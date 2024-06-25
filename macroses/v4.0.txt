@@ -1,0 +1,153 @@
+Sub Difference20()
+    Dim N As Integer
+    N = Cells(2, 10) 'Zadaem period izmerenii v yacheike (2, 10).
+    'MsgBox "Period:" & N, , ""
+    Dim iLastRow As Long
+    Dim iLastRow_Volt As Long
+    iLastRow = Cells(Rows.Count, 4).End(xlUp).Row 'Kol-vo vseh izmerenii.
+    'MsgBox "Last:" & iLastRow, , ""
+    iLastRow_Volt = Cells(Rows.Count, 44).End(xlUp).Row 'Kol-vo raschetov.
+    'MsgBox "Last_Voltage:" & iLastRow_Volt, , ""
+    iLastRow_Volt = iLastRow_Volt - 10
+    Dim M As Long
+    
+    Dim countCycle As Integer
+    Dim skipCycles As Integer ' Kol-vo cycles, posle kotorih nujen propusk
+    Dim skipRows As Integer ' Kol-vo rows, kotorie nujno propustit
+    skipCycles = 1 ' 3 izmereniya termoEDS
+    skipRows = 4 ' 6 izmereniy Resistance
+    countCycle = -1
+    
+    Dim i As Integer
+    
+    If iLastRow_Volt = -1 Then
+        iLastRow_Volt = 0
+    End If
+    
+    ' N1 = N + 10 + (iLastRow_Volt * N * 2) 'Otkuda nachinat otschet.
+    N1 = N + 10 + (iLastRow_Volt * (N * 2 + skipRows)) 'Otkuda nachinat otschet.
+
+    
+    Dim Ncyc As Long
+    Ncyc = iLastRow / (skipRows + 2 * N * skipCycles)
+    
+    If ((iLastRow - 10) \ N) Mod 2 = 0 Then
+        M = ((iLastRow - 10 - skipRows * Ncyc) \ N) / 2
+    Else
+        M = ((iLastRow - 10 - skipRows * Ncyc) \ N - 1) / 2
+    End If
+    
+    For i = (11 + iLastRow_Volt) To (M + 10)
+    'For i = 11 To (M + 10) 'Schitaet s nachala
+   
+        If counterCycle = -1 Then
+            counterCycle = 0
+        ElseIf counterCycle = skipCycles Then
+            N1 = N1 + skipRows
+            counterCycle = 0
+        Else
+        End If
+    
+        Range("AR" & i).Value = N1 + N - 10
+        Range("AS" & i).Value = Range("Z" & (N1 + N)).Value - Range("Z" & N1).Value
+        Range("AT" & i).Value = Range("AA" & (N1 + N)).Value - Range("AA" & N1).Value
+        Range("AU" & i).Value = Range("AB" & (N1 + N)).Value - Range("AB" & N1).Value
+        Range("AV" & i).Value = Range("AV" & (N1 + N)).Value - Range("AC" & N1).Value
+        ' popravka:
+        'Range("AD" & i).Value = Range("D" & (N1 + N)).Value - (Range("D" & N1).Value + Range("D" & N1 + 2 * N).Value) / 2
+        'Range("AE" & i).Value = Range("E" & (N1 + N)).Value - (Range("E" & N1).Value + Range("E" & N1 + 2 * N).Value) / 2
+        'Range("AF" & i).Value = Range("H" & (N1 + N)).Value - (Range("H" & N1).Value + Range("H" & N1 + 2 * N).Value) / 2
+        'Range("AG" & i).Value = Range("I" & (N1 + N)).Value - (Range("I" & N1).Value + Range("I" & N1 + 2 * N).Value) / 2
+        Range("AW" & i).Value = Range("AH" & (N1 + N)).Value
+        Range("AX" & i).Value = counterCycle
+        
+        N1 = N1 + (2 * N)
+        counterCycle = counterCycle + 1
+        
+    Next i
+End Sub
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim lastRow As Long
+
+    ' Proverka, byli li izmeneniya v stolbtse A
+    If Not Intersect(Target, Me.Range("A:A")) Is Nothing Then
+        ' Poluchayem nomer posledney zapollnennoy stroki
+        lastRow = Me.Cells(Me.Rows.Count, "A").End(xlUp).Row
+
+        ' Proverka, yavlyaetsya li tekushchaya stroka 12-m izmereniem, nachinaya s 11-y stroki
+        If (lastRow >= 11) And ((lastRow - 11) Mod 12 = 0) Then
+            ' Vyzov funktsii Difference()
+            Difference20
+        End If
+    End If
+End Sub
+
+Sub ButtonFromStart()
+    Dim N As Integer
+    N = Cells(2, 10) 'Zadaem period izmerenii v yacheike (2, 10).
+    'MsgBox "Period:" & N, , ""
+    Dim iLastRow As Long
+    Dim iLastRow_Volt As Long
+    iLastRow = Cells(Rows.Count, 4).End(xlUp).Row 'Kol-vo vseh izmerenii.
+    'MsgBox "Last:" & iLastRow, , ""
+    iLastRow_Volt = Cells(Rows.Count, 44).End(xlUp).Row 'Kol-vo raschetov.
+    'MsgBox "Last_Voltage:" & iLastRow_Volt, , ""
+    iLastRow_Volt = iLastRow_Volt - 10
+    Dim M As Long
+    
+    Dim countCycle As Integer
+    Dim skipCycles As Integer ' Kol-vo cycles, posle kotorih nujen propusk
+    Dim skipRows As Integer ' Kol-vo rows, kotorie nujno propustit
+    skipCycles = 1 ' 3 izmereniya termoEDS
+    skipRows = 4 ' 6 izmereniy Resistance
+    countCycle = -1
+    
+    Dim i As Integer
+    
+    If iLastRow_Volt = -1 Then
+        iLastRow_Volt = 0
+    End If
+    
+    ' N1 = N + 10 + (iLastRow_Volt * N * 2) 'Otkuda nachinat otschet.
+    N1 = N + 10 '+ (iLastRow_Volt * (N * 2 + skipRows)) 'Otkuda nachinat otschet.
+
+    
+    Dim Ncyc As Long
+    Ncyc = iLastRow / (skipRows + 2 * N * skipCycles)
+    
+    If ((iLastRow - 10) \ N) Mod 2 = 0 Then
+        M = ((iLastRow - 10 - skipRows * Ncyc) \ N) / 2
+    Else
+        M = ((iLastRow - 10 - skipRows * Ncyc) \ N - 1) / 2
+    End If
+    
+    'For i = (11 + iLastRow_Volt) To (M + 10)
+    For i = 11 To (M + 10) 'Schitaet s nachala
+    
+        If counterCycle = -1 Then
+            counterCycle = 0
+        ElseIf counterCycle = skipCycles Then
+            N1 = N1 + skipRows
+            counterCycle = 0
+        Else
+        End If
+    
+        Range("AR" & i).Value = N1 + N - 10
+        Range("AS" & i).Value = Range("Z" & (N1 + N)).Value - Range("Z" & N1).Value
+        Range("AT" & i).Value = Range("AA" & (N1 + N)).Value - Range("AA" & N1).Value
+        Range("AU" & i).Value = Range("AB" & (N1 + N)).Value - Range("AB" & N1).Value
+        Range("AV" & i).Value = Range("AV" & (N1 + N)).Value - Range("AC" & N1).Value
+        ' popravka:
+        'Range("AD" & i).Value = Range("D" & (N1 + N)).Value - (Range("D" & N1).Value + Range("D" & N1 + 2 * N).Value) / 2
+        'Range("AE" & i).Value = Range("E" & (N1 + N)).Value - (Range("E" & N1).Value + Range("E" & N1 + 2 * N).Value) / 2
+        'Range("AF" & i).Value = Range("H" & (N1 + N)).Value - (Range("H" & N1).Value + Range("H" & N1 + 2 * N).Value) / 2
+        'Range("AG" & i).Value = Range("I" & (N1 + N)).Value - (Range("I" & N1).Value + Range("I" & N1 + 2 * N).Value) / 2
+        Range("AW" & i).Value = Range("AH" & (N1 + N)).Value
+        Range("AX" & i).Value = counterCycle
+        
+        N1 = N1 + (2 * N)
+        counterCycle = counterCycle + 1
+        
+    Next i
+End Sub

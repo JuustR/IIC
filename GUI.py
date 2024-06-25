@@ -2,6 +2,7 @@
 Добавить создание текстового файла с логами
 
 """
+import os
 import pathlib
 import time
 from typing import Union
@@ -44,7 +45,8 @@ class App(QMainWindow):
 
         # Time and console start settings
         formatted_time = time.strftime("%d-%m-%Y %H:%M:%S", time.localtime())
-        self.ConsolePTE.setPlainText(formatted_time + "\n" + """
+        self.ConsolePTE.setPlainText(formatted_time + "\n" +
+                                     """
 Здравствуйте! Для начала работы:
 1. Выберите/создайте шаблон Excel
 2. Настройте приборы и Excel
@@ -54,6 +56,12 @@ class App(QMainWindow):
 3.(необ.) Задайте начальную строчку Excel
 4. Запускайте измерения
         """)
+
+        # Dictionary for requests to other classes
+        # In use: FileName, TempName, MacrosName
+        self.data = {"TempName": "Нет шаблона",
+                     "MacrosName": "Нет макроса",
+                     "FileName": "Example"}
 
         # Flag for start button
         self.working_flag = False
@@ -68,6 +76,8 @@ class App(QMainWindow):
         pass
 
     def onCreateClicked(self):
+        self.ConsolePTE.appendPlainText(
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'НЕДОСТУПНО! Находится в разработке \n')
         pass
 
     def onStartLineClicked(self):
@@ -82,16 +92,79 @@ class App(QMainWindow):
             self.working_flag = True
             self.StartButton.setText('Стоп')
 
-        #self.start_fuct()
+        # self.start_fuct()
 
     def onChooseExcelClicked(self):
-        self.ConsolePTE.appendPlainText(time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали выбор шаблона Excel \n')
-        dlg = ChooseExcelDialog(self)
+        self.ConsolePTE.appendPlainText(
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали выбор шаблона Excel \n')
+        dlg = ChooseExcelDialog(self.data)
         dlg.exec()
 
 
 class ChooseExcelDialog(QDialog):
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, data_dict):
+        super().__init__()
         loadUi('assets/chooseDialog.ui', self)
+
+        self.data = data_dict
+
+        self.setWindowTitle('Choosing Template')
+        self.OpenMacrosBtn.clicked.connect(self.open_macros_btn)
+        self.OpenTempBtn.clicked.connect(self.open_temp_btn)
+        self.buttonBox.accepted.connect(self.onAccepted)
+        self.buttonBox.rejected.connect(self.onRejected)
+
+        # Добавить флаг, чтобы не переписывалась data при нажатии cancel
+        self.FileNameLE.setText(self.data["FileName"])
+        self.MacrosLabel.setText(self.data["MacrosName"])
+        self.TempLabel.setText(self.data["TempName"])
+
+    def open_macros_btn(self):
+        dir_path = str(pathlib.Path.cwd())  # директория в которой находимся
+        # dir_path = str(pathlib.Path.home()) # домашняя директоряи
+        file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path + "\\macroses", 'Macros (*txt)')
+        if file_dir[0]:
+            self.data["MacrosName"] = file_dir[0][0]
+            self.MacrosLabel.setText(file_dir[0][0])
+
+    def open_temp_btn(self):
+        dir_path = str(pathlib.Path.cwd())  # директория в которой находимся
+        # dir_path = str(pathlib.Path.home()) # домашняя директоряи
+        file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path + "\\templates", 'Excel file (*xltm)')
+        if file_dir[0]:
+            self.data["TempName"] = file_dir[0][0]
+            self.TempLabel.setText(file_dir[0][0])
+
+    def onAccepted(self):
+        self.data["FileName"] = self.FileNameLE.text()
+        #
+        # script_path = os.path.abspath(__file__)
+        # file_path = os.path.dirname(script_path) + "\\Measurements\\" + self.data["FileName"]  # without '.xlsm'
+        #
+        # if self.data["TempName"] == None:
+        #     workbook = self.excel.Workbooks.Open(os.path.dirname(script_path) + "\\templates\\Base_temp.xltm")
+        # else:
+        #     workbook = self.excel.Workbooks.Open(self.data[4])
+        #     # workbook.SaveAs(file_path, 52)
+        #
+        # # Формат .xlsm будет при 52, а .xlsx при 51
+        # if self.data[2]:
+        #     try:
+        #         vbacomponent = workbook.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
+        #         vbacomponent.CodeModule.AddFromFile("C:\\Dima\\INH\\VBAcode.txt")
+        #         print("Макросы успешно добавлены")
+        #     except:
+        #         print("Макросы не добавлены")
+        #         print(
+        #             "В Центре управления безопасностью поставить галочку на Доверять доступ к объектной модели проектов VBA")
+        # else:
+        #     print("Макросы не добавлены")
+        # workbook.SaveAs(file_path, 52)
+        pass
+
+    def onRejected(self):
+        # Не работает, т.к. нет флага, а как его реализовать хз)
+        self.FileNameLE.setText("Example")
+        self.TempLabel.setText("Нет шаблона")
+        self.MacrosLabel.setText("Нет макроса")
