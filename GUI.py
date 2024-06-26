@@ -18,7 +18,7 @@ from PyQt6.QtGui import QIcon, QMovie
 
 
 class App(QMainWindow):
-
+    """GUI основной страницы программы"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         uic.loadUi('assets/mainIIC.ui', self)
@@ -58,17 +58,19 @@ class App(QMainWindow):
         """)
 
         # Dictionary for requests to other classes
+        # data - changeable, base_data - unchangeable REMEMBER IT!!!
+        # Вообще выглядит херово, я бы как-то изменил
         # In use: FileName, TempName, MacrosName
-        self.data = {"TempName": "Нет шаблона",
+        self.data = {"TempName": "Нет шаблона1",
+                     "MacrosName": "Нет макроса",
+                     "FileName": "Example"}
+        self.base_data = {"TempName": "Нет шаблона",
                      "MacrosName": "Нет макроса",
                      "FileName": "Example"}
 
         # Flag for start button
         self.working_flag = False
-
-        # self.movie = QMovie("C:/Users/Comp.ROMAN/Desktop/giphy.gif")
-        # self.label.setMovie(self.movie)
-        # self.movie.start()
+        self.data_reset_flag = False
 
         self.show()
 
@@ -96,18 +98,18 @@ class App(QMainWindow):
 
     def onChooseExcelClicked(self):
         self.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали выбор шаблона Excel \n')
-        dlg = ChooseExcelDialog(self.data)
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали выбор шаблона Excel')
+        dlg = ChooseExcelDialog(self)
         dlg.exec()
 
 
 class ChooseExcelDialog(QDialog):
 
-    def __init__(self, data_dict):
-        super().__init__()
+    def __init__(self, app_instance,  parent=None):
+        super().__init__(parent)
         loadUi('assets/chooseDialog.ui', self)
 
-        self.data = data_dict
+        self.app_instance = app_instance
 
         self.setWindowTitle('Choosing Template')
         self.OpenMacrosBtn.clicked.connect(self.open_macros_btn)
@@ -115,17 +117,23 @@ class ChooseExcelDialog(QDialog):
         self.buttonBox.accepted.connect(self.onAccepted)
         self.buttonBox.rejected.connect(self.onRejected)
 
-        # Добавить флаг, чтобы не переписывалась data при нажатии cancel
+        if self.app_instance.data_reset_flag:
+            self.data = self.app_instance.base_data
+            self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
+        else:
+            self.data = self.app_instance.data
+
         self.FileNameLE.setText(self.data["FileName"])
         self.MacrosLabel.setText(self.data["MacrosName"])
         self.TempLabel.setText(self.data["TempName"])
+
 
     def open_macros_btn(self):
         dir_path = str(pathlib.Path.cwd())  # директория в которой находимся
         # dir_path = str(pathlib.Path.home()) # домашняя директоряи
         file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path + "\\macroses", 'Macros (*txt)')
         if file_dir[0]:
-            self.data["MacrosName"] = file_dir[0][0]
+            self.app_instance.data["MacrosName"] = file_dir[0][0]
             self.MacrosLabel.setText(file_dir[0][0])
 
     def open_temp_btn(self):
@@ -161,10 +169,12 @@ class ChooseExcelDialog(QDialog):
         # else:
         #     print("Макросы не добавлены")
         # workbook.SaveAs(file_path, 52)
-        pass
+
+        self.app_instance.ConsolePTE.appendPlainText(
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Создали файл Excel')
 
     def onRejected(self):
-        # Не работает, т.к. нет флага, а как его реализовать хз)
-        self.FileNameLE.setText("Example")
-        self.TempLabel.setText("Нет шаблона")
-        self.MacrosLabel.setText("Нет макроса")
+        self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
+        self.app_instance.ConsolePTE.appendPlainText(
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Отмена')
+
