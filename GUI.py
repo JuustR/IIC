@@ -1,8 +1,10 @@
 """
-Добавить создание текстового файла с логами
-
+Добавить создание текстового файла с логами (in progress)
+Добавить описания всех функций и классов
+Добавить выбор старых файлов (не скоро)
 """
 import os
+import win32com.client as win32
 import pathlib
 import time
 from typing import Union
@@ -24,6 +26,9 @@ class App(QMainWindow):
         uic.loadUi('assets/mainIIC.ui', self)
         self.init()
 
+        self.excel = win32.Dispatch('Excel.Application')  # Создаем COM объект
+        self.excel.Visible = False
+
     def init(self):
         self.setWindowTitle('IIC Measuring Program')
         # self.setFixedSize(self.geometry().width(), self.geometry().height())
@@ -39,7 +44,7 @@ class App(QMainWindow):
 
         self.ChooseButton.clicked.connect(self.onChooseExcelClicked)
         # self.SettingsButton.clicked.connect(self.onSettingsClicked)
-        # self.CreateButton.clicked.connect(self.onCreateClicked)
+        self.CreateButton.clicked.connect(self.onCreateClicked)
         # self.StartLineButton.clicked.connect(self.onStartLineClicked)
         self.StartButton.clicked.connect(self.onStartClicked)
 
@@ -61,7 +66,7 @@ class App(QMainWindow):
         # data - changeable, base_data - unchangeable REMEMBER IT!!!
         # Вообще выглядит херово, я бы как-то изменил
         # In use: FileName, TempName, MacrosName
-        self.data = {"TempName": "Нет шаблона1",
+        self.data = {"TempName": "Нет шаблона",
                      "MacrosName": "Нет макроса",
                      "FileName": "Example"}
         self.base_data = {"TempName": "Нет шаблона",
@@ -146,35 +151,50 @@ class ChooseExcelDialog(QDialog):
 
     def onAccepted(self):
         self.data["FileName"] = self.FileNameLE.text()
-        #
-        # script_path = os.path.abspath(__file__)
-        # file_path = os.path.dirname(script_path) + "\\Measurements\\" + self.data["FileName"]  # without '.xlsm'
-        #
-        # if self.data["TempName"] == None:
-        #     workbook = self.excel.Workbooks.Open(os.path.dirname(script_path) + "\\templates\\Base_temp.xltm")
-        # else:
-        #     workbook = self.excel.Workbooks.Open(self.data[4])
-        #     # workbook.SaveAs(file_path, 52)
-        #
-        # # Формат .xlsm будет при 52, а .xlsx при 51
-        # if self.data[2]:
-        #     try:
-        #         vbacomponent = workbook.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
-        #         vbacomponent.CodeModule.AddFromFile("C:\\Dima\\INH\\VBAcode.txt")
-        #         print("Макросы успешно добавлены")
-        #     except:
-        #         print("Макросы не добавлены")
-        #         print(
-        #             "В Центре управления безопасностью поставить галочку на Доверять доступ к объектной модели проектов VBA")
-        # else:
-        #     print("Макросы не добавлены")
-        # workbook.SaveAs(file_path, 52)
+        print(self.data["FileName"])
 
-        self.app_instance.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Создали файл Excel')
+        script_path = os.path.abspath(__file__)
+        file_path = os.path.dirname(script_path) + "\\Measurements\\" + self.data["FileName"]  # without '.xlsm'
+
+        if self.data["TempName"] == "Нет шаблона":
+            temp_path = os.path.dirname(script_path) + "\\templates\\Base_temp.xltm"
+            workbook = self.app_instance.excel.Workbooks.Open(temp_path)
+        else:
+            workbook = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
+            temp_path = self.data["TempName"]
+            # workbook.SaveAs(file_path, 52)
+
+        # Формат .xlsm будет при 52, а .xlsx при 51
+        if self.data["MacrosName"] != "Нет макроса":
+            try:
+                vbacomponent = workbook.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
+                vbacomponent.CodeModule.AddFromFile(self.data["MacrosName"])
+                print("Макросы успешно добавлены") # Необязательно
+            except:
+                self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + "Макросы не добавлены, т.к. ")
+                self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + """в Центре управления безопасностью 
+(Параметры макросов) необходимо поставить галочку на Доверять доступ к объектной модели проектов VBA""")
+                self.data["MacrosName"] = "Нет макроса"
+        else:
+            print("Макросы не добавлены") # Необязательно
+
+        workbook.SaveAs(file_path, 52)
+        self.app_instance.excel.Visible = True
+
+        if self.data["MacrosName"] == "Нет макроса":
+            self.app_instance.ConsolePTE.appendPlainText(
+                time.strftime("%H:%M:%S | ", time.localtime()) + "Создали файл Excel" +
+                " по шаблону \"" + os.path.basename(temp_path) + "\" без макроса\n")
+        else:
+            self.app_instance.ConsolePTE.appendPlainText(
+                time.strftime("%H:%M:%S | ", time.localtime()) + "Создали файл Excel" + " по шаблону \""
+                + os.path.basename(temp_path) + "\" с макросом \"" + os.path.basename(self.data["MacrosName"]) + "\"\n")
+
 
     def onRejected(self):
         self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
         self.app_instance.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Отмена')
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Отмена создания файла')
 
