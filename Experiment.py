@@ -2,7 +2,7 @@ from GUI import App
 import pyvisa as visa
 
 
-class Experiment(App):
+class Experiment:
     def __init__(self, app_instance):
         self.app_instance = app_instance
 

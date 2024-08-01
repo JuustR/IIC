@@ -18,6 +18,7 @@ from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import (QMainWindow, QDialog, QFileDialog)
 
 from ChooseExcelDialog import ChooseExcelDialog
+from Experiment import Experiment
 
 
 class App(QMainWindow):
