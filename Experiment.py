@@ -1,4 +1,27 @@
-from GUI import App
+"""
+План по измерениям
+
+1. Проверка подключения к приборам
+2. Запись начальных условий
+3. Старт измерений
+    3.1. Измерение сопротивления
+        3.1.1. Замыкание релюшек на ток
+        3.1.2. Подача напряжения на токовые контакты
+        3.1.3. Запись измеренных данных
+        3.1.4. Переключение направления тока (мб секундную задержку между переключениями)
+        3.1.5. Повторение пунктов 2-3
+        3.1.6. Если измерений >1, то повторяем 4-2-3-4-2-3 умноженное на кол-во измерений (4-2-3 можно в одну ф-ю)
+        3.1.7. Размыкание токовых релюшек, отключение нагревателя и пауза (если нужно)
+    3.2. Измерения термоЭДС (если нужно)
+        3.2.1. Замыкание релюшки на нагреватель
+        3.2.2. Подаём напряжение на нагреватель
+        3.2.3. Измеряем и записываем n точек полуцикла нагрева
+        3.2.4. Размыкаем релюшку нагревателя и отключаем нагреватель
+        3.2.5. Измеряем и записываем m точек полуцикла охлаждения
+        3.2.6. Выставляем паузу, если нужно
+4. Остановка измерений и сохранение файла
+"""
+
 import pyvisa as visa
 
 
@@ -75,5 +98,48 @@ class Experiment:
         self.keithley.write(":init:cont 0")  # Отключить непрерывную инициализацию
 
     def measur(self):
+
+        pass
+
+    def Akip_connection(self):
+        # PowerSource_allowed - стоит галочка на источник питания
+        if self.PowerSource_allowed == True:
+            #Разобраться в подключении к USB
+            n = 0
+            while n < len(self.USB_resources):
+                try:
+                    AKIP = visa.ResourceManager().open_resource(self.USB_resources[n])
+                    self.send_IDN = AKIP.query("*IDN?")
+                except:
+                    self.send_IDN = 'None'
+                if self.send_IDN == 'ITECH Ltd., IT6333A, 800572020767710004, 1.11-1.08\n':
+                    # print('Проверка условия прошла')
+                    AKIP.write("*rst")
+                    # print('Команда подана')
+                    self.w_root.statusBar.showMessage('Подключение успешно')
+                    break
+                # print('while1:' + str(n))
+
+                n += 1
+            else:
+                error = QMessageBox()
+                error.setWindowTitle('Не удалось подключиться к АКИП-1142/3')
+                error.setText('Убедитесь, что АКИП-1142/3 подключен к компуктеру по USB')
+                error.setIcon(QMessageBox.Warning)
+                error.setStandardButtons(QMessageBox.Ok)
+                error.exec_()
+                self.w_root.statusBar.showMessage('Подключение не удалось')
+
+        AKIP.write('INSTrument:NSELect ' + self.heater_channel)
+        AKIP.write('APPL CH' + self.heater_channel + ',' + str(self.heater_voltage) + ',1')  # APPL канал, напряжение, ток
+        AKIP.write('CHANnel:OUTPut 0')  # + str(int(self.Change_Volt))
         pass
     
+    def Settings(self):
+        """Сюда прописываются и хранятся параметры которые измеряются right now"""
+        self.akip_channel = 1 # 1-3
+        self.akip_voltage = 0 # 0-60 для 1-2 ch и 0-5 для 3 ch
+        self.
+
+
+        pass
