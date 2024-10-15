@@ -101,14 +101,17 @@ class Experiment:
 
         pass
 
-    def Akip_connection(self):
+    def Instr_connection(self):
+        "Функция для подключения приборов"
+        rm = visa.ResourceManager()
+        
         # PowerSource_allowed - стоит галочка на источник питания
         if self.PowerSource_allowed == True:
             #Разобраться в подключении к USB
             n = 0
             while n < len(self.USB_resources):
                 try:
-                    AKIP = visa.ResourceManager().open_resource(self.USB_resources[n])
+                    AKIP = rm.open_resource(self.USB_resources[n])
                     self.send_IDN = AKIP.query("*IDN?")
                 except:
                     self.send_IDN = 'None'
@@ -133,7 +136,9 @@ class Experiment:
         AKIP.write('INSTrument:NSELect ' + self.heater_channel)
         AKIP.write('APPL CH' + self.heater_channel + ',' + str(self.heater_voltage) + ',1')  # APPL канал, напряжение, ток
         AKIP.write('CHANnel:OUTPut 0')  # + str(int(self.Change_Volt))
-        pass
+
+        print("Список подключенных приборов: " + rm.list_resources())
+        return rm
     
     def Settings(self):
         """Сюда прописываются и хранятся параметры которые измеряются right now"""
