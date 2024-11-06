@@ -6,8 +6,8 @@ import pyvisa
 
 class InstrumentConnection:
     def __init__(self, w_root):
-        self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
-        self.w_root = w_root
+        self.rm = pyvisa.ResourceManager()
+        self.w_root = w_root # Вместо w_root код 
         self.keithley = None
         self.E36312A = None
         self.AKIP = None
@@ -18,7 +18,7 @@ class InstrumentConnection:
         if self.Keithley_allowed:
             "Добавить галочку или выбор сканера к которому подключаться"
             self.Keithley_connection()
-        if self.BP_allowed and self.E36312A_allowed:
+        if self.BP_allowed and self.E36312A_allowed: #BP_allowed можно убрать в теории
             "Если есть нагреватель и подключен Е36312А"
             self.E36312A_connection()
         if self.BP_allowed and self.AKIP_allowed:
