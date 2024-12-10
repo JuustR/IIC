@@ -144,7 +144,7 @@ class Experiment:
         """Сюда прописываются и хранятся параметры которые измеряются right now"""
         self.akip_channel = 1 # 1-3
         self.akip_voltage = 0 # 0-60 для 1-2 ch и 0-5 для 3 ch
-        self.
+        # self.
 
 
         pass
