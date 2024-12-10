@@ -51,7 +51,7 @@ class Experiment:
         self.keithley.write("initiate")  # make the instrument waiting for a trigger pulse,
         self.keithley.assert_trigger()  # trigger it,
         self.keithley.wait_for_srq()  # and wait until it sends a “service request”
-
+ 
         voltages = self.keithley.query_ascii_values("trace:data?")
         print("Average voltage: ", sum(voltages) / len(voltages))
 

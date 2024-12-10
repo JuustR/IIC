@@ -19,6 +19,7 @@ class Measurements:
                 instrument.write(f"VOLT {settings['voltage']}")
                 instrument.write(f"CURR {settings['current']}")
 
+
     def start_measurements(self):
         #! Переписать согласно experiment.py
         """Запускаем измерения для всех подключенных приборов"""
@@ -52,6 +53,7 @@ class SettingsManager:
                 'current': 1.0
             }
         }
+
 
     def get_settings_for(self, instrument_name):
         """Возвращаем настройки для указанного прибора"""

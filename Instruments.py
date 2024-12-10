@@ -7,11 +7,18 @@ import pyvisa
 class InstrumentConnection:
     def __init__(self, w_root):
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
-        self.w_root = w_root
+        self.w_root = w_root # w_root - uic.loadUi('...')
         self.keithley = None
+        self.Keithley_allowed = True
+        # self.Keithley_allowed = self.w_root.Keithley_allowed
+        self.BP_allowed = False
+        # self.BP_allowed = self.w_root.BP_allowed
         self.E36312A = None
+        self.E36312A_allowed = False
         self.AKIP = None
+        self.AKIP_allowed = False
         self.USB_resources = []
+        self.instr = None
 
     def Connect_all(self):
         "Функция для подключения всех выбранных приборов"
@@ -65,6 +72,7 @@ class InstrumentConnection:
 
 
     def Instr_check(self):
+        """Поочередный вывод IDN всех приборов"""
         for i in self.rm.list_resources():
             self.instr = self.rm.open_resource(i)
             print("Для (" + i + ") IDN будет: " + self.instr.query("*IDN?"))

@@ -18,6 +18,8 @@ class ChooseExcelDialog(QDialog):
         loadUi('assets/chooseDialog.ui', self)
 
         self.app_instance = app_instance
+        self.excel_settings = 'Smth'
+
 
         self.setWindowTitle('Choosing Template')
         self.OpenMacrosBtn.clicked.connect(self.open_macros_btn)
@@ -79,8 +81,7 @@ class ChooseExcelDialog(QDialog):
                 self.app_instance.ConsolePTE.appendPlainText(
                     time.strftime("%H:%M:%S | ", time.localtime()) + "Макросы не добавлены, т.к. ")
                 self.app_instance.ConsolePTE.appendPlainText(
-                    time.strftime("%H:%M:%S | ", time.localtime()) + """в Центре управления безопасностью 
-(Параметры макросов) необходимо поставить галочку на Доверять доступ к объектной модели проектов VBA""")
+                    time.strftime("%H:%M:%S | ", time.localtime()) + "в Центре управления безопасностью \n(Параметры макросов) необходимо поставить галочку на 'Доверять доступ к объектной модели проектов VBA'")
                 self.data["MacrosName"] = "Нет макроса"
         else:
             print("Макросы не добавлены")  # Необязательно
@@ -97,8 +98,15 @@ class ChooseExcelDialog(QDialog):
                 time.strftime("%H:%M:%S | ", time.localtime()) + "Создали файл Excel" + " по шаблону \""
                 + os.path.basename(temp_path) + "\" с макросом \"" + os.path.basename(self.data["MacrosName"]) + "\"\n")
 
+        # Добавить, если такой-то шаблон, что установки будут такие-то
+
+
+
     def onRejected(self):
         """Отмена создания Excel со сбросом заданных условий"""
         self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
         self.app_instance.ConsolePTE.appendPlainText(
             time.strftime("%H:%M:%S | ", time.localtime()) + 'Отмена создания файла')
+
+    def getExcelSettings(self):
+        return self.excel_settings

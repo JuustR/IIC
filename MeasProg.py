@@ -11,7 +11,7 @@ add logs
 """
 import time
 import sys
-
+from PyQt6.uic import loadUi #!
 from Instruments import InstrumentConnection
 from Measurings import Measurements, SettingsManager
 from GUI import App
@@ -20,10 +20,12 @@ from PyQt6.QtWidgets import QApplication
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    ex = App()
     """
     # Подключаем приборы
-    instrument_connection = InstrumentConnection()
-    instrument_connection.connect_all()  # Подключаем все приборы
+    instrument_connection = InstrumentConnection(loadUi('assets/mainIIC.ui'))
+    instrument_connection.Connect_all() # Подключаем все приборы
+    instrument_connection.Instr_check() # Вывод IDN всех подключенных приборов
     # Получаем подключенные приборы
     instruments = {
         'keithley': instrument_connection.keithley,
@@ -42,5 +44,5 @@ if __name__ == '__main__':
     instrument_manager.apply_settings(settings_manager)
 
     """
-    ex = App()
+
     sys.exit(app.exec())

@@ -18,7 +18,7 @@ from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import (QMainWindow, QDialog, QFileDialog)
 
 from ChooseExcelDialog import ChooseExcelDialog
-from Experiment import Experiment
+# from Experiment import Experiment
 
 
 class App(QMainWindow):
@@ -35,6 +35,8 @@ class App(QMainWindow):
         self.setWindowTitle('IIC Measuring Program')
         # self.setFixedSize(self.geometry().width(), self.geometry().height())
 
+
+        # Подключаем основные кнопки к соответсвующим функциям
         self.ChooseButton.clicked.connect(self.onChooseExcelClicked)
         self.SettingsButton.clicked.connect(self.onSettingsClicked)
         self.CreateButton.clicked.connect(self.onCreateClicked)
