@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1438</width>
+    <width>1310</width>
     <height>600</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1438</width>
+    <height>600</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -22,7 +28,7 @@
      <rect>
       <x>399</x>
       <y>9</y>
-      <width>291</width>
+      <width>261</width>
       <height>211</height>
      </rect>
     </property>
@@ -126,7 +132,7 @@
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>700</x>
+      <x>670</x>
       <y>10</y>
       <width>621</width>
       <height>551</height>
@@ -160,7 +166,7 @@
            <x>10</x>
            <y>10</y>
            <width>591</width>
-           <height>451</height>
+           <height>481</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -197,6 +203,13 @@
              </layout>
             </item>
             <item>
+             <widget class="Line" name="line_10">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_10">
               <item>
                <widget class="QLabel" name="label_9">
@@ -206,7 +219,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_2">
+               <widget class="QLineEdit" name="NPLC">
                 <property name="text">
                  <string>2</string>
                 </property>
@@ -220,7 +233,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_3">
+               <widget class="QLineEdit" name="TimeNPLC">
                 <property name="text">
                  <string>40</string>
                 </property>
@@ -232,7 +245,39 @@
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_20">
+             <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0">
+              <item>
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>Каналы термометра</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="ChTerm">
+                <property name="text">
+                 <string>7</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="ChTerm2">
+                <property name="text">
+                 <string>17</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="Line" name="line_12">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_20" stretch="0,0">
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_9">
                 <item>
@@ -256,7 +301,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_23">
+                   <widget class="QLineEdit" name="ChIP1">
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -274,7 +319,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_25">
+                   <widget class="QLineEdit" name="U_IP1">
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -292,7 +337,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_24">
+                   <widget class="QLineEdit" name="ChIP2">
                     <property name="text">
                      <string>3</string>
                     </property>
@@ -310,7 +355,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_26">
+                   <widget class="QLineEdit" name="U_IP2">
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -323,11 +368,18 @@
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_21">
+             <widget class="Line" name="line_11">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_21" stretch="0,0">
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_12">
                 <item>
-                 <widget class="QRadioButton" name="radioButton">
+                 <widget class="QRadioButton" name="RB_oldRead">
                   <property name="text">
                    <string>Старые Read'ы</string>
                   </property>
@@ -337,7 +389,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton_2">
+                 <widget class="QRadioButton" name="RB_newRead">
                   <property name="text">
                    <string>Новые Read'ы</string>
                   </property>
@@ -357,7 +409,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_27">
+                   <widget class="QLineEdit" name="NRead">
                     <property name="text">
                      <string>2</string>
                     </property>
@@ -366,7 +418,7 @@
                  </layout>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="checkBox_2">
+                 <widget class="QCheckBox" name="CB_average">
                   <property name="text">
                    <string>Усреднение</string>
                   </property>
@@ -378,6 +430,19 @@
                </layout>
               </item>
              </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -477,7 +542,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_4">
+                   <widget class="QLineEdit" name="Ch1">
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -491,7 +556,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_5">
+                   <widget class="QLineEdit" name="DelayCh1">
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -509,7 +574,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_6">
+                   <widget class="QLineEdit" name="Ch2">
                     <property name="text">
                      <string>2</string>
                     </property>
@@ -523,7 +588,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_8">
+                   <widget class="QLineEdit" name="DelayCh2">
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -548,7 +613,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_9">
+                   <widget class="QLineEdit" name="Ch3">
                     <property name="text">
                      <string>3</string>
                     </property>
@@ -562,7 +627,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_10">
+                   <widget class="QLineEdit" name="DelayCh3">
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -580,7 +645,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_11">
+                   <widget class="QLineEdit" name="Ch4">
                     <property name="text">
                      <string>4</string>
                     </property>
@@ -594,7 +659,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_12">
+                   <widget class="QLineEdit" name="DelayCh4">
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -619,7 +684,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_13">
+                   <widget class="QLineEdit" name="Ch5">
                     <property name="text">
                      <string>5</string>
                     </property>
@@ -633,7 +698,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_14">
+                   <widget class="QLineEdit" name="DelayCh5">
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -651,7 +716,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_16">
+                   <widget class="QLineEdit" name="Ch6">
                     <property name="text">
                      <string>6</string>
                     </property>
@@ -665,7 +730,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_15">
+                   <widget class="QLineEdit" name="DelayCh6">
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -694,7 +759,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_7">
+               <widget class="QLineEdit" name="Ncycles">
                 <property name="text">
                  <string>1</string>
                 </property>
@@ -712,7 +777,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_19">
+               <widget class="QLineEdit" name="Nheat">
                 <property name="text">
                  <string>4</string>
                 </property>
@@ -726,7 +791,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_20">
+               <widget class="QLineEdit" name="Ncool">
                 <property name="text">
                  <string>4</string>
                 </property>
@@ -744,7 +809,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_21">
+               <widget class="QLineEdit" name="DelayS">
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -758,7 +823,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_22">
+               <widget class="QLineEdit" name="DelayR">
                 <property name="text">
                  <string>5</string>
                 </property>
@@ -778,7 +843,7 @@
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_7">
                 <item>
-                 <widget class="QCheckBox" name="checkBox">
+                 <widget class="QCheckBox" name="CB_rele">
                   <property name="text">
                    <string>Релюшки на R</string>
                   </property>
@@ -805,7 +870,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_17">
+                   <widget class="QLineEdit" name="NR_UpDown">
                     <property name="enabled">
                      <bool>false</bool>
                     </property>
@@ -826,7 +891,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_18">
+                   <widget class="QLineEdit" name="NR_Up">
                     <property name="text">
                      <string>4</string>
                     </property>
@@ -837,6 +902,19 @@
                </layout>
               </item>
              </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -879,30 +957,6 @@
       </widget>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QLabel" name="label_2">
-         <property name="contextMenuPolicy">
-          <enum>Qt::PreventContextMenu</enum>
-         </property>
-         <property name="text">
-          <string> Название категории </string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="lineEdit"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton">
-         <property name="text">
-          <string>Обновить имя</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <widget class="QPushButton" name="pushButton_2">
@@ -919,7 +973,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_4">
+        <widget class="QPushButton" name="PB_save_settings">
          <property name="text">
           <string>Сохранить параметры</string>
          </property>
