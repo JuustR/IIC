@@ -2,8 +2,8 @@ import logging
 from telegram import Update
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes
 
-TOKEN = '7351408788:AAHy0Yly70lQB_jkM1LfaQatKUXox1qtaLY'
-BOT_USERNAME = '@justTasksBot'
+TOKEN = '-'
+BOT_USERNAME = '-'
 
 
 # Create spam defence
