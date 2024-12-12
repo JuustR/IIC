@@ -15,7 +15,13 @@ class ChooseExcelDialog(QDialog):
 
     def __init__(self, app_instance, parent=None):
         super().__init__(parent)
-        loadUi('assets/chooseDialog.ui', self)
+
+        # Путь к основной директории
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Загрузка ui, путем выхода в основную директорию
+
+        loadUi(os.path.join(current_dir, '..', 'assets', 'chooseDialog.ui'), self)
+        # loadUi('assets/chooseDialog.ui', self)
 
         self.app_instance = app_instance
         self.excel_settings = 'Smth'
@@ -39,18 +45,18 @@ class ChooseExcelDialog(QDialog):
 
     def open_macros_btn(self):
         """Метод для открытия макроса"""
-        dir_path = str(pathlib.Path.cwd())  # директория в которой находимся
-        # dir_path = str(pathlib.Path.home()) # домашняя директоряи
-        file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path + "\\macroses", 'Macros (*txt)')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        dir_path = os.path.join(current_dir, '..', 'macroses')
+        file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path, 'Macros (*txt)')
         if file_dir[0]:
             self.app_instance.data["MacrosName"] = file_dir[0][0]
             self.MacrosLabel.setText(file_dir[0][0])
 
     def open_temp_btn(self):
         """Метод для открытия шаблона"""
-        dir_path = str(pathlib.Path.cwd())  # директория в которой находимся
-        # dir_path = str(pathlib.Path.home()) # домашняя директоряи
-        file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path + "\\templates", 'Excel file (*xltm)')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        dir_path = os.path.join(current_dir, '..', 'templates')
+        file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path, 'Excel file (*xltm)')
         if file_dir[0]:
             self.data["TempName"] = file_dir[0][0]
             self.TempLabel.setText(file_dir[0][0])
@@ -58,17 +64,17 @@ class ChooseExcelDialog(QDialog):
     def onAccepted(self):
         """Метод создающий новый Excel на основе заданных ранее параметров"""
         self.data["FileName"] = self.FileNameLE.text()
-        print(self.data["FileName"])
+        # print(self.data["FileName"])
 
-        script_path = os.path.abspath(__file__)
-        file_path = os.path.dirname(script_path) + "\\Measurements\\" + self.data["FileName"]  # without '.xlsm'
+        script_path = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(script_path, '..', "Measurements", self.data["FileName"])  # without '.xlsm'
 
         if self.data["TempName"] == "Нет шаблона":
-            temp_path = os.path.dirname(script_path) + "\\templates\\Base_temp.xltm"
+            temp_path = os.path.join(script_path, "..", "templates", "Base_temp.xltm")
             workbook = self.app_instance.excel.Workbooks.Open(temp_path)
         else:
+            temp_path = os.path.join(script_path, "templates", self.data["TempName"])
             workbook = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
-            temp_path = self.data["TempName"]
             # workbook.SaveAs(file_path, 52)
 
         # Формат .xlsm будет при 52, а .xlsx при 51
@@ -76,29 +82,26 @@ class ChooseExcelDialog(QDialog):
             try:
                 vbacomponent = workbook.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
                 vbacomponent.CodeModule.AddFromFile(self.data["MacrosName"])
-                print("Макросы успешно добавлены")  # Необязательно
+                self.macros_status = f"с макросом \"{os.path.basename(self.data['MacrosName'])}\""
+
             except:
                 self.app_instance.ConsolePTE.appendPlainText(
                     time.strftime("%H:%M:%S | ", time.localtime()) + "Макросы не добавлены, т.к. ")
                 self.app_instance.ConsolePTE.appendPlainText(
                     time.strftime("%H:%M:%S | ", time.localtime()) + "в Центре управления безопасностью \n(Параметры макросов) необходимо поставить галочку на 'Доверять доступ к объектной модели проектов VBA'")
                 self.data["MacrosName"] = "Нет макроса"
+                self.macros_status = "без макроса"
         else:
-            print("Макросы не добавлены")  # Необязательно
+            self.macros_status = "без макроса"
 
         workbook.SaveAs(file_path, 52)
         self.app_instance.excel.Visible = True
 
-        if self.data["MacrosName"] == "Нет макроса":
-            self.app_instance.ConsolePTE.appendPlainText(
-                time.strftime("%H:%M:%S | ", time.localtime()) + "Создали файл Excel" +
-                " по шаблону \"" + os.path.basename(temp_path) + "\" без макроса\n")
-        else:
-            self.app_instance.ConsolePTE.appendPlainText(
-                time.strftime("%H:%M:%S | ", time.localtime()) + "Создали файл Excel" + " по шаблону \""
-                + os.path.basename(temp_path) + "\" с макросом \"" + os.path.basename(self.data["MacrosName"]) + "\"\n")
+        self.app_instance.ConsolePTE.appendPlainText(
+            time.strftime("%H:%M:%S | ", time.localtime()) +
+            f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}\n")
 
-        # Добавить, если такой-то шаблон, что установки будут такие-то
+        #! Добавить, если такой-то шаблон, то установки будут такие-то
 
 
 

@@ -12,6 +12,8 @@ from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import (QMainWindow, QDialog, QFileDialog, QLineEdit)
 from PyQt6.QtCore import QSettings
 
+from Config.ChooseExcelDialog import ChooseExcelDialog
+
 class App(QMainWindow):
     """GUI основной страницы программы"""
 
@@ -56,14 +58,12 @@ class App(QMainWindow):
         """)
 
         # data - changeable, base_data - unchangeable REMEMBER IT!!!
-        # Вообще выглядит херово, я бы как-то изменил
-        # In use: FileName, TempName, MacrosName
         self.data = {"TempName": "Нет шаблона",
                      "MacrosName": "Нет макроса",
-                     "FileName": "Example"}
+                     "FileName": time.strftime("%d-%m-%Y_Example", time.localtime())}
         self.base_data = {"TempName": "Нет шаблона",
                           "MacrosName": "Нет макроса",
-                          "FileName": "Example"}
+                          "FileName": time.strftime("%d-%m-%Y_Example", time.localtime())}
 
         # Flag for start button
         self.working_flag = False
@@ -141,7 +141,7 @@ class App(QMainWindow):
             time.strftime("%H:%M:%S | ", time.localtime()) + 'Сохранили настройки программы')
 
         #! Добавить сравнение изменений и вывод их в Excel, например
-        #! 
+        #!
 
     def load_tab1_settings(self):
         """Загружает сохранённые значения виджетов пока только для Seebeck+R"""
