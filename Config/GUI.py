@@ -1,10 +1,13 @@
 """
+Окно основного графического интерфейса и его настройки
 
+Tasks:
+1) GUI При изменении NPLC, R_UpDown и т.д. добавить привязку к соответсв кнопкам
+2) Обновить ui
 """
 
 import os
 import win32com.client as win32
-import pathlib
 import time
 import json
 
