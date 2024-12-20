@@ -10,6 +10,7 @@ import os
 import win32com.client as win32
 import time
 import json
+import pyvisa
 
 from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import (QMainWindow, QDialog, QFileDialog, QLineEdit)
@@ -22,9 +23,13 @@ class App(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Относительно долго грузится, можно разделить на 2 потока и добавить анимацию включения программы
-        self.excel = win32.Dispatch('Excel.Application')  # Создаем COM объект
-        self.excel.Visible = False  # Excel invisible
+
+        try:
+            # Относительно долго грузится, можно разделить на 2 потока и добавить анимацию включения программы
+            self.excel = win32.Dispatch('Excel.Application')  # Создаем COM объект
+            self.excel.Visible = False  # Excel invisible
+        except:
+            print("Очистите gen_py\nМожно это сделать запустив программу gen_cache_clear.py")
 
         # Путь к основной директории
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -37,14 +42,14 @@ class App(QMainWindow):
         self.settings = QSettings("lab425", "IIC")
 
         # Подключаем основные кнопки к соответсвующим функциям
-        self.ChooseButton.clicked.connect(self.onChooseExcelClicked)
-        self.SettingsButton.clicked.connect(self.onSettingsClicked)
-        self.CreateButton.clicked.connect(self.onCreateClicked)
-        self.StartLineButton.clicked.connect(self.onStartLineClicked)
-        self.StartButton.clicked.connect(self.onStartClicked)
+        self.ChooseButton.clicked.connect(self.on_choose_excel_clicked)
+        self.InstrumentsButton.clicked.connect(self.on_instruments_clicked)
+        self.CreateButton.clicked.connect(self.on_create_clicked)
+        self.StartLineButton.clicked.connect(self.on_start_line_clicked)
+        self.StartButton.clicked.connect(self.on_start_clicked)
 
         # Подключаем кнопки меню настроек
-        self.PB_save_settings.clicked.connect(self.saveSettings)
+        self.PB_save_settings.clicked.connect(self.save_settings)
 
         # Time and console start settings
         formatted_time = time.strftime("%d-%m-%Y %H:%M:%S", time.localtime())
@@ -77,21 +82,21 @@ class App(QMainWindow):
 
         self.show()
 
-    def onSettingsClicked(self):
-        """Открывает настройки эксперимента"""
+    def on_instruments_clicked(self):
+        """Подключается ко всем доступным приборам, которые обнаружит"""
         pass
 
-    def onCreateClicked(self):
+    def on_create_clicked(self):
         """Создаёт шаблон эксперимента"""
         self.ConsolePTE.appendPlainText(
             time.strftime("%H:%M:%S | ", time.localtime()) + 'НЕДОСТУПНО! Находится в разработке \n')
         pass
 
-    def onStartLineClicked(self):
+    def on_start_line_clicked(self):
         """Задаёт начало строки, по дефолту выставляет начало строки на 11 (реализовать по созданию Excel)"""
         pass
 
-    def onStartClicked(self):
+    def on_start_clicked(self):
         """Запускает эксперимент"""
         if self.working_flag:
             self.working_flag = False
@@ -102,14 +107,14 @@ class App(QMainWindow):
 
         # self.start_fuct()
 
-    def onChooseExcelClicked(self):
+    def on_choose_excel_clicked(self):
         """Вызов диалога с созданием нового Excel"""
         self.ConsolePTE.appendPlainText(
             time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали создание нового Excel')
         dlg = ChooseExcelDialog(self)
         dlg.exec()
 
-    def saveSettings(self):
+    def save_settings(self):
         """По кнопке сохраняет настройки программы для Seebeck+R"""
         self.settings.setValue("comboBox_scan", self.comboBox_scan.currentText())
         self.settings.setValue("comboBox_power", self.comboBox_power.currentText())
@@ -138,6 +143,7 @@ class App(QMainWindow):
         self.settings.setValue("DelayR", self.DelayR.text())
         self.settings.setValue("NR_Up", self.NR_Up.text())
         self.settings.setValue("NR_UpDown", self.NR_UpDown.text())
+        self.settings.setValue("IP_Rigol", self.IP_Rigol.text())
 
         #Добавление текста в консоль
         self.ConsolePTE.appendPlainText(
@@ -175,3 +181,4 @@ class App(QMainWindow):
         self.DelayR.setText(self.settings.value("DelayR", ""))
         self.NR_Up.setText(self.settings.value("NR_Up", ""))
         self.NR_UpDown.setText(self.settings.value("NR_UpDown", ""))
+        self.IP_Rigol.setText(self.settings.value("IP_Rigol", ""))

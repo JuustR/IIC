@@ -34,9 +34,9 @@
     </property>
     <layout class="QVBoxLayout" name="MainVL">
      <item>
-      <widget class="QPushButton" name="SettingsButton">
+      <widget class="QPushButton" name="InstrumentsButton">
        <property name="text">
-        <string>Настройки</string>
+        <string>Подключиться к приборам</string>
        </property>
       </widget>
      </item>
@@ -183,7 +183,7 @@
               <item>
                <widget class="QLabel" name="label_7">
                 <property name="text">
-                 <string>Сканер:</string>
+                 <string> Сканер:</string>
                 </property>
                </widget>
               </item>
@@ -199,6 +199,20 @@
               </item>
               <item>
                <widget class="QComboBox" name="comboBox_power"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QLabel" name="label_36">
+                <property name="text">
+                 <string> ip для Rigol</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="IP_Rigol"/>
               </item>
              </layout>
             </item>

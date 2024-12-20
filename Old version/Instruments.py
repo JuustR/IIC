@@ -5,14 +5,14 @@
 import pyvisa
 
 class InstrumentConnection:
-    def __init__(self, w_root):
+    def __init__(self, app_instance):
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
-        self.w_root = w_root
+        self.app_instance = app_instance
         self.keithley = None
         self.Keithley_allowed = True
-        # self.Keithley_allowed = self.w_root.Keithley_allowed
+        # self.Keithley_allowed = self.app_instance.Keithley_allowed
         self.BP_allowed = False
-        # self.BP_allowed = self.w_root.BP_allowed
+        # self.BP_allowed = self.app_instance.BP_allowed
         self.E36312A = None
         self.E36312A_allowed = False
         self.AKIP = None
@@ -35,19 +35,19 @@ class InstrumentConnection:
 
     def Keithley_connection(self):
         try:
-            self.keithley = self.rm.open_resource('GPIB0::' + str(self.w_root.GPIB.text()) + '::INSTR')
+            self.keithley = self.rm.open_resource('GPIB0::' + str(self.app_instance.GPIB.text()) + '::INSTR')
             self.keithley.write("*rst")
-            self.w_root.statusBar.showMessage('Keithley подключен успешно')
+            self.app_instance.statusBar.showMessage('Keithley подключен успешно')
         except Exception as e:
-            self.w_root.statusBar.showMessage(f'Ошибка подключения Keithley: {e}')
+            self.app_instance.statusBar.showMessage(f'Ошибка подключения Keithley: {e}')
 
     def E36312A_connection(self):
 
         try:
-            self.E36312A = self.rm.open_resource('TCPIP0::' + str(self.w_root.IP_BP.text()) + '::inst0::INSTR')
-            self.w_root.statusBar.showMessage('E36312A подключен успешно')
+            self.E36312A = self.rm.open_resource('TCPIP0::' + str(self.app_instance.IP_BP.text()) + '::inst0::INSTR')
+            self.app_instance.statusBar.showMessage('E36312A подключен успешно')
         except Exception as e:
-            self.w_root.statusBar.showMessage(f'Ошибка подключения E36312A: {e}')
+            self.app_instance.statusBar.showMessage(f'Ошибка подключения E36312A: {e}')
 
     def AKIP_connection(self):
         # Проверка USB ресурсов
@@ -63,12 +63,12 @@ class InstrumentConnection:
 
                 if self.send_IDN == 'ITECH Ltd., IT6333A, 800572020767710004, 1.11-1.08\n':
                     self.AKIP.write("*rst")
-                    self.w_root.statusBar.showMessage('AKIP подключен успешно')
+                    self.app_instance.statusBar.showMessage('AKIP подключен успешно')
                     break
 
                 n += 1
         except Exception as e:
-            self.w_root.statusBar.showMessage(f'AKIP не подключен(или не обнаружается) по USB: {e}')
+            self.app_instance.statusBar.showMessage(f'AKIP не подключен(или не обнаружается) по USB: {e}')
 
 
     def Instr_check(self):
