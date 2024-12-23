@@ -28,17 +28,40 @@
      <rect>
       <x>399</x>
       <y>9</y>
-      <width>261</width>
+      <width>271</width>
       <height>211</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="MainVL">
      <item>
-      <widget class="QPushButton" name="InstrumentsButton">
-       <property name="text">
-        <string>Подключиться к приборам</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QPushButton" name="InstrumentsButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Подключиться к приборам</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="show_errorsCB">
+         <property name="layoutDirection">
+          <enum>Qt::RightToLeft</enum>
+         </property>
+         <property name="text">
+          <string>Show errors?</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
       <layout class="QHBoxLayout" name="TemplateHL">
@@ -762,6 +785,48 @@
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                 <widget class="QLabel" name="label_39">
+                  <property name="text">
+                   <string>Range Термопар</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_37">
+                  <property name="text">
+                   <string>Range Между ними</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_38">
+                  <property name="text">
+                   <string>Range Сопротивления</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="QLineEdit" name="rangeCh12"/>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="rangeCh34"/>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="rangeCh56"/>
+                </item>
+               </layout>
+              </item>
+             </layout>
             </item>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_12">

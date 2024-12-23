@@ -32,9 +32,9 @@ class Experiment:
         rm = visa.ResourceManager
         self.keithley = rm.open_resource('GPIB0::16::INSTR')
         self.keithley.write('*rst')
-        # self.keithley.write('*rst; status:preset; *cls') # Полная очистка параметров и бит регистра
+        # self.keithley2001.write('*rst; status:preset; *cls') # Полная очистка параметров и бит регистра
 
-        # Test keithley
+        # Test keithley2001
         interval_in_ms = 500
         number_of_readings = 10
         self.keithley.write(
@@ -60,10 +60,10 @@ class Experiment:
 
         # Вывод результатов можно реализовать как:
 
-        # voltages = self.keithley.query_ascii_values("trace:data?") # Список значений
+        # voltages = self.keithley2001.query_ascii_values("trace:data?") # Список значений
         # print("Average voltage: ", sum(voltages) / len(voltages)) # вывод среднего значения
 
-        # result = self.keithley.query(":fetch?") # Нужно тестить, не до конца понимаю как будет усредняться и будет ли результат в 10чном виде
+        # result = self.keithley2001.query(":fetch?") # Нужно тестить, не до конца понимаю как будет усредняться и будет ли результат в 10чном виде
         # print("Average voltage: ", result)
 
     def instr_init(self):

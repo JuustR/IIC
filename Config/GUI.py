@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (QMainWindow, QDialog, QFileDialog, QLineEdit)
 from PyQt6.QtCore import QSettings
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
+from Config.Instruments import InstrumentConnection
 
 class App(QMainWindow):
     """GUI основной страницы программы"""
@@ -28,8 +29,8 @@ class App(QMainWindow):
             # Относительно долго грузится, можно разделить на 2 потока и добавить анимацию включения программы
             self.excel = win32.Dispatch('Excel.Application')  # Создаем COM объект
             self.excel.Visible = False  # Excel invisible
-        except:
-            print("Очистите gen_py\nМожно это сделать запустив программу gen_cache_clear.py")
+        except Exception as e:
+            print(f"Очистите gen_py\nМожно это сделать запустив программу gen_cache_clear.py\n{e}")
 
         # Путь к основной директории
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -77,6 +78,8 @@ class App(QMainWindow):
         self.working_flag = False
         self.data_reset_flag = False
 
+        self.inst_list = None
+
         # Загрузка настроек для Seebeck+R
         self.load_tab1_settings()
 
@@ -84,7 +87,13 @@ class App(QMainWindow):
 
     def on_instruments_clicked(self):
         """Подключается ко всем доступным приборам, которые обнаружит"""
-        pass
+        #! Добавить ресет подключенных приборов
+        ic = InstrumentConnection(self)
+        self.inst_list = ic.connect_all()
+        connected_instruments = ', '.join(str(i) for i in self.inst_list)
+        self.ConsolePTE.appendPlainText(
+            time.strftime("%H:%M:%S | ", time.localtime()) +
+            'Подключенные приборы: ' + connected_instruments + "\n")
 
     def on_create_clicked(self):
         """Создаёт шаблон эксперимента"""
@@ -110,7 +119,7 @@ class App(QMainWindow):
     def on_choose_excel_clicked(self):
         """Вызов диалога с созданием нового Excel"""
         self.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали создание нового Excel')
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали создание нового Excel\n')
         dlg = ChooseExcelDialog(self)
         dlg.exec()
 
@@ -127,6 +136,9 @@ class App(QMainWindow):
             self.settings.setValue(f"Ch{i}", self.findChild(QLineEdit, f"Ch{i}").text())
             self.settings.setValue(f"DelayCh{i}", self.findChild(QLineEdit, f"DelayCh{i}").text())
 
+        self.settings.setValue("rangeCh12", self.rangeCh12.text())
+        self.settings.setValue("rangeCh34", self.rangeCh34.text())
+        self.settings.setValue("rangeCh56", self.rangeCh56.text())
         self.settings.setValue("ChTerm", self.ChTerm.text())
         self.settings.setValue("ChTerm2", self.ChTerm2.text())
         self.settings.setValue("ChIP1", self.ChIP1.text())
@@ -147,7 +159,7 @@ class App(QMainWindow):
 
         #Добавление текста в консоль
         self.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Сохранили настройки программы')
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Сохранили настройки программы\n')
 
         #! Добавить сравнение изменений и вывод их в Excel, например
         #!
@@ -165,6 +177,9 @@ class App(QMainWindow):
             self.findChild(QLineEdit, f"Ch{i}").setText(self.settings.value(f"Ch{i}", ""))
             self.findChild(QLineEdit, f"DelayCh{i}").setText(self.settings.value(f"DelayCh{i}", ""))
 
+        self.rangeCh12.setText(self.settings.value("rangeCh12", ""))
+        self.rangeCh34.setText(self.settings.value("rangeCh34", ""))
+        self.rangeCh56.setText(self.settings.value("rangeCh56", ""))
         self.ChTerm.setText(self.settings.value("ChTerm", ""))
         self.ChTerm2.setText(self.settings.value("ChTerm2", ""))
         self.ChIP1.setText(self.settings.value("ChIP1", ""))
