@@ -3,7 +3,7 @@
 
 Tasks:
 1) GUI При изменении NPLC, R_UpDown и т.д. добавить привязку к соответсв кнопкам
-2) Обновить ui
+2) Обновить gui в соответствии с ui  !!!!!!!
 """
 
 import os
@@ -18,6 +18,7 @@ from PyQt6.QtCore import QSettings
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection
+from Config.Keithley2001 import Keithley2001
 
 class App(QMainWindow):
     """GUI основной страницы программы"""
@@ -107,12 +108,42 @@ class App(QMainWindow):
 
     def on_start_clicked(self):
         """Запускает эксперимент"""
-        if self.working_flag:
-            self.working_flag = False
-            self.StartButton.setText('Старт')
-        else:
-            self.working_flag = True
-            self.StartButton.setText('Стоп')
+        try:
+            if self.working_flag:
+                self.working_flag = False
+                self.StartButton.setText('Старт')
+
+            #! Добавить начало измерений в консоль
+            #! Номер строки, и время цифрами добавить
+            #! Изменить ренджи для каждой
+            #!! Сделать вывод в Excel и сохранение в памяти python для кэша
+
+            # Запись значений с прибора FRES - 6xDCV - FRES
+            instr = Keithley2001(self)
+            instr.set_fres_parameters(float(self.NPLC.text()), int(self.ChTerm.text()), 0, 0)
+            fres_res_1 = instr.measure(1)
+
+            dcv_results = {}
+            for i in range(1, 7):
+                ch_line_edit = self.findChild(QLineEdit, f"Ch{i}") # Поиск элемента с именем Ch{i}
+
+                instr.set_dcv_params(float(self.NPLC.text()), int(ch_line_edit.text()), range=1, delay=1)  # Первая задержка
+                dcv_results[f"Ch{i}"] = instr.measure(meas_count=1)  # Первое измерение
+
+                if int(self.NRead.text()) > 1:
+                    instr.set_dcv_params(float(self.NPLC.text()), int(ch_line_edit.text()), range=1, delay=0)  # Остальные измерения
+                    dcv_results[f"Ch{i}"].extend(instr.measure(meas_count=(int(self.NRead.text()) - 1)))  # 4 оставшихся измерения
+
+            for channel, results in dcv_results.items():
+                print(f"DCV on channel {channel}: {results}")
+
+            else:
+                self.working_flag = True
+                self.StartButton.setText('Стоп')
+
+        except Exception as e:
+            print(e)
+
 
         # self.start_fuct()
 

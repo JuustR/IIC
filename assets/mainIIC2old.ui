@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1301</width>
+    <width>1310</width>
     <height>600</height>
    </rect>
   </property>
@@ -52,7 +52,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="show_errors_cb">
+        <widget class="QCheckBox" name="show_errorsCB">
          <property name="layoutDirection">
           <enum>Qt::RightToLeft</enum>
          </property>
@@ -187,8 +187,8 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>7</y>
-           <width>601</width>
+           <y>10</y>
+           <width>591</width>
            <height>481</height>
           </rect>
          </property>
@@ -197,14 +197,10 @@
            <enum>QLayout::SetDefaultConstraint</enum>
           </property>
           <item>
-           <widget class="Line" name="line">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetMinimumSize</enum>
             </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_9">
               <item>
@@ -215,17 +211,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="combobox_scan"/>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_36">
-                <property name="text">
-                 <string> ip для Rigol</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="ip_rigol"/>
+               <widget class="QComboBox" name="comboBox_scan"/>
               </item>
               <item>
                <widget class="QLabel" name="label_8">
@@ -235,7 +221,186 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="combobox_power"/>
+               <widget class="QComboBox" name="comboBox_power"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QLabel" name="label_36">
+                <property name="text">
+                 <string> ip для Rigol</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="IP_Rigol"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="Line" name="line_10">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <item>
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>NPLC</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="NPLC">
+                <property name="text">
+                 <string>2</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>Time, мс</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="TimeNPLC">
+                <property name="text">
+                 <string>40</string>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0">
+              <item>
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>Каналы термометра</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="ChTerm">
+                <property name="text">
+                 <string>7</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="ChTerm2">
+                <property name="text">
+                 <string>17</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="Line" name="line_12">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_20" stretch="0,0">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_9">
+                <item>
+                 <widget class="QLabel" name="label_30">
+                  <property name="text">
+                   <string>Настройки ИП</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_10">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_26">
+                  <item>
+                   <widget class="QLabel" name="label_31">
+                    <property name="text">
+                     <string>Ch(S)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="ChIP1">
+                    <property name="text">
+                     <string>1</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_28">
+                  <item>
+                   <widget class="QLabel" name="label_33">
+                    <property name="text">
+                     <string>U(V)  </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="U_IP1">
+                    <property name="text">
+                     <string>1</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_27">
+                  <item>
+                   <widget class="QLabel" name="label_32">
+                    <property name="text">
+                     <string>Ch(R)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="ChIP2">
+                    <property name="text">
+                     <string>3</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_29">
+                  <item>
+                   <widget class="QLabel" name="label_34">
+                    <property name="text">
+                     <string>U(V)  </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="U_IP2">
+                    <property name="text">
+                     <string>1</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
               </item>
              </layout>
             </item>
@@ -247,49 +412,105 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_11">
+             <layout class="QHBoxLayout" name="horizontalLayout_21" stretch="0,0">
               <item>
-               <layout class="QVBoxLayout" name="verticalLayout_6">
+               <layout class="QVBoxLayout" name="verticalLayout_12">
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_4">
+                 <widget class="QRadioButton" name="RB_oldRead">
+                  <property name="text">
+                   <string>Старые Read'ы</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="RB_newRead">
+                  <property name="text">
+                   <string>Новые Read'ы</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_11">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
                   <item>
-                   <widget class="QLabel" name="label_4">
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>46</height>
-                     </size>
-                    </property>
+                   <widget class="QLabel" name="label_35">
                     <property name="text">
-                     <string>  Термопары  </string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignCenter</set>
+                     <string>Кол-во</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="Line" name="line_15">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_53">
-                    <property name="text">
-                     <string>Кол-во read</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="n_read_ch12">
+                   <widget class="QLineEdit" name="NRead">
                     <property name="text">
                      <string>2</string>
                     </property>
                    </widget>
                   </item>
                  </layout>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="CB_average">
+                  <property name="text">
+                   <string>Усреднение</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_4"/>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="Line" name="line">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <widget class="QLabel" name="label_4">
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>46</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Термопары</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="Line" name="line_3">
@@ -299,45 +520,20 @@
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_5">
-                  <item>
-                   <widget class="QLabel" name="label_19">
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>46</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>  Между ними</string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignCenter</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="Line" name="line_14">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_54">
-                    <property name="text">
-                     <string>Кол-во read</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="n_read_ch34">
-                    <property name="text">
-                     <string>2</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
+                 <widget class="QLabel" name="label_19">
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>46</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Между ними</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="Line" name="line_6">
@@ -347,45 +543,20 @@
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_6">
-                  <item>
-                   <widget class="QLabel" name="label_20">
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>46</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>  Resistance   </string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignCenter</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="Line" name="line_13">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_55">
-                    <property name="text">
-                     <string>Кол-во read</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="n_read_ch56">
-                    <property name="text">
-                     <string>2</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
+                 <widget class="QLabel" name="label_20">
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>46</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Сопротивление</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -408,7 +579,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ch1">
+                   <widget class="QLineEdit" name="Ch1">
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -422,33 +593,9 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="delay_ch1">
+                   <widget class="QLineEdit" name="DelayCh1">
                     <property name="text">
                      <string>0</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_39">
-                    <property name="text">
-                     <string>Range</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="range_ch1"/>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_9">
-                    <property name="text">
-                     <string>NPLC</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="nplc_ch1">
-                    <property name="text">
-                     <string>2</string>
                     </property>
                    </widget>
                   </item>
@@ -464,7 +611,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ch2">
+                   <widget class="QLineEdit" name="Ch2">
                     <property name="text">
                      <string>2</string>
                     </property>
@@ -478,33 +625,9 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="delay_ch2">
+                   <widget class="QLineEdit" name="DelayCh2">
                     <property name="text">
                      <string>0</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_40">
-                    <property name="text">
-                     <string>Range</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="range_ch2"/>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_10">
-                    <property name="text">
-                     <string>NPLC</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="nplc_ch2">
-                    <property name="text">
-                     <string>2</string>
                     </property>
                    </widget>
                   </item>
@@ -527,7 +650,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ch3">
+                   <widget class="QLineEdit" name="Ch3">
                     <property name="text">
                      <string>3</string>
                     </property>
@@ -541,33 +664,9 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="delay_ch3">
+                   <widget class="QLineEdit" name="DelayCh3">
                     <property name="text">
                      <string>0</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_41">
-                    <property name="text">
-                     <string>Range</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="range_ch3"/>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_30">
-                    <property name="text">
-                     <string>NPLC</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="nplc_ch3">
-                    <property name="text">
-                     <string>2</string>
                     </property>
                    </widget>
                   </item>
@@ -583,7 +682,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ch4">
+                   <widget class="QLineEdit" name="Ch4">
                     <property name="text">
                      <string>4</string>
                     </property>
@@ -597,33 +696,9 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="delay_ch4">
+                   <widget class="QLineEdit" name="DelayCh4">
                     <property name="text">
                      <string>0</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_42">
-                    <property name="text">
-                     <string>Range</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="range_ch4"/>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_31">
-                    <property name="text">
-                     <string>NPLC</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="nplc_ch4">
-                    <property name="text">
-                     <string>2</string>
                     </property>
                    </widget>
                   </item>
@@ -646,7 +721,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ch5">
+                   <widget class="QLineEdit" name="Ch5">
                     <property name="text">
                      <string>5</string>
                     </property>
@@ -660,33 +735,9 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="delay_ch5">
+                   <widget class="QLineEdit" name="DelayCh5">
                     <property name="text">
                      <string>0</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_43">
-                    <property name="text">
-                     <string>Range</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="range_ch5"/>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_32">
-                    <property name="text">
-                     <string>NPLC</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="nplc_ch5">
-                    <property name="text">
-                     <string>2</string>
                     </property>
                    </widget>
                   </item>
@@ -702,7 +753,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ch6">
+                   <widget class="QLineEdit" name="Ch6">
                     <property name="text">
                      <string>6</string>
                     </property>
@@ -716,33 +767,9 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="delay_ch6">
+                   <widget class="QLineEdit" name="DelayCh6">
                     <property name="text">
                      <string>0</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_44">
-                    <property name="text">
-                     <string>Range</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="range_ch6"/>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_33">
-                    <property name="text">
-                     <string>NPLC</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="nplc_ch6">
-                    <property name="text">
-                     <string>2</string>
                     </property>
                    </widget>
                   </item>
@@ -760,88 +787,46 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout">
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
               <item>
-               <widget class="QLabel" name="label_2">
-                <property name="text">
-                 <string>Термометр</string>
-                </property>
-               </widget>
+               <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                 <widget class="QLabel" name="label_39">
+                  <property name="text">
+                   <string>Range Термопар</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_37">
+                  <property name="text">
+                   <string>Range Между ними</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_38">
+                  <property name="text">
+                   <string>Range Сопротивления</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
               <item>
-               <widget class="Line" name="line_10">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_34">
-                <property name="text">
-                 <string>Chs</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="ch_term1">
-                <property name="text">
-                 <string>7</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="ch_term2">
-                <property name="text">
-                 <string>17</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_37">
-                <property name="text">
-                 <string>Delay, сек</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="delay_term">
-                <property name="text">
-                 <string>0</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_45">
-                <property name="text">
-                 <string>Range</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="range_term"/>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_35">
-                <property name="text">
-                 <string>NPLC</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="nplc_term">
-                <property name="text">
-                 <string>10</string>
-                </property>
-               </widget>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="QLineEdit" name="rangeCh12"/>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="rangeCh34"/>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="rangeCh56"/>
+                </item>
+               </layout>
               </item>
              </layout>
-            </item>
-            <item>
-             <widget class="Line" name="line_12">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
             </item>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -853,12 +838,16 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="n_cycles">
+               <widget class="QLineEdit" name="Ncycles">
                 <property name="text">
                  <string>1</string>
                 </property>
                </widget>
               </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_24">
               <item>
                <widget class="QLabel" name="label_26">
                 <property name="text">
@@ -867,7 +856,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="n_heat">
+               <widget class="QLineEdit" name="Nheat">
                 <property name="text">
                  <string>4</string>
                 </property>
@@ -881,7 +870,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="n_cool">
+               <widget class="QLineEdit" name="Ncool">
                 <property name="text">
                  <string>4</string>
                 </property>
@@ -890,73 +879,16 @@
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_13">
-              <item>
-               <widget class="QCheckBox" name="rele_cb">
-                <property name="text">
-                 <string>Релюшки на R</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="Line" name="line_7">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_8">
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_23">
-                  <item>
-                   <widget class="QLabel" name="label_6">
-                    <property name="text">
-                     <string>Кол-во измерений R↑↓</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="n_r_updown">
-                    <property name="enabled">
-                     <bool>true</bool>
-                    </property>
-                    <property name="text">
-                     <string>2</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_25">
-                    <property name="text">
-                     <string>Кол-во измерений R↑  </string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="n_r_up">
-                    <property name="text">
-                     <string>4</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </item>
-            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_25">
               <item>
                <widget class="QLabel" name="label_28">
                 <property name="text">
-                 <string>Пауза после S, сек</string>
+                 <string>Delay после S, сек</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="pause_s">
+               <widget class="QLineEdit" name="DelayS">
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -965,12 +897,12 @@
               <item>
                <widget class="QLabel" name="label_29">
                 <property name="text">
-                 <string>Пауза после R, сек</string>
+                 <string>Delay после R, сек</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="pause_r">
+               <widget class="QLineEdit" name="DelayR">
                 <property name="text">
                  <string>5</string>
                 </property>
@@ -986,79 +918,61 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_20" stretch="0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_13">
               <item>
-               <layout class="QVBoxLayout" name="verticalLayout_9">
+               <layout class="QVBoxLayout" name="verticalLayout_7">
                 <item>
-                 <widget class="QLabel" name="label_38">
+                 <widget class="QCheckBox" name="CB_rele">
                   <property name="text">
-                   <string>Настройки ИП</string>
+                   <string>Релюшки на R</string>
                   </property>
                  </widget>
                 </item>
                </layout>
               </item>
               <item>
-               <layout class="QVBoxLayout" name="verticalLayout_10">
+               <widget class="Line" name="line_7">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_8">
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_26">
+                 <layout class="QHBoxLayout" name="horizontalLayout_23">
                   <item>
-                   <widget class="QLabel" name="label_46">
+                   <widget class="QLabel" name="label_6">
                     <property name="text">
-                     <string>Ch(S)</string>
+                     <string>R↑↓</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ChIP1">
-                    <property name="text">
-                     <string>1</string>
+                   <widget class="QLineEdit" name="NR_UpDown">
+                    <property name="enabled">
+                     <bool>false</bool>
                     </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_48">
                     <property name="text">
-                     <string>Ch(R)</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="ChIP2">
-                    <property name="text">
-                     <string>3</string>
+                     <string>2</string>
                     </property>
                    </widget>
                   </item>
                  </layout>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_28">
+                 <layout class="QHBoxLayout" name="horizontalLayout_22">
                   <item>
-                   <widget class="QLabel" name="label_47">
+                   <widget class="QLabel" name="label_25">
                     <property name="text">
-                     <string>U, V  </string>
+                     <string>R↑  </string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="U_IP1">
+                   <widget class="QLineEdit" name="NR_Up">
                     <property name="text">
-                     <string>1</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_49">
-                    <property name="text">
-                     <string>U, V  </string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="U_IP2">
-                    <property name="text">
-                     <string>1</string>
+                     <string>4</string>
                     </property>
                    </widget>
                   </item>
@@ -1090,37 +1004,11 @@
         <attribute name="title">
          <string>Seebeck</string>
         </attribute>
-        <widget class="QLabel" name="label_50">
-         <property name="geometry">
-          <rect>
-           <x>160</x>
-           <y>120</y>
-           <width>221</width>
-           <height>111</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>В разработке</string>
-         </property>
-        </widget>
        </widget>
        <widget class="QWidget" name="tab_3">
         <attribute name="title">
          <string>R</string>
         </attribute>
-        <widget class="QLabel" name="label_51">
-         <property name="geometry">
-          <rect>
-           <x>190</x>
-           <y>100</y>
-           <width>221</width>
-           <height>111</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>В разработке</string>
-         </property>
-        </widget>
        </widget>
        <widget class="QWidget" name="tab_4">
         <attribute name="title">
@@ -1144,19 +1032,6 @@
         <attribute name="title">
          <string>Читалка</string>
         </attribute>
-        <widget class="QLabel" name="label_52">
-         <property name="geometry">
-          <rect>
-           <x>170</x>
-           <y>80</y>
-           <width>221</width>
-           <height>111</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>В разработке</string>
-         </property>
-        </widget>
        </widget>
       </widget>
      </item>
@@ -1177,7 +1052,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="save_settings_pb">
+        <widget class="QPushButton" name="PB_save_settings">
          <property name="text">
           <string>Сохранить параметры</string>
          </property>

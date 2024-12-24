@@ -100,6 +100,65 @@
         :AUTO?
     :OCOMpensated <b>
     :OCOMpensated?
+
+    !Несколько измерений вариант 1
+    :SENS:FUNC 'VOLT:DC'       // Установить функцию измерения DC напряжения
+    :SENS:VOLT:NPLC 10         // Задать NPLC
+    :TRIG:COUN 10              // Количество измерений = 10
+    :TRIG:DEL 0.5              // Задержка перед первым измерением = 0.5 сек
+    :TRIG:SOUR TIM             // Использовать таймер для триггера
+    :TRIG:TIM 0                // Задержка между последующими измерениями = 0 сек
+    :INIT                      // Запустить измерения
+    :FETCh?                    // Считать результаты
+
+    !Несколько измерений вариант 2
+    :SENS:FUNC 'VOLT:DC'       // Установить функцию измерения DC напряжения
+    :SENS:VOLT:NPLC 10         // Задать NPLC
+
+    // Первое измерение с задержкой
+    :TRIG:DEL 0.5              // Установить задержку перед первым измерением
+    :INIT                      // Запустить измерение
+    :FETCh?                    // Считать результат
+
+    // Последующие измерения без задержки
+    :TRIG:DEL 0                // Установить задержку = 0
+    :INIT                      // Запустить второе измерение
+    :FETCh?                    // Считать результат
+
+    !Вариант для наших измерений
+    // Настройка измерений FRES
+    :SENS:FUNC 'FRES'            // Установить функцию FRES
+    :SENS:FRES:NPLC 10           // NPLC для FRES
+    :SENS:FRES:RANG 1E3          // Диапазон для FRES
+    :TRIG:DEL 0.5                // Задержка перед первым измерением
+    :TRIG:SOUR IMM               // Автоматический запуск измерения
+    :TRIG:COUN 1                 // Одно измерение на триггер
+    :INIT                        // Запустить FRES
+    :FETCh?                      // Считать результат
+
+    // Настройка измерений DCV
+    :SENS:FUNC 'VOLT:DC'         // Установить функцию DCV
+    :SENS:VOLT:NPLC 1            // NPLC для DCV
+    :SENS:VOLT:RANG 10           // Диапазон для DCV
+
+    // Измерение на канале 101
+    :ROUT:CLOS (@101)            // Выбрать канал 101
+    :TRIG:DEL 0.2                // Задержка перед первым измерением
+    :INIT                        // Запустить DCV
+    :FETCh?                      // Считать результат
+
+    // Измерение на канале 102
+    :ROUT:CLOS (@102)            // Выбрать канал 102
+    :TRIG:DEL 0.2                // Задержка перед первым измерением
+    :INIT                        // Запустить DCV
+    :FETCh?                      // Считать результат
+
+    // Повтор FRES
+    :SENS:FUNC 'FRES'            // Вернуться к FRES
+    :TRIG:DEL 0.5                // Задержка перед первым измерением
+    :INIT                        // Запустить FRES
+    :FETCh?                      // Считать результат
+
 """
 
 import pyvisa
@@ -111,88 +170,73 @@ class Keithley2001:
         self.rm = pyvisa.ResourceManager()
         self.instrument = self.rm.open_resource(self.instr["keithley2001"])
 
-        # Установка параметров при инициализации
-        self.set_nplc(app_instance.get("nplc", 1))
-        self.set_delay(app_instance.get("delay", 0))
-        self.set_readings(app_instance.get("readings", 1))
-        self.set_channel(app_instance.get("channel", 1))
+        #Задаём параметры #! мб можно убрать
+        self.nplc = self.app_instance.NPLC.text()
+        self.range12 = self.app_instance.rangeCh12.text() # Если 0, то авто
+        self.range34 = self.app_instance.rangeCh34.text()
+        self.range56 = self.app_instance.rangeCh56.text()
+        self.ch1 = self.app_instance.Ch1.text()
+        self.ch2 = self.app_instance.Ch2.text()
+        self.ch3 = self.app_instance.Ch3.text()
+        self.ch4 = self.app_instance.Ch4.text()
+        self.ch5 = self.app_instance.Ch5.text()
+        self.ch6 = self.app_instance.Ch6.text()
+        self.chterm = self.app_instance.ChTerm.text()
 
     def reset(self):
-        """Сброс настроек прибора."""
+        """Сброс настроек прибора"""
         self.instrument.write("*RST")
 
-    def set_dcv(self):
-        """Настройка прибора на измерение постоянного напряжения (DCV)."""
-        self.instrument.write("FUNC 'VOLT:DC'")
+    def set_dcv_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
+        """Настройка прибора на измерение постоянного напряжения"""
+        self.instrument.write(":SENS:FUNC 'VOLT:DC'")
+        self.instrument.write(f":SENS:VOLT:NPLC {nplc}")
+        if range == 0:
+            self.instrument.write(f":SENS:VOLT:RANG:AUTO ON")
+        else:
+            self.instrument.write(f":SENS:VOLT:RANG {range}")
+        if ch < 10:
+            self.instrument.write(f":ROUT:CLOS (@10{ch})")
+        else:
+            self.instrument.write(f":ROUT:CLOS (@1{ch})")
+        self.instrument.write(f":TRIG:DEL {delay}")
 
-    def set_fres(self):
-        """Настройка прибора на измерение 4-проводного сопротивления (FRES)."""
-        self.instrument.write("FUNC 'FRES'")
+    def set_fres_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
+        """Настройка прибора на измерение 4-проводного сопротивления"""
+        self.instrument.write(":SENS:FUNC 'FRES'")
+        self.instrument.write(f":SENS:VOLT:NPLC {nplc}")
+        if range == 0:
+            self.instrument.write(f":SENS:VOLT:RANG:AUTO ON")
+        else:
+            self.instrument.write(f":SENS:VOLT:RANG {range}")
+        if ch < 10:
+            self.instrument.write(f":ROUT:CLOS (@10{ch})")
+        else:
+            self.instrument.write(f":ROUT:CLOS (@1{ch})")
+        self.instrument.write(f":TRIG:DEL {delay}")
 
-    def set_res(self):
-        """Настройка прибора на измерение 2-проводного сопротивления (RES)."""
-        self.instrument.write("FUNC 'RES'")
-
-    def set_nplc(self, nplc):
-        """Установка параметра NPLC (число периодов линий питания).
-
-        Args:
-            nplc (float): Значение NPLC.
-        """
-        self.instrument.write(f"VOLT:NPLC {nplc}")
-
-    def set_delay(self, delay):
-        """Установка задержки между измерениями.
-
-        Args:
-            delay (float): Значение задержки в секундах.
-        """
-        self.instrument.write(f"TRIG:DEL {delay}")
-
-    def set_readings(self, count):
-        """Установка количества чтений.
-
-        Args:
-            count (int): Количество чтений.
-        """
-        self.instrument.write(f"SAMP:COUN {count}")
-
-    def set_channel(self, channel):
-        """Выбор канала измерения (для многоканальных систем).
-
-        Args:
-            channel (int): Номер канала.
-        """
-        self.instrument.write(f"ROUT:CHAN {channel}")
-
-    def measure(self):
-        """Запуск измерения и получение результата.
-
-        Returns:
-            float: Результат измерения.
-        """
-        return float(self.instrument.query("READ?"))
-
-    def close(self):
-        """Закрытие соединения с прибором."""
-        self.instrument.close()
-        self.rm.close()
+    def set_res_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
+        """Настройка прибора на измерение 2-проводного сопротивления"""
+        self.instrument.write(":SENS:FUNC 'RES'")
+        self.instrument.write(f":SENS:VOLT:NPLC {nplc}")
+        if range == 0:
+            self.instrument.write(f":SENS:VOLT:RANG:AUTO ON")
+        else:
+            self.instrument.write(f":SENS:VOLT:RANG {range}")
+        if ch < 10:
+            self.instrument.write(f":ROUT:CLOS (@10{ch})")
+        else:
+            self.instrument.write(f":ROUT:CLOS (@1{ch})")
+        self.instrument.write(f":TRIG:DEL {delay}")
 
 
-# Пример использования:
-if __name__ == "__main__":
-    app_instance = {
-        "resource_name": "GPIB::24::INSTR",
-        "nplc": 10,
-        "delay": 0.1,
-        "readings": 5,
-        "channel": 1
-    }
-    keithley = Keithley2001(app_instance)
-    try:
-        keithley.reset()
-        keithley.set_dcv()
-        result = keithley.measure()
-        print(f"Результат измерения DCV: {result} В")
-    finally:
-        keithley.close()
+    def measure(self, meas_count: int) -> list:
+        """Запуск измерения и получение результата(должно быть -> list?)"""
+        self.instrument.write(f":TRIG:COUN {meas_count}")
+        self.instrument.write(":INIT")
+        results = []
+        for _ in range(meas_count):
+            results.append(float(self.instrument.query(":FETCh?")))
+        return results
+
+
