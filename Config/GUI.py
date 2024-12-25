@@ -19,6 +19,7 @@ from PyQt6.QtCore import QSettings
 from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection
 from Config.Keithley2001 import Keithley2001
+from Config.Rigol import Rigol
 
 class App(QMainWindow):
     """GUI основной страницы программы"""
@@ -44,14 +45,14 @@ class App(QMainWindow):
         self.settings = QSettings("lab425", "IIC")
 
         # Подключаем основные кнопки к соответсвующим функциям
-        self.ChooseButton.clicked.connect(self.on_choose_excel_clicked)
-        self.InstrumentsButton.clicked.connect(self.on_instruments_clicked)
-        self.CreateButton.clicked.connect(self.on_create_clicked)
-        self.StartLineButton.clicked.connect(self.on_start_line_clicked)
-        self.StartButton.clicked.connect(self.on_start_clicked)
+        self.choose_button.clicked.connect(self.on_choose_excel_clicked)
+        self.instruments_button.clicked.connect(self.on_instruments_clicked)
+        self.create_button.clicked.connect(self.on_create_clicked)
+        self.start_line_button.clicked.connect(self.on_start_line_clicked)
+        self.start_button.clicked.connect(self.on_start_clicked)
 
         # Подключаем кнопки меню настроек
-        self.PB_save_settings.clicked.connect(self.save_settings)
+        self.save_settings_pb.clicked.connect(self.save_settings)
 
         # Time and console start settings
         formatted_time = time.strftime("%d-%m-%Y %H:%M:%S", time.localtime())
@@ -79,7 +80,7 @@ class App(QMainWindow):
         self.working_flag = False
         self.data_reset_flag = False
 
-        self.inst_list = None
+        self.inst_dict = None
 
         # Загрузка настроек для Seebeck+R
         self.load_tab1_settings()
@@ -90,8 +91,8 @@ class App(QMainWindow):
         """Подключается ко всем доступным приборам, которые обнаружит"""
         #! Добавить ресет подключенных приборов
         ic = InstrumentConnection(self)
-        self.inst_list = ic.connect_all()
-        connected_instruments = ', '.join(str(i) for i in self.inst_list)
+        self.inst_dict = ic.connect_all()
+        connected_instruments = ', '.join(str(i) for i in self.inst_dict)
         self.ConsolePTE.appendPlainText(
             time.strftime("%H:%M:%S | ", time.localtime()) +
             'Подключенные приборы: ' + connected_instruments + "\n")
@@ -108,41 +109,22 @@ class App(QMainWindow):
 
     def on_start_clicked(self):
         """Запускает эксперимент"""
-        try:
-            if self.working_flag:
-                self.working_flag = False
-                self.StartButton.setText('Старт')
+        if not self.working_flag:
+            self.working_flag = True
+            self.start_button.setText('Стоп')
 
-            #! Добавить начало измерений в консоль
-            #! Номер строки, и время цифрами добавить
-            #! Изменить ренджи для каждой
-            #!! Сделать вывод в Excel и сохранение в памяти python для кэша
+            # try расписать внутри функции
 
-            # Запись значений с прибора FRES - 6xDCV - FRES
-            instr = Keithley2001(self)
-            instr.set_fres_parameters(float(self.NPLC.text()), int(self.ChTerm.text()), 0, 0)
-            fres_res_1 = instr.measure(1)
+            try:
+                self.rigol_measurements()
+                # self.keithley_measurements()
+            except Exception as e:
+                print(e)
 
-            dcv_results = {}
-            for i in range(1, 7):
-                ch_line_edit = self.findChild(QLineEdit, f"Ch{i}") # Поиск элемента с именем Ch{i}
+        else:
+            self.working_flag = False
+            self.start_button.setText('Старт')
 
-                instr.set_dcv_params(float(self.NPLC.text()), int(ch_line_edit.text()), range=1, delay=1)  # Первая задержка
-                dcv_results[f"Ch{i}"] = instr.measure(meas_count=1)  # Первое измерение
-
-                if int(self.NRead.text()) > 1:
-                    instr.set_dcv_params(float(self.NPLC.text()), int(ch_line_edit.text()), range=1, delay=0)  # Остальные измерения
-                    dcv_results[f"Ch{i}"].extend(instr.measure(meas_count=(int(self.NRead.text()) - 1)))  # 4 оставшихся измерения
-
-            for channel, results in dcv_results.items():
-                print(f"DCV on channel {channel}: {results}")
-
-            else:
-                self.working_flag = True
-                self.StartButton.setText('Стоп')
-
-        except Exception as e:
-            print(e)
 
 
         # self.start_fuct()
@@ -156,37 +138,36 @@ class App(QMainWindow):
 
     def save_settings(self):
         """По кнопке сохраняет настройки программы для Seebeck+R"""
-        self.settings.setValue("comboBox_scan", self.comboBox_scan.currentText())
-        self.settings.setValue("comboBox_power", self.comboBox_power.currentText())
-        self.settings.setValue("RB_newRead", self.RB_newRead.isChecked())
-        self.settings.setValue("RB_oldRead", self.RB_oldRead.isChecked())
-        self.settings.setValue("CB_average", self.CB_average.isChecked())
-        self.settings.setValue("CB_rele", self.CB_rele.isChecked())
+        self.settings.setValue("combobox_scan", self.combobox_scan.currentText())
+        self.settings.setValue("combobox_power", self.combobox_power.currentText())
+        self.settings.setValue("rele_cb", self.rele_cb.isChecked())
 
         for i in range(1, 7):  #Ch1 - Ch6
-            self.settings.setValue(f"Ch{i}", self.findChild(QLineEdit, f"Ch{i}").text())
-            self.settings.setValue(f"DelayCh{i}", self.findChild(QLineEdit, f"DelayCh{i}").text())
+            self.settings.setValue(f"ch{i}", self.findChild(QLineEdit, f"ch{i}").text())
+            self.settings.setValue(f"delay_ch{i}", self.findChild(QLineEdit, f"delay_ch{i}").text())
+            self.settings.setValue(f"range_ch{i}", self.findChild(QLineEdit, f"range_ch{i}").text())
+            self.settings.setValue(f"nplc_ch{i}", self.findChild(QLineEdit, f"nplc_ch{i}").text())
 
-        self.settings.setValue("rangeCh12", self.rangeCh12.text())
-        self.settings.setValue("rangeCh34", self.rangeCh34.text())
-        self.settings.setValue("rangeCh56", self.rangeCh56.text())
-        self.settings.setValue("ChTerm", self.ChTerm.text())
-        self.settings.setValue("ChTerm2", self.ChTerm2.text())
-        self.settings.setValue("ChIP1", self.ChIP1.text())
-        self.settings.setValue("ChIP2", self.ChIP2.text())
-        self.settings.setValue("U_IP1", self.U_IP1.text())
-        self.settings.setValue("U_IP2", self.U_IP2.text())
-        self.settings.setValue("NPLC", self.NPLC.text())
-        self.settings.setValue("TimeNPLC", self.TimeNPLC.text())
-        self.settings.setValue("NRead", self.NRead.text())
-        self.settings.setValue("Ncycles", self.Ncycles.text())
-        self.settings.setValue("Nheat", self.Nheat.text())
-        self.settings.setValue("Ncool", self.Ncool.text())
-        self.settings.setValue("DelayS", self.DelayS.text())
-        self.settings.setValue("DelayR", self.DelayR.text())
-        self.settings.setValue("NR_Up", self.NR_Up.text())
-        self.settings.setValue("NR_UpDown", self.NR_UpDown.text())
-        self.settings.setValue("IP_Rigol", self.IP_Rigol.text())
+        self.settings.setValue("n_read_ch12", self.n_read_ch12.text())
+        self.settings.setValue("n_read_ch34", self.n_read_ch34.text())
+        self.settings.setValue("n_read_ch56", self.n_read_ch56.text())
+        self.settings.setValue("ch_term1", self.ch_term1.text())
+        self.settings.setValue("ch_term2", self.ch_term2.text())
+        self.settings.setValue("delay_term", self.delay_term.text())
+        self.settings.setValue("range_term", self.range_term.text())
+        self.settings.setValue("nplc_term", self.nplc_term.text())
+        self.settings.setValue("ch_ip1", self.ch_ip1.text())
+        self.settings.setValue("ch_ip2", self.ch_ip2.text())
+        self.settings.setValue("u_ip1", self.u_ip1.text())
+        self.settings.setValue("u_ip2", self.u_ip2.text())
+        self.settings.setValue("n_cycles", self.n_cycles.text())
+        self.settings.setValue("n_heat", self.n_heat.text())
+        self.settings.setValue("n_cool", self.n_cool.text())
+        self.settings.setValue("pause_s", self.pause_s.text())
+        self.settings.setValue("pause_r", self.pause_r.text())
+        self.settings.setValue("n_r_up", self.n_r_up.text())
+        self.settings.setValue("n_r_updown", self.n_r_updown.text())
+        self.settings.setValue("ip_rigol", self.ip_rigol.text())
 
         #Добавление текста в консоль
         self.ConsolePTE.appendPlainText(
@@ -197,34 +178,175 @@ class App(QMainWindow):
 
     def load_tab1_settings(self):
         """Загружает сохранённые значения виджетов пока только для Seebeck+R"""
-        self.comboBox_scan.setCurrentText(self.settings.value("comboBox_scan", ""))
-        self.comboBox_power.setCurrentText(self.settings.value("comboBox_power", ""))
-        self.RB_newRead.setChecked(self.settings.value("RB_newRead", "false") == "true")
-        self.RB_oldRead.setChecked(self.settings.value("RB_oldRead", "false") == "true")
-        self.CB_average.setChecked(self.settings.value("CB_average", "false") == "true")
-        self.CB_rele.setChecked(self.settings.value("CB_rele", "false") == "true")
+        self.combobox_scan.setCurrentText(self.settings.value("combobox_scan", ""))
+        self.combobox_power.setCurrentText(self.settings.value("combobox_power", ""))
+        self.rele_cb.setChecked(self.settings.value("rele_cb", "false") == "true")
 
         for i in range(1, 7):
-            self.findChild(QLineEdit, f"Ch{i}").setText(self.settings.value(f"Ch{i}", ""))
-            self.findChild(QLineEdit, f"DelayCh{i}").setText(self.settings.value(f"DelayCh{i}", ""))
+            self.findChild(QLineEdit, f"ch{i}").setText(self.settings.value(f"ch{i}", ""))
+            self.findChild(QLineEdit, f"delay_ch{i}").setText(self.settings.value(f"delay_ch{i}", ""))
+            self.findChild(QLineEdit, f"range_ch{i}").setText(self.settings.value(f"range_ch{i}", ""))
+            self.findChild(QLineEdit, f"nplc_ch{i}").setText(self.settings.value(f"nplc_ch{i}", ""))
 
-        self.rangeCh12.setText(self.settings.value("rangeCh12", ""))
-        self.rangeCh34.setText(self.settings.value("rangeCh34", ""))
-        self.rangeCh56.setText(self.settings.value("rangeCh56", ""))
-        self.ChTerm.setText(self.settings.value("ChTerm", ""))
-        self.ChTerm2.setText(self.settings.value("ChTerm2", ""))
-        self.ChIP1.setText(self.settings.value("ChIP1", ""))
-        self.ChIP2.setText(self.settings.value("ChIP2", ""))
-        self.U_IP1.setText(self.settings.value("U_IP1", ""))
-        self.U_IP2.setText(self.settings.value("U_IP2", ""))
-        self.NPLC.setText(self.settings.value("NPLC", ""))
-        self.TimeNPLC.setText(self.settings.value("TimeNPLC", ""))
-        self.NRead.setText(self.settings.value("NRead", ""))
-        self.Ncycles.setText(self.settings.value("Ncycles", ""))
-        self.Nheat.setText(self.settings.value("Nheat", ""))
-        self.Ncool.setText(self.settings.value("Ncool", ""))
-        self.DelayS.setText(self.settings.value("DelayS", ""))
-        self.DelayR.setText(self.settings.value("DelayR", ""))
-        self.NR_Up.setText(self.settings.value("NR_Up", ""))
-        self.NR_UpDown.setText(self.settings.value("NR_UpDown", ""))
-        self.IP_Rigol.setText(self.settings.value("IP_Rigol", ""))
+        self.n_read_ch12.setText(self.settings.value("n_read_ch12", ""))
+        self.n_read_ch34.setText(self.settings.value("n_read_ch34", ""))
+        self.n_read_ch56.setText(self.settings.value("n_read_ch56", ""))
+        self.ch_term1.setText(self.settings.value("ch_term1", ""))
+        self.ch_term2.setText(self.settings.value("ch_term2", ""))
+        self.ch_ip1.setText(self.settings.value("ch_ip1", ""))
+        self.ch_ip2.setText(self.settings.value("ch_ip2", ""))
+        self.u_ip1.setText(self.settings.value("u_ip1", ""))
+        self.u_ip2.setText(self.settings.value("u_ip2", ""))
+        self.delay_term.setText(self.settings.value("delay_term", ""))
+        self.range_term.setText(self.settings.value("range_term", ""))
+        self.nplc_term.setText(self.settings.value("nplc_term", ""))
+        self.n_cycles.setText(self.settings.value("n_cycles", ""))
+        self.n_heat.setText(self.settings.value("n_heat", ""))
+        self.n_cool.setText(self.settings.value("n_cool", ""))
+        self.pause_s.setText(self.settings.value("pause_s", ""))
+        self.pause_r.setText(self.settings.value("pause_r", ""))
+        self.n_r_up.setText(self.settings.value("n_r_up", ""))
+        self.n_r_up.setText(self.settings.value("n_r_up", ""))
+        self.ip_rigol.setText(self.settings.value("ip_rigol", ""))
+
+
+    def keithley_measurements(self):
+        # ! Добавить начало измерений в консоль
+        # ! Номер строки, и время цифрами добавить
+        # ! Изменить ренджи для каждой
+        # !! Сделать вывод в Excel и сохранение в памяти python для кэша
+
+        # Запись значений с прибора FRES - 6xDCV - FRES
+        instr = Keithley2001(self)
+        # ! Добавить range and delay
+        instr.set_fres_parameters(float(self.nplc_term.text()),
+                                  int(self.ch_term1.text()),
+                                  range=0,
+                                  delay=0)
+        fres_res_1 = instr.measure(1)
+        print(f"FRES on channel 101: {fres_res_1}")
+
+        dcv_results = {}
+        for i in range(1, 7):
+            ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
+            delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
+            range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
+            nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
+
+            instr.set_dcv_params(float(nplc_line_edit.text()),
+                                 int(ch_line_edit.text()),
+                                 float(range_line_edit.text()),
+                                 float(delay_line_edit.text()))  # Первая задержка
+            dcv_results[f"ch{i}"] = instr.measure(meas_count=1)  # Первое измерение
+
+            # Измерения для больше чем одного read
+            if i < 3:
+                if int(self.n_read_ch12.text()) > 1:
+                    instr.set_dcv_params(float(nplc_line_edit.text()),
+                                         int(ch_line_edit.text()),
+                                         float(range_line_edit.text()),
+                                         delay=0)  # Остальные измерения
+                    dcv_results[f"ch{i}"].extend(
+                        instr.measure(meas_count=(int(self.n_read_ch12.text()) - 1)))  # 4 оставшихся измерения
+                else:
+                    continue
+            elif 2 < i < 5:
+                if int(self.n_read_ch34.text()) > 1:
+                    instr.set_dcv_params(float(nplc_line_edit.text()),
+                                         int(ch_line_edit.text()),
+                                         float(range_line_edit.text()),
+                                         delay=0)  # Остальные измерения
+                    dcv_results[f"ch{i}"].extend(
+                        instr.measure(meas_count=(int(self.n_read_ch34.text()) - 1)))  # 4 оставшихся измерения
+                else:
+                    continue
+            else:
+                if int(self.n_read_ch56.text()) > 1:
+                    instr.set_dcv_params(float(nplc_line_edit.text()),
+                                         int(ch_line_edit.text()),
+                                         float(range_line_edit.text()),
+                                         delay=0)  # Остальные измерения
+                    dcv_results[f"ch{i}"].extend(
+                        instr.measure(meas_count=(int(self.n_read_ch56.text()) - 1)))  # 4 оставшихся измерения
+                else:
+                    continue
+
+        for channel, results in dcv_results.items():
+            print(f"DCV on channel {channel}: {results}")
+
+        instr.set_fres_paramters(float(self.nplc_term.text()), int(self.ch_term1.text()),
+                                 range=0, delay=0)
+        fres_result_2 = instr.measure(1)
+        print(f"FRES on channel 101 (repeat): {fres_result_2}")
+
+    def rigol_measurements(self):
+        instr = Rigol(self)
+
+        # Настройка и измерение 4-проводного сопротивления на канале 101
+        instr.set_fres_parameters(
+            float(self.nplc_term.text()),
+            int(self.ch_term1.text()),
+            range=0,
+            delay=0
+        )
+        fres_res_1 = instr.measure(1)
+        print(f"FRES on channel 101: {fres_res_1}")
+
+        # Словарь для хранения результатов измерений
+        dcv_results = {}
+
+        # Перебор каналов с параметрами
+        for i in range(1, 7):
+            ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
+            delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
+            range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
+            nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
+            ch = int(ch_line_edit.text())
+
+            try:
+                # Открытие канала
+                instr.open_channel(ch)
+
+                # Настройка и измерение на текущем канале
+                instr.set_dcv_parameters(
+                    float(nplc_line_edit.text()),
+                    ch,
+                    float(range_line_edit.text()),
+                    float(delay_line_edit.text())
+                )
+                dcv_results[f"ch{i}"] = instr.measure(meas_count=1)
+
+                # Дополнительные измерения (если требуется)
+                additional_reads = 0
+                if i < 3:
+                    additional_reads = int(self.n_read_ch12.text()) - 1
+                elif 2 < i < 5:
+                    additional_reads = int(self.n_read_ch34.text()) - 1
+                else:
+                    additional_reads = int(self.n_read_ch56.text()) - 1
+
+                if additional_reads > 0:
+                    instr.set_dcv_parameters(
+                        float(nplc_line_edit.text()),
+                        ch,
+                        float(range_line_edit.text()),
+                        delay=0  # Установка задержки для оставшихся измерений
+                    )
+                    dcv_results[f"ch{i}"].extend(instr.measure(meas_count=additional_reads))
+            finally:
+                # Закрытие канала
+                instr.close_channel(ch)
+
+        # Вывод результатов измерений
+        for channel, results in dcv_results.items():
+            print(f"DCV on channel {channel}: {results}")
+
+        # Повторное измерение 4-проводного сопротивления на канале 101
+        instr.set_fres_parameters(
+            float(self.nplc_term.text()),
+            int(self.ch_term1.text()),
+            range=0,
+            delay=0
+        )
+        fres_result_2 = instr.measure(1)
+        print(f"FRES on channel 101 (repeat): {fres_result_2}")

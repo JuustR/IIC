@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1301</width>
+    <width>1325</width>
     <height>600</height>
    </rect>
   </property>
@@ -36,7 +36,7 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
-        <widget class="QPushButton" name="InstrumentsButton">
+        <widget class="QPushButton" name="instruments_button">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -66,7 +66,7 @@
      <item>
       <layout class="QHBoxLayout" name="TemplateHL">
        <item>
-        <widget class="QPushButton" name="ChooseButton">
+        <widget class="QPushButton" name="choose_button">
          <property name="maximumSize">
           <size>
            <width>100</width>
@@ -98,7 +98,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="CreateButton">
+        <widget class="QPushButton" name="create_button">
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
@@ -112,14 +112,14 @@
      <item>
       <layout class="QHBoxLayout" name="StartLineHL">
        <item>
-        <widget class="QPushButton" name="StartLineButton">
+        <widget class="QPushButton" name="start_line_button">
          <property name="text">
           <string>Задать начальную строчку в Excel</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="StartLineLineEdit">
+        <widget class="QLineEdit" name="start_line_le">
          <property name="text">
           <string>11</string>
          </property>
@@ -128,7 +128,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QPushButton" name="StartButton">
+      <widget class="QPushButton" name="start_button">
        <property name="text">
         <string>Старт</string>
        </property>
@@ -157,7 +157,7 @@
      <rect>
       <x>670</x>
       <y>10</y>
-      <width>621</width>
+      <width>631</width>
       <height>551</height>
      </rect>
     </property>
@@ -357,7 +357,7 @@
                      </size>
                     </property>
                     <property name="text">
-                     <string>  Resistance   </string>
+                     <string>  Resistance    </string>
                     </property>
                     <property name="alignment">
                      <set>Qt::AlignCenter</set>
@@ -1010,7 +1010,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ChIP1">
+                   <widget class="QLineEdit" name="ch_ip1">
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -1024,7 +1024,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="ChIP2">
+                   <widget class="QLineEdit" name="ch_ip2">
                     <property name="text">
                      <string>3</string>
                     </property>
@@ -1042,7 +1042,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="U_IP1">
+                   <widget class="QLineEdit" name="u_ip1">
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -1056,7 +1056,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="U_IP2">
+                   <widget class="QLineEdit" name="u_ip2">
                     <property name="text">
                      <string>1</string>
                     </property>

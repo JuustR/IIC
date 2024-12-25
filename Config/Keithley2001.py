@@ -166,7 +166,7 @@ import pyvisa
 class Keithley2001:
     def __init__(self, app_instance):
         self.app_instance = app_instance
-        self.instr = self.app_instance.inst_list
+        self.instr = self.app_instance.inst_dict
         self.rm = pyvisa.ResourceManager()
         self.instrument = self.rm.open_resource(self.instr["keithley2001"])
 

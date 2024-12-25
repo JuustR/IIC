@@ -25,12 +25,16 @@ class InstrumentConnection:
         self.instr_list = {"Smth1": "IDN...1", "Smth2": "IDN...2"}
         self.instr = None # Для проверки всех подключенных приборов
 
+        self.send_IDN = None
+
     def connect_all(self):
         """Функция для подключения всех выбранных приборов"""
         self.keithley2001_connection()
         self.keithley2000_connection()
         self.daq970A_connection()
+        self.keysight_connection()
         self.rigol_connection()
+        #! BP пока не работают
         if self.BP_allowed:
             "Если есть нагреватель и подключен Е36312А"
             self.E36312A_connection()
@@ -49,7 +53,7 @@ class InstrumentConnection:
             # self.app_instance.statusBar.showMessage('Keithley подключен успешно')
             self.instr_list["keithley2001"] = 'GPIB0::16::INSTR'
         except Exception as e:
-            if self.app_instance.show_errorsCB.isChecked():
+            if self.app_instance.show_errors_cb.isChecked():
                 self.app_instance.ConsolePTE.appendPlainText(
                     time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения Keithley2001!\n'
                                                                      f'GPIB на приборе должен быть 16\n'
@@ -67,7 +71,7 @@ class InstrumentConnection:
             # self.app_instance.statusBar.showMessage('Keithley подключен успешно')
             self.instr_list["keithley2000"] = 'GPIB0::16::INSTR'
         except Exception as e:
-            if self.app_instance.show_errorsCB.isChecked():
+            if self.app_instance.show_errors_cb.isChecked():
                 self.app_instance.ConsolePTE.appendPlainText(
                     time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения Keithley2000!\n'
                                                                      f'GPIB на приборе должен быть 16\n'
@@ -85,7 +89,7 @@ class InstrumentConnection:
             # self.app_instance.statusBar.showMessage('Keithley подключен успешно')
             self.instr_list["daq970A"] = 'TCPIP0::192.168.0.102::inst0::INSTR'
         except Exception as e:
-            if self.app_instance.show_errorsCB.isChecked():
+            if self.app_instance.show_errors_cb.isChecked():
                 self.app_instance.ConsolePTE.appendPlainText(
                     time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения DAQ970A!\n'
                                                                      f'IP прибора должен быть 192.168.0.102\n'
@@ -93,8 +97,41 @@ class InstrumentConnection:
             else:
                 print('Ошибка подключения DAQ970A')
 
+    def keysight_connection(self):
+        try:
+            # self.keysight = self.rm.open_resource('TCPIP0::' + str(self.w_root.lineIP_1.text()) + '::inst0::INSTR')
+            self.keysight = self.rm.open_resource('TCPIP0::' + "192.168.0.103" + '::inst0::INSTR')
+            self.keysight.write("*RST")
+            self.app_instance.ConsolePTE.appendPlainText(
+                time.strftime("%H:%M:%S | ", time.localtime()) + 'keysight подключен успешно\n')
+            # self.app_instance.statusBar.showMessage('Keithley подключен успешно')
+            self.instr_list["keysight"] = 'TCPIP0::192.168.0.103::inst0::INSTR'
+        except Exception as e:
+            if self.app_instance.show_errors_cb.isChecked():
+                self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения keysight!\n'
+                                                                     f'IP прибора должен быть 192.168.0.103\n'
+                                                                     f'Описание ошибки: {e}\n')
+            else:
+                print('Ошибка подключения keysight')
+
     def rigol_connection(self):
-        pass
+        #! Поменять IP
+        try:
+            # self.rigol = self.rm.open_resource('TCPIP0::' + str(self.w_root.lineIP_1.text()) + '::inst0::INSTR')
+            self.rigol = self.rm.open_resource('TCPIP0::' + "169.254.50.9" + '::inst0::INSTR')
+            self.rigol.write("*RST")
+            self.app_instance.ConsolePTE.appendPlainText(
+                time.strftime("%H:%M:%S | ", time.localtime()) + 'Rigol подключен успешно\n')
+            self.instr_list["rigol"] = 'TCPIP0::169.254.50.9::inst0::INSTR'
+        except Exception as e:
+            if self.app_instance.show_errors_cb.isChecked():
+                self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения Rigol!\n'
+                                                                     f'IP прибора должен быть 169.254.50.9\n'
+                                                                     f'Описание ошибки: {e}\n')
+            else:
+                print('Ошибка подключения Rigol')
 
     def E36312A_connection(self):
 
@@ -113,7 +150,7 @@ class InstrumentConnection:
                 try:
                     self.AKIP = self.rm.open_resource(self.USB_resources[n])
                     self.send_IDN = self.AKIP.query("*IDN?")
-                except:
+                except Exception as e:
                     self.send_IDN = None
 
                 if self.send_IDN == 'ITECH Ltd., IT6333A, 800572020767710004, 1.11-1.08\n':
