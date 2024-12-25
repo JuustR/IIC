@@ -55,31 +55,43 @@ class Rigol:
     def set_dcv_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение постоянного напряжения"""
         # Настройка Keysight для измерения постоянного напряжения
-        self.additional_inst.write(":SENS:FUNC 'VOLT:DC'")
-        self.additional_inst.write(f":SENS:VOLT:NPLC {nplc}")
+        nplc = int(nplc) if nplc.is_integer() else float(nplc)
+        range = int(range) if range.is_integer() else float(range)
+        delay = int(delay) if delay.is_integer() else float(delay)
+
+        self.additional_inst.write("SENS:FUNC 'VOLT:DC'")
+        self.additional_inst.write(f"SENS:VOLT:NPLC {nplc}")
         if range == 0:
-            self.additional_inst.write(":SENS:VOLT:RANG:AUTO ON")
+            self.additional_inst.write("SENS:VOLT:RANG:AUTO ON")
         else:
-            self.additional_inst.write(f":SENS:VOLT:RANG {range}")
-        self.additional_inst.write(f":TRIG:DEL {delay}")
+            self.additional_inst.write(f"SENS:VOLT:RANG {range}")
+        self.additional_inst.write(f"TRIG:DEL {delay}")
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение 4-проводного сопротивления"""
         # Настройка Keysight для измерения 4-проводного сопротивления
-        self.additional_inst.write(":SENS:FUNC 'FRES'")
-        self.additional_inst.write(f":SENS:VOLT:NPLC {nplc}")
+        nplc = int(nplc) if nplc.is_integer() else float(nplc)
+        range = int(range) if range.is_integer() else float(range)
+        delay = int(delay) if delay.is_integer() else float(delay)
+
+        self.additional_inst.write("SENS:FUNC 'FRES'")
+        self.additional_inst.write(f"SENS:FRES:NPLC {nplc}")
         if range == 0:
-            self.additional_inst.write(":SENS:RES:RANG:AUTO ON")
+            self.additional_inst.write("SENS:FRES:RANG:AUTO ON")
         else:
-            self.additional_inst.write(f":SENS:RES:RANG {range}")
-        self.additional_inst.write(f":TRIG:DEL {delay}")
+            self.additional_inst.write(f"SENS:FRES:RANG {range}")
+        self.additional_inst.write(f"TRIG:DEL {delay}")
 
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение 2-проводного сопротивления"""
         # Настройка Keysight для измерения 2-проводного сопротивления
+        nplc = int(nplc) if nplc.is_integer() else float(nplc)
+        range = int(range) if range.is_integer() else float(range)
+        delay = int(delay) if delay.is_integer() else float(delay)
+
         self.additional_inst.write(":SENS:FUNC 'RES'")
-        self.additional_inst.write(f":SENS:VOLT:NPLC {nplc}")
+        self.additional_inst.write(f":SENS:RES:NPLC {nplc}")
         if range == 0:
             self.additional_inst.write(":SENS:RES:RANG:AUTO ON")
         else:

@@ -116,8 +116,8 @@ class App(QMainWindow):
             # try расписать внутри функции
 
             try:
-                self.rigol_measurements()
-                # self.keithley_measurements()
+                # self.rigol_measurements()
+                self.keithley_measurements()
             except Exception as e:
                 print(e)
 
@@ -289,7 +289,7 @@ class App(QMainWindow):
             range=0,
             delay=0
         )
-        fres_res_1 = instr.measure(1)
+        fres_res_1 = instr.measure(1) 
         print(f"FRES on channel 101: {fres_res_1}")
 
         # Словарь для хранения результатов измерений
@@ -301,7 +301,7 @@ class App(QMainWindow):
             delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
             range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
             nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
-            ch = int(ch_line_edit.text())
+
 
             try:
                 # Открытие канала
@@ -310,14 +310,13 @@ class App(QMainWindow):
                 # Настройка и измерение на текущем канале
                 instr.set_dcv_parameters(
                     float(nplc_line_edit.text()),
-                    ch,
+                    int(ch_line_edit.text()),
                     float(range_line_edit.text()),
                     float(delay_line_edit.text())
                 )
                 dcv_results[f"ch{i}"] = instr.measure(meas_count=1)
 
                 # Дополнительные измерения (если требуется)
-                additional_reads = 0
                 if i < 3:
                     additional_reads = int(self.n_read_ch12.text()) - 1
                 elif 2 < i < 5:
@@ -328,7 +327,7 @@ class App(QMainWindow):
                 if additional_reads > 0:
                     instr.set_dcv_parameters(
                         float(nplc_line_edit.text()),
-                        ch,
+                        int(ch_line_edit.text()),
                         float(range_line_edit.text()),
                         delay=0  # Установка задержки для оставшихся измерений
                     )

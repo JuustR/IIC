@@ -82,17 +82,17 @@ class InstrumentConnection:
     def daq970A_connection(self):
         try:
             # self.daq970A = self.rm.open_resource('TCPIP0::' + str(self.w_root.lineIP_1.text()) + '::inst0::INSTR')
-            self.daq970A = self.rm.open_resource('TCPIP0::' + "192.168.0.102" + '::inst0::INSTR')
+            self.daq970A = self.rm.open_resource('TCPIP0::' + "169.254.50.10" + '::inst0::INSTR')
             self.daq970A.write("*RST")
             self.app_instance.ConsolePTE.appendPlainText(
                 time.strftime("%H:%M:%S | ", time.localtime()) + 'DAQ подключен успешно\n')
             # self.app_instance.statusBar.showMessage('Keithley подключен успешно')
-            self.instr_list["daq970A"] = 'TCPIP0::192.168.0.102::inst0::INSTR'
+            self.instr_list["daq970A"] = 'TCPIP0::169.254.50.10::inst0::INSTR'
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.app_instance.ConsolePTE.appendPlainText(
                     time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения DAQ970A!\n'
-                                                                     f'IP прибора должен быть 192.168.0.102\n'
+                                                                     f'IP прибора должен быть 169.254.50.10\n'
                                                                      f'Описание ошибки: {e}\n')
             else:
                 print('Ошибка подключения DAQ970A')
