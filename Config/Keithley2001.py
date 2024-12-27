@@ -168,8 +168,7 @@ class Keithley2001:
         self.app_instance = app_instance
         self.instr = self.app_instance.inst_dict
         self.rm = pyvisa.ResourceManager()
-        # self.instrument = self.rm.open_resource(self.instr["keithley2001"])
-        self.instrument = self.rm.open_resource(self.instr["daq970A"])
+        self.instrument = self.rm.open_resource(self.instr["keithley2001"])
 
     def reset(self):
         """Сброс настроек прибора"""
@@ -180,13 +179,13 @@ class Keithley2001:
         self.instrument.write(":SENS:FUNC 'VOLT:DC'")
         self.instrument.write(f":SENS:VOLT:DC:NPLC {nplc}")
         if range == 0:
-            self.instrument.write(f":SENS:VOLT:RANG:AUTO ON")
+            self.instrument.write(f":SENS:VOLT:DC:RANG:AUTO ON")
         else:
-            self.instrument.write(f":SENS:VOLT:RANG {range}")
+            self.instrument.write(f":SENS:VOLT:DC:RANG {range}")
         if ch < 10:
-            self.instrument.write(f":ROUT:CLOS (@10{ch})")
+            self.instrument.write(f":ROUT:CLOS (@ {ch})")
         else:
-            self.instrument.write(f":ROUT:CLOS (@1{ch})")
+            self.instrument.write(f":ROUT:CLOS (@ {ch})")
         self.instrument.write(f":TRIG:DEL {delay}")
 
     def set_fres_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
@@ -198,9 +197,9 @@ class Keithley2001:
         else:
             self.instrument.write(f":SENS:FRES:RANG {range}")
         if ch < 10:
-            self.instrument.write(f":ROUT:CLOS (@10{ch})")
+            self.instrument.write(f":ROUT:CLOS (@ {ch})")
         else:
-            self.instrument.write(f":ROUT:CLOS (@1{ch})")
+            self.instrument.write(f":ROUT:CLOS (@ {ch})")
         self.instrument.write(f":TRIG:DEL {delay}")
 
     def set_res_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
@@ -212,9 +211,9 @@ class Keithley2001:
         else:
             self.instrument.write(f":SENS:RES:RANG {range}")
         if ch < 10:
-            self.instrument.write(f":ROUT:CLOS (@10{ch})")
+            self.instrument.write(f":ROUT:CLOS (@ {ch})")
         else:
-            self.instrument.write(f":ROUT:CLOS (@1{ch})")
+            self.instrument.write(f":ROUT:CLOS (@ {ch})")
         self.instrument.write(f":TRIG:DEL {delay}")
 
 

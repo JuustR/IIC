@@ -233,7 +233,7 @@ class App(QMainWindow):
             range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
             nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
 
-            instr.set_dcv_params(float(nplc_line_edit.text()),
+            instr.set_dcv_parameters(float(nplc_line_edit.text()),
                                  int(ch_line_edit.text()),
                                  float(range_line_edit.text()),
                                  float(delay_line_edit.text()))  # Первая задержка
@@ -242,7 +242,7 @@ class App(QMainWindow):
             # Измерения для больше чем одного read
             if i < 3:
                 if int(self.n_read_ch12.text()) > 1:
-                    instr.set_dcv_params(float(nplc_line_edit.text()),
+                    instr.set_dcv_parameters(float(nplc_line_edit.text()),
                                          int(ch_line_edit.text()),
                                          float(range_line_edit.text()),
                                          delay=0)  # Остальные измерения
@@ -252,7 +252,7 @@ class App(QMainWindow):
                     continue
             elif 2 < i < 5:
                 if int(self.n_read_ch34.text()) > 1:
-                    instr.set_dcv_params(float(nplc_line_edit.text()),
+                    instr.set_dcv_parameters(float(nplc_line_edit.text()),
                                          int(ch_line_edit.text()),
                                          float(range_line_edit.text()),
                                          delay=0)  # Остальные измерения
@@ -262,7 +262,7 @@ class App(QMainWindow):
                     continue
             else:
                 if int(self.n_read_ch56.text()) > 1:
-                    instr.set_dcv_params(float(nplc_line_edit.text()),
+                    instr.set_dcv_parameters(float(nplc_line_edit.text()),
                                          int(ch_line_edit.text()),
                                          float(range_line_edit.text()),
                                          delay=0)  # Остальные измерения
@@ -274,7 +274,7 @@ class App(QMainWindow):
         for channel, results in dcv_results.items():
             print(f"DCV on channel {channel}: {results}")
 
-        instr.set_fres_paramters(float(self.nplc_term.text()), int(self.ch_term1.text()),
+        instr.set_fres_parameters(float(self.nplc_term.text()), int(self.ch_term1.text()),
                                  range=0, delay=0)
         fres_result_2 = instr.measure(1)
         print(f"FRES on channel 101 (repeat): {fres_result_2}")
