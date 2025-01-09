@@ -42,9 +42,9 @@ import pyvisa
 class Rigol:
     def __init__(self, app_instance):
         self.app_instance = app_instance
-        self.instr = self.app_instance.inst_dict
+        self.instr = self.app_instance.inst_list
         self.rm = pyvisa.ResourceManager()
-        self.instrument = self.rm.open_resource(self.instr["rigol"])
+        self.instrument = self.rm.open_resource(self.instr["Rigol"])
         self.additional_inst = self.rm.open_resource(self.instr["keysight"])
 
 

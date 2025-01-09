@@ -38,7 +38,7 @@ class App(QMainWindow):
         try:
             # Относительно долго грузится, можно разделить на 2 потока и добавить анимацию включения программы
             self.excel = win32.Dispatch('Excel.Application')  # Создаем COM объект
-            self.excel.Visible = False  # Excel invisible
+            self.excel.Visible = True  # Excel visible, тк invisible скрывает уже открытые файлы
         except Exception as e:
             print(f"Очистите gen_py\nМожно это сделать запустив программу gen_cache_clear.py\n{e}")
 
@@ -58,6 +58,15 @@ class App(QMainWindow):
         self.create_button.clicked.connect(self.on_create_clicked)
         self.start_line_button.clicked.connect(self.on_start_line_clicked)
         self.start_button.clicked.connect(self.on_start_clicked)
+
+        # checkBox'ы
+        self.rele_cb.stateChanged.connect(self.rele_cb_clicked)
+        self.instr1_cb.stateChanged.connect(self.instr1_cb_clicked)
+        self.instr2_cb.stateChanged.connect(self.instr2_cb_clicked)
+
+        # ComboBox'ы
+        self.combobox_scan.currentTextChanged.connect(self.combobox_scan_changed)
+        self.combobox_power.currentTextChanged.connect(self.combobox_power_changed)
 
         # Подключаем кнопки меню настроек
         self.save_settings_pb.clicked.connect(self.save_settings)
@@ -88,22 +97,66 @@ class App(QMainWindow):
         self.working_flag = False
         self.data_reset_flag = False
 
-        self.inst_dict = None
+        self.inst_list = None
 
         # Загрузка настроек для Seebeck+R
         self.load_tab1_settings()
 
         self.show()
 
+    def combobox_scan_changed(self):
+        """Включение ip для Rigol'a"""
+        if self.combobox_scan.currentText() == "Rigol":
+            self.ip_rigol.setEnabled(True)
+        else:
+            self.ip_rigol.setEnabled(False)
+
+    def combobox_power_changed(self):
+        pass
+
+    def instr1_cb_clicked(self):
+        """Добавление ещё одного прибора"""
+        if self.instr1_cb.isChecked():
+            self.ip_instr1.setEnabled(True)
+            self.excel_instr1.setEnabled(True)
+            self.instr1_connect.setEnabled(True)
+        else:
+            self.ip_instr1.setEnabled(False)
+            self.excel_instr1.setEnabled(False)
+            self.instr1_connect.setEnabled(False)
+
+    def instr2_cb_clicked(self):
+        """Добавление ещё одного прибора"""
+        if self.instr2_cb.isChecked():
+            self.ip_instr2.setEnabled(True)
+            self.excel_instr2.setEnabled(True)
+            self.instr2_connect.setEnabled(True)
+        else:
+            self.ip_instr2.setEnabled(False)
+            self.excel_instr2.setEnabled(False)
+            self.instr2_connect.setEnabled(False)
+
+    def rele_cb_clicked(self):
+        """Подключение к релюшкам"""
+        if self.rele_cb.isChecked():
+            self.n_r_up.setEnabled(False)
+            self.n_r_updown.setEnabled(True)
+        else:
+            self.n_r_updown.setEnabled(False)
+            self.n_r_up.setEnabled(True)
+
     def on_instruments_clicked(self):
         """Подключается ко всем доступным приборам, которые обнаружит"""
-        #! Добавить ресет подключенных приборов
+        self.combobox_scan.clear()
+        self.combobox_power.clear()
         ic = InstrumentConnection(self)
-        self.inst_dict = ic.connect_all()
-        connected_instruments = ', '.join(str(i) for i in self.inst_dict)
+        self.inst_list = ic.connect_all()
+        connected_instruments = ', '.join(str(i) for i in self.inst_list)
         self.ConsolePTE.appendPlainText(
             time.strftime("%H:%M:%S | ", time.localtime()) +
             'Подключенные приборы: ' + connected_instruments + "\n")
+        for _ in self.inst_list:
+            self.combobox_scan.addItem(_)
 
     def on_create_clicked(self):
         """Создаёт шаблон эксперимента"""

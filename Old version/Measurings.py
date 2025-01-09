@@ -34,7 +34,7 @@ class SettingsManager:
     def __init__(self):
         # Пример настроек для каждого прибора
         self.settings = {
-            'keithley2001': {
+            'keithley2010': {
                 'reset': '*RST',
                 'mode': ':SOUR:FUNC VOLT',
                 'voltage': 5.0,

@@ -28,7 +28,7 @@ if __name__ == '__main__':
     instrument_connection.Instr_check() # Вывод IDN всех подключенных приборов
     # Получаем подключенные приборы
     instruments = {
-        'keithley2001': instrument_connection.keithley2001,
+        'keithley2010': instrument_connection.keithley2010,
         'akip': instrument_connection.AKIP,
         'e36312a': instrument_connection.E36312A
         # Добавьте сюда любые другие приборы, которые у вас есть

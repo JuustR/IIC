@@ -10,7 +10,7 @@ class InstrumentConnection:
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
         self.app_instance = app_instance
 
-        self.keithley2001 = None
+        self.keithley2010 = None
         self.keithley2000 = None
         self.daq970A = None
         self.rigol = None
@@ -29,7 +29,7 @@ class InstrumentConnection:
 
     def connect_all(self):
         """Функция для подключения всех выбранных приборов"""
-        self.keithley2001_connection()
+        self.keithley2010_connection()
         # self.keithley2000_connection()
         # self.daq970A_connection()
         # self.keysight_connection()
@@ -48,15 +48,15 @@ class InstrumentConnection:
         # Должен возвращаться словарь подключенных приборов с их IP/GPIB
         return self.instr_list
 
-    def keithley2001_connection(self):
+    def keithley2010_connection(self):
         try:
-            # self.keithley2001 = self.rm.open_resource('GPIB0::' + str(self.app_instance.GPIB.text()) + '::INSTR')
-            self.keithley2001 = self.rm.open_resource('GPIB0::' + '16' + '::INSTR')
-            self.keithley2001.write("*rst")
+            # self.keithley2010 = self.rm.open_resource('GPIB0::' + str(self.app_instance.GPIB.text()) + '::INSTR')
+            self.keithley2010 = self.rm.open_resource('GPIB0::' + '16' + '::INSTR')
+            self.keithley2010.write("*rst")
             self.app_instance.ConsolePTE.appendPlainText(
                 time.strftime("%H:%M:%S | ", time.localtime()) + 'Keithley подключен успешно\n')
             # self.app_instance.statusBar.showMessage('Keithley подключен успешно')
-            self.instr_list["keithley2001"] = 'GPIB0::16::INSTR'
+            self.instr_list["keithley2010"] = 'GPIB0::16::INSTR'
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.app_instance.ConsolePTE.appendPlainText(
@@ -128,7 +128,7 @@ class InstrumentConnection:
             self.rigol.write("*RST")
             self.app_instance.ConsolePTE.appendPlainText(
                 time.strftime("%H:%M:%S | ", time.localtime()) + 'Rigol подключен успешно\n')
-            self.instr_list["rigol"] = 'TCPIP0::169.254.50.9::inst0::INSTR'
+            self.instr_list["Rigol"] = 'TCPIP0::169.254.50.9::inst0::INSTR'
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.app_instance.ConsolePTE.appendPlainText(
