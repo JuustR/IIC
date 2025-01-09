@@ -26,7 +26,7 @@ from PyQt6.QtCore import QSettings
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection
-from Config.Keithley2001 import Keithley2001
+from Config.Keithley2010 import Keithley2010
 from Config.Rigol import Rigol
 
 class App(QMainWindow):
@@ -225,7 +225,9 @@ class App(QMainWindow):
         # !! Сделать вывод в Excel и сохранение в памяти python для кэша
 
         # Запись значений с прибора FRES - 6xDCV - FRES
-        instr = Keithley2001(self)
+        instr = Keithley2010(self)
+
+
         # ! Добавить range and delay
         instr.set_fres_parameters(float(self.nplc_term.text()),
                                   int(self.ch_term1.text()),
@@ -234,10 +236,12 @@ class App(QMainWindow):
         fres_res_1 = instr.measure(1)
         print(f"FRES on channel 101: {fres_res_1}")
 
+        instr.reset()  # Сброс настроек перед напряжением
+
         dcv_results = {}
         for i in range(1, 7):
             ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
-            delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
+            delay_line_edit = self.findChild(QLineEdit, f"delay_ch{i}")
             range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
             nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
 
@@ -281,6 +285,8 @@ class App(QMainWindow):
 
         for channel, results in dcv_results.items():
             print(f"DCV on channel {channel}: {results}")
+
+        instr.reset()  # Сброс настроек перед сопротивлением
 
         instr.set_fres_parameters(float(self.nplc_term.text()), int(self.ch_term1.text()),
                                  range=0, delay=0)

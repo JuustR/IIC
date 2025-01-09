@@ -1,5 +1,5 @@
 """
-Все команды для Keithley2001
+Все команды для Keithley2010
 
 :VOLTage[:DC]
     :APERture <n> 
@@ -162,13 +162,15 @@
 """
 
 import pyvisa
+import time
 
-class Keithley2001:
+class Keithley2010:
     def __init__(self, app_instance):
         self.app_instance = app_instance
         self.instr = self.app_instance.inst_dict
         self.rm = pyvisa.ResourceManager()
         self.instrument = self.rm.open_resource(self.instr["keithley2001"])
+        self.instrument.timeout = 10000  # Большее время таймаута для корректного выполнения команды fetch
 
     def reset(self):
         """Сброс настроек прибора"""
@@ -183,10 +185,11 @@ class Keithley2001:
         else:
             self.instrument.write(f":SENS:VOLT:DC:RANG {range}")
         if ch < 10:
-            self.instrument.write(f":ROUT:CLOS (@ {ch})")
+            self.instrument.write(f":ROUT:CLOS (@{ch})")
         else:
-            self.instrument.write(f":ROUT:CLOS (@ {ch})")
+            self.instrument.write(f":ROUT:CLOS (@{ch})")
         self.instrument.write(f":TRIG:DEL {delay}")
+        self.instrument.write("DISP:ENAB ON")
 
     def set_fres_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
         """Настройка прибора на измерение 4-проводного сопротивления"""
@@ -197,10 +200,11 @@ class Keithley2001:
         else:
             self.instrument.write(f":SENS:FRES:RANG {range}")
         if ch < 10:
-            self.instrument.write(f":ROUT:CLOS (@ {ch})")
+            self.instrument.write(f":ROUT:CLOS (@{ch})")
         else:
-            self.instrument.write(f":ROUT:CLOS (@ {ch})")
+            self.instrument.write(f":ROUT:CLOS (@{ch})")
         self.instrument.write(f":TRIG:DEL {delay}")
+        self.instrument.write("DISP:ENAB ON")
 
     def set_res_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
         """Настройка прибора на измерение 2-проводного сопротивления"""
@@ -211,19 +215,30 @@ class Keithley2001:
         else:
             self.instrument.write(f":SENS:RES:RANG {range}")
         if ch < 10:
-            self.instrument.write(f":ROUT:CLOS (@ {ch})")
+            self.instrument.write(f":ROUT:CLOS (@{ch})")
         else:
-            self.instrument.write(f":ROUT:CLOS (@ {ch})")
+            self.instrument.write(f":ROUT:CLOS (@{ch})")
         self.instrument.write(f":TRIG:DEL {delay}")
+        self.instrument.write("DISP:ENAB ON")
 
 
     def measure(self, meas_count: int) -> list:
         """Запуск измерения и получение результата(должно быть -> list?)"""
-        self.instrument.write(f":TRIG:COUN {meas_count}")
-        self.instrument.write(":INIT")
+        print(time.strftime("%H:%M:%S | ", time.localtime()))
+        # self.instrument.write(f":TRIG:COUN {meas_count}")
+        # self.instrument.write(":INIT")
+        self.instrument.write("DISP:ENAB ON")
+        self.instrument.write(":INIT:CONT 1")
+        time.sleep(1)
+        self.instrument.write(":INIT:CONT 0")
+        # self.instrument.write(":TRIG:SOUR IMM")
         results = []
         for _ in range(meas_count):
-            results.append(float(self.instrument.query(":FETCh?")))
+            # results.append(float(self.instrument.query(":FETCh?")))
+            values = self.instrument.query_ascii_values(":read?")
+            results.append(float(values[0]))
+        # self.instrument.write("*RST")
+        self.instrument.write("DISP:ENAB ON")
         return results
 
 

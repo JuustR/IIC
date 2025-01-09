@@ -30,10 +30,15 @@ class InstrumentConnection:
     def connect_all(self):
         """Функция для подключения всех выбранных приборов"""
         self.keithley2001_connection()
-        self.keithley2000_connection()
-        self.daq970A_connection()
-        self.keysight_connection()
-        self.rigol_connection()
+        # self.keithley2000_connection()
+        # self.daq970A_connection()
+        # self.keysight_connection()
+        # self.rigol_connection()
+
+        # Если нужно будет, чтобы ускорить подключение то можно закоментить
+        # self.app_instance.ConsolePTE.appendPlainText(
+        #     time.strftime("%H:%M:%S | ", time.localtime()) + 'Подключения к ... закомменчены\n')
+
         #! BP пока не работают
         if self.BP_allowed:
             "Если есть нагреватель и подключен Е36312А"
@@ -55,11 +60,11 @@ class InstrumentConnection:
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.app_instance.ConsolePTE.appendPlainText(
-                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения Keithley2001!\n'
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения Keithley2010!\n'
                                                                      f'GPIB на приборе должен быть 16\n'
                                                                      f'Описание ошибки: {e}\n')
             else:
-                print('Ошибка подключения Keithley2001')
+                print('Ошибка подключения Keithley2010')
 
     def keithley2000_connection(self):
         try:
