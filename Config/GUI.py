@@ -4,14 +4,11 @@
 Tasks:
 1) Добавить словарь со всеми настройками, чтоб в него заносились настройки и
    чтоб была возможность обновлять их между циклами измерений
-2) Исправить ошибку -213 Keithley и разобрться с даком
 3) data И base_data реализовать через settings
 4) Пауза
 4.1) Либо сделать счетчик действий, чтоб следующий старт начинал измерения с
      определенного действия. При этом, когда задаётся начало строки счетчик сбрасывался
 4.2) Либо ждать окончания измерения, но тогда реализовать выход из длительной задержки
-5) Проверить работу lstn тк он вроде не выводит измеряемые значения на прибор
-6) Возможно, вынести измерения в отдельный класс
 """
 
 import os
@@ -26,8 +23,7 @@ from PyQt6.QtCore import QSettings
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection
-from Config.Keithley2010 import Keithley2010
-from Config.Rigol import Rigol
+from Config.Measurements import Measurements
 
 class App(QMainWindow):
     """GUI основной страницы программы"""
@@ -96,8 +92,11 @@ class App(QMainWindow):
         # Flag for start button
         self.working_flag = False
         self.data_reset_flag = False
+        self.settings_changed_flag = True
 
         self.inst_list = None
+        self.settings_dict = {}
+        self.start_time = 0
 
         # Загрузка настроек для Seebeck+R
         self.load_tab1_settings()
@@ -174,11 +173,21 @@ class App(QMainWindow):
             self.working_flag = True
             self.start_button.setText('Стоп')
 
-            # try расписать внутри функции
+
+            # Копирование настроек
+            try:
+                if self.settings_changed_flag:
+                    self.copy_settings_to_dict()
+
+            except Exception as e:
+                self.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Настройки не скопировались\n{e}')
 
             try:
+                self.start_time = time.time()
                 # self.rigol_measurements()
-                self.keithley_measurements()
+                measurement = Measurements(self)
+                measurement.keithley_measurements()
             except Exception as e:
                 print(e)
 
@@ -198,7 +207,9 @@ class App(QMainWindow):
         dlg.exec()
 
     def save_settings(self):
-        """По кнопке сохраняет настройки программы для Seebeck+R"""
+        """
+        По кнопке сохраняет настройки программы для Seebeck+R
+        """
         self.settings.setValue("combobox_scan", self.combobox_scan.currentText())
         self.settings.setValue("combobox_power", self.combobox_power.currentText())
         self.settings.setValue("rele_cb", self.rele_cb.isChecked())
@@ -230,9 +241,14 @@ class App(QMainWindow):
         self.settings.setValue("n_r_updown", self.n_r_updown.text())
         self.settings.setValue("ip_rigol", self.ip_rigol.text())
 
-        #Добавление текста в консоль
+
+
+        # Добавление текста в консоль
         self.ConsolePTE.appendPlainText(
             time.strftime("%H:%M:%S | ", time.localtime()) + 'Сохранили настройки программы\n')
+        if self.working_flag:
+            self.ConsolePTE.appendPlainText(time.strftime("%H:%M:%S | ", time.localtime()) +
+                                            'Настройки будут применены в следующем цикле\n')
 
         #! Добавить сравнение изменений и вывод их в Excel, например
         #!
@@ -270,149 +286,26 @@ class App(QMainWindow):
         self.n_r_up.setText(self.settings.value("n_r_up", ""))
         self.ip_rigol.setText(self.settings.value("ip_rigol", ""))
 
+        # (мб необ) Копирование настроек в словарь
+        self.copy_settings_to_dict()
 
-    def keithley_measurements(self):
-        # ! Добавить начало измерений в консоль
-        # ! Номер строки, и время цифрами добавить
-        # ! Изменить ренджи для каждой
-        # !! Сделать вывод в Excel и сохранение в памяти python для кэша
+    def copy_settings_to_dict(self):
+        """Копирует настройки из self.settings в словарь settings_dict"""
 
-        # Запись значений с прибора FRES - 6xDCV - FRES
-        instr = Keithley2010(self)
+        def copy_to_dict(element):
+            self.settings_dict[element] = self.settings.value(element)
 
+        keys = [
+            "combobox_scan", "combobox_power", "rele_cb",
+            "n_read_ch12", "n_read_ch34", "n_read_ch56",
+            "ch_term1", "ch_term2", "delay_term", "range_term", "nplc_term",
+            "ch_ip1", "ch_ip2", "u_ip1", "u_ip2", "n_cycles",
+            "n_heat", "n_cool", "pause_s", "pause_r",
+            "n_r_up", "n_r_updown", "ip_rigol"
+        ]
 
-        # ! Добавить range and delay
-        instr.set_fres_parameters(float(self.nplc_term.text()),
-                                  int(self.ch_term1.text()),
-                                  range=0,
-                                  delay=0)
-        fres_res_1 = instr.measure(1)
-        print(f"FRES on channel 101: {fres_res_1}")
-
-        instr.reset()  # Сброс настроек перед напряжением
-
-        dcv_results = {}
         for i in range(1, 7):
-            ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
-            delay_line_edit = self.findChild(QLineEdit, f"delay_ch{i}")
-            range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
-            nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
+            keys.extend([f"ch{i}", f"delay_ch{i}", f"range_ch{i}", f"nplc_ch{i}"])
 
-            instr.set_dcv_parameters(float(nplc_line_edit.text()),
-                                 int(ch_line_edit.text()),
-                                 float(range_line_edit.text()),
-                                 float(delay_line_edit.text()))  # Первая задержка
-            dcv_results[f"ch{i}"] = instr.measure(meas_count=1)  # Первое измерение
-
-            # Измерения для больше чем одного read
-            if i < 3:
-                if int(self.n_read_ch12.text()) > 1:
-                    instr.set_dcv_parameters(float(nplc_line_edit.text()),
-                                         int(ch_line_edit.text()),
-                                         float(range_line_edit.text()),
-                                         delay=0)  # Остальные измерения
-                    dcv_results[f"ch{i}"].extend(
-                        instr.measure(meas_count=(int(self.n_read_ch12.text()) - 1)))  # 4 оставшихся измерения
-                else:
-                    continue
-            elif 2 < i < 5:
-                if int(self.n_read_ch34.text()) > 1:
-                    instr.set_dcv_parameters(float(nplc_line_edit.text()),
-                                         int(ch_line_edit.text()),
-                                         float(range_line_edit.text()),
-                                         delay=0)  # Остальные измерения
-                    dcv_results[f"ch{i}"].extend(
-                        instr.measure(meas_count=(int(self.n_read_ch34.text()) - 1)))  # 4 оставшихся измерения
-                else:
-                    continue
-            else:
-                if int(self.n_read_ch56.text()) > 1:
-                    instr.set_dcv_parameters(float(nplc_line_edit.text()),
-                                         int(ch_line_edit.text()),
-                                         float(range_line_edit.text()),
-                                         delay=0)  # Остальные измерения
-                    dcv_results[f"ch{i}"].extend(
-                        instr.measure(meas_count=(int(self.n_read_ch56.text()) - 1)))  # 4 оставшихся измерения
-                else:
-                    continue
-
-        for channel, results in dcv_results.items():
-            print(f"DCV on channel {channel}: {results}")
-
-        instr.reset()  # Сброс настроек перед сопротивлением
-
-        instr.set_fres_parameters(float(self.nplc_term.text()), int(self.ch_term1.text()),
-                                 range=0, delay=0)
-        fres_result_2 = instr.measure(1)
-        print(f"FRES on channel 101 (repeat): {fres_result_2}")
-
-    def rigol_measurements(self):
-        instr = Rigol(self)
-
-        # Настройка и измерение 4-проводного сопротивления на канале 101
-        instr.set_fres_parameters(
-            float(self.nplc_term.text()),
-            int(self.ch_term1.text()),
-            range=0,
-            delay=0
-        )
-        fres_res_1 = instr.measure(1) 
-        print(f"FRES on channel 101: {fres_res_1}")
-
-        # Словарь для хранения результатов измерений
-        dcv_results = {}
-
-        # Перебор каналов с параметрами
-        for i in range(1, 7):
-            ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
-            delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
-            range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
-            nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
-
-
-            try:
-                # Открытие канала
-                instr.open_channel(ch_line_edit)
-
-                # Настройка и измерение на текущем канале
-                instr.set_dcv_parameters(
-                    float(nplc_line_edit.text()),
-                    int(ch_line_edit.text()),
-                    float(range_line_edit.text()),
-                    float(delay_line_edit.text())
-                )
-                dcv_results[f"ch{i}"] = instr.measure(meas_count=1)
-
-                # Дополнительные измерения (если требуется)
-                if i < 3:
-                    additional_reads = int(self.n_read_ch12.text()) - 1
-                elif 2 < i < 5:
-                    additional_reads = int(self.n_read_ch34.text()) - 1
-                else:
-                    additional_reads = int(self.n_read_ch56.text()) - 1
-
-                if additional_reads > 0:
-                    instr.set_dcv_parameters(
-                        float(nplc_line_edit.text()),
-                        int(ch_line_edit.text()),
-                        float(range_line_edit.text()),
-                        delay=0  # Установка задержки для оставшихся измерений
-                    )
-                    dcv_results[f"ch{i}"].extend(instr.measure(meas_count=additional_reads))
-            finally:
-                # Закрытие канала
-                instr.close_channel(ch_line_edit)
-
-        # Вывод результатов измерений
-        for channel, results in dcv_results.items():
-            print(f"DCV on channel {channel}: {results}")
-
-        # Повторное измерение 4-проводного сопротивления на канале 101
-        instr.set_fres_parameters(
-            float(self.nplc_term.text()),
-            int(self.ch_term1.text()),
-            range=0,
-            delay=0
-        )
-        fres_result_2 = instr.measure(1)
-        print(f"FRES on channel 101 (repeat): {fres_result_2}")
+        for key in keys:
+            copy_to_dict(key)
