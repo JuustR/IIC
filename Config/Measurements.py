@@ -12,7 +12,7 @@ import time
 import requests
 
 from Config.Keithley2010 import Keithley2010
-from Config.Rigol import Rigol
+#from Config.Rigol import Rigol
 
 class Measurements:
     def __init__(self, app_instance):
@@ -147,14 +147,14 @@ class Measurements:
 
     def temperature(self):
         """Функция измерения температуры"""
-        if self.combobox_scan.currentText() == "keithley2010":
+        if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
             instrument.set_fres_parameters(float(self.settings['nplc_term']),
                                       int(self.settings['ch_term1']),
                                       range=0,
                                       delay=0)
             self.fres_value = instrument.measure(1)
-            instrment.reset()  # Сброс настроек перед напряжением
+            instrument.reset()  # Сброс настроек перед напряжением
         else:
             self.fres_value = "Error"
 
@@ -164,7 +164,7 @@ class Measurements:
     def resistance(self):
         """Функция измерения сопротивления"""
         res_results = {}
-        if self.combobox_scan.currentText() == "keithley2010":
+        if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
             for i in range(5, 7):
                 ch_line_edit = self.settings[f"ch{i}"]
@@ -179,13 +179,13 @@ class Measurements:
                 res_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
 
                 # Измерения для больше чем одного read
-                if int(self.settings[n_read_ch56]) > 1:
+                if int(self.settings["n_read_ch56"]) > 1:
                     instrument.set_dcv_parameters(float(nplc_line_edit),
                                              int(ch_line_edit),
                                              float(range_line_edit),
                                              delay=0)  # Остальные измерения
                     res_results[f"ch{i}"].extend(
-                        instrument.measure(meas_count=(int(self.settings[n_read_ch56]) - 1)))  # 4 оставшихся измерения
+                        instrument.measure(meas_count=(int(self.settings["n_read_ch56"]) - 1)))  # 4 оставшихся измерения
                 else:
                     continue
             #! Убрать
@@ -200,7 +200,7 @@ class Measurements:
     def termoemf(self):
         """Функция измерения термоЭДС"""
         termoemf_results = {}
-        if self.combobox_scan.currentText() == "keithley2010":
+        if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
             for i in range(1, 5):
                 ch_line_edit = self.settings[f"ch{i}"]
@@ -216,23 +216,23 @@ class Measurements:
 
                 # Измерения для больше чем одного read
                 if i < 3:
-                    if int(self.settings[n_read_ch12]) > 1:
+                    if int(self.settings["n_read_ch12"]) > 1:
                         instrument.set_dcv_parameters(float(nplc_line_edit),
                                                  int(ch_line_edit),
                                                  float(range_line_edit),
                                                  delay=0)  # Остальные измерения
                         termoemf_results[f"ch{i}"].extend(
-                            instrument.measure(meas_count=(int(self.settings[n_read_ch12]) - 1)))  # 4 оставшихся измерения
+                            instrument.measure(meas_count=(int(self.settings["n_read_ch12"]) - 1)))  # 4 оставшихся измерения
                     else:
                         continue
                 else:
-                    if int(self.settings[n_read_ch34]) > 1:
+                    if int(self.settings["n_read_ch34"]) > 1:
                         instrument.set_dcv_parameters(float(nplc_line_edit),
                                                  int(ch_line_edit),
                                                  float(range_line_edit),
                                                  delay=0)  # Остальные измерения
                         termoemf_results[f"ch{i}"].extend(
-                            instrument.measure(meas_count=(int(self.settings[n_read_ch34]) - 1)))  # 4 оставшихся измерения
+                            instrument.measure(meas_count=(int(self.settings["n_read_ch34"]) - 1)))  # 4 оставшихся измерения
                     else:
                         continue
             #! Убрать
@@ -247,73 +247,74 @@ class Measurements:
     def add_dcv(self):
         pass
 
-    def rigol_measurements(self):
-        instr = Rigol(self)
 
-        # Настройка и измерение 4-проводного сопротивления на канале 101
-        instr.set_fres_parameters(
-            float(self.nplc_term.text()),
-            int(self.ch_term1.text()),
-            range=0,
-            delay=0
-        )
-        fres_res_1 = instr.measure(1)
-        print(f"FRES on channel 101: {fres_res_1}")
-
-        # Словарь для хранения результатов измерений
-        dcv_results = {}
-
-        # Перебор каналов с параметрами
-        for i in range(1, 7):
-            ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
-            delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
-            range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
-            nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
-
-
-            try:
-                # Открытие канала
-                instr.open_channel(ch_line_edit)
-
-                # Настройка и измерение на текущем канале
-                instr.set_dcv_parameters(
-                    float(nplc_line_edit.text()),
-                    int(ch_line_edit.text()),
-                    float(range_line_edit.text()),
-                    float(delay_line_edit.text())
-                )
-                dcv_results[f"ch{i}"] = instr.measure(meas_count=1)
-
-                # Дополнительные измерения (если требуется)
-                if i < 3:
-                    additional_reads = int(self.n_read_ch12.text()) - 1
-                elif 2 < i < 5:
-                    additional_reads = int(self.n_read_ch34.text()) - 1
-                else:
-                    additional_reads = int(self.n_read_ch56.text()) - 1
-
-                if additional_reads > 0:
-                    instr.set_dcv_parameters(
-                        float(nplc_line_edit.text()),
-                        int(ch_line_edit.text()),
-                        float(range_line_edit.text()),
-                        delay=0  # Установка задержки для оставшихся измерений
-                    )
-                    dcv_results[f"ch{i}"].extend(instr.measure(meas_count=additional_reads))
-            finally:
-                # Закрытие канала
-                instr.close_channel(ch_line_edit)
-
-        # Вывод результатов измерений
-        for channel, results in dcv_results.items():
-            print(f"DCV on channel {channel}: {results}")
-
-        # Повторное измерение 4-проводного сопротивления на канале 101
-        instr.set_fres_parameters(
-            float(self.nplc_term.text()),
-            int(self.ch_term1.text()),
-            range=0,
-            delay=0
-        )
-        fres_result_2 = instr.measure(1)
-        print(f"FRES on channel 101 (repeat): {fres_result_2}")
+    # def rigol_measurements(self):
+    #     instr = Rigol(self)
+    #
+    #     # Настройка и измерение 4-проводного сопротивления на канале 101
+    #     instr.set_fres_parameters(
+    #         float(self.nplc_term.text()),
+    #         int(self.ch_term1.text()),
+    #         range=0,
+    #         delay=0
+    #     )
+    #     fres_res_1 = instr.measure(1)
+    #     print(f"FRES on channel 101: {fres_res_1}")
+    #
+    #     # Словарь для хранения результатов измерений
+    #     dcv_results = {}
+    #
+    #     # Перебор каналов с параметрами
+    #     for i in range(1, 7):
+    #         ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
+    #         delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
+    #         range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
+    #         nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
+    #
+    #
+    #         try:
+    #             # Открытие канала
+    #             instr.open_channel(ch_line_edit)
+    #
+    #             # Настройка и измерение на текущем канале
+    #             instr.set_dcv_parameters(
+    #                 float(nplc_line_edit.text()),
+    #                 int(ch_line_edit.text()),
+    #                 float(range_line_edit.text()),
+    #                 float(delay_line_edit.text())
+    #             )
+    #             dcv_results[f"ch{i}"] = instr.measure(meas_count=1)
+    #
+    #             # Дополнительные измерения (если требуется)
+    #             if i < 3:
+    #                 additional_reads = int(self.n_read_ch12.text()) - 1
+    #             elif 2 < i < 5:
+    #                 additional_reads = int(self.n_read_ch34.text()) - 1
+    #             else:
+    #                 additional_reads = int(self.n_read_ch56.text()) - 1
+    #
+    #             if additional_reads > 0:
+    #                 instr.set_dcv_parameters(
+    #                     float(nplc_line_edit.text()),
+    #                     int(ch_line_edit.text()),
+    #                     float(range_line_edit.text()),
+    #                     delay=0  # Установка задержки для оставшихся измерений
+    #                 )
+    #                 dcv_results[f"ch{i}"].extend(instr.measure(meas_count=additional_reads))
+    #         finally:
+    #             # Закрытие канала
+    #             instr.close_channel(ch_line_edit)
+    #
+    #     # Вывод результатов измерений
+    #     for channel, results in dcv_results.items():
+    #         print(f"DCV on channel {channel}: {results}")
+    #
+    #     # Повторное измерение 4-проводного сопротивления на канале 101
+    #     instr.set_fres_parameters(
+    #         float(self.nplc_term.text()),
+    #         int(self.ch_term1.text()),
+    #         range=0,
+    #         delay=0
+    #     )
+    #     fres_result_2 = instr.measure(1)
+    #     print(f"FRES on channel 101 (repeat): {fres_result_2}")
