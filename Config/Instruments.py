@@ -15,9 +15,6 @@ class InstrumentConnection:
         self.daq970A = None
         self.rigol = None
 
-        self.BP_allowed = False
-        # self.BP_allowed = self.app_instance.BP_allowed
-
         self.E36312A = None
         self.AKIP = None
 
@@ -34,16 +31,12 @@ class InstrumentConnection:
         # self.daq970A_connection()
         # self.keysight_connection()
         # self.rigol_connection()
+        # self.E36312A_connection()
+        # self.AKIP_connection()
 
         # Если нужно будет, чтобы ускорить подключение то можно закоментить
-        # self.app_instance.ConsolePTE.appendPlainText(
-        #     time.strftime("%H:%M:%S | ", time.localtime()) + 'Подключения к ... закомменчены\n')
-
-        #! BP пока не работают
-        if self.BP_allowed:
-            "Если есть нагреватель и подключен Е36312А"
-            self.E36312A_connection()
-            self.AKIP_connection()
+        self.app_instance.ConsolePTE.appendPlainText(
+            time.strftime("%H:%M:%S | ", time.localtime()) + 'Подключения к daq, keysight, rigol, E36312A, AKIP закомменчены\n')
 
         # Должен возвращаться словарь подключенных приборов с их IP/GPIB
         return self.instr_list
@@ -142,14 +135,22 @@ class InstrumentConnection:
 
         try:
             self.E36312A = self.rm.open_resource('TCPIP0::' + str(self.app_instance.IP_BP.text()) + '::inst0::INSTR')
-            self.app_instance.statusBar.showMessage('E36312A подключен успешно')
+            self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'E36312A подключен успешно\n')
         except Exception as e:
-            self.app_instance.statusBar.showMessage(f'Ошибка подключения E36312A: {e}')
+            if self.app_instance.show_errors_cb.isChecked():
+                self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения E36312A!\n'
+                                                                     f'Проверьте IP прибора\n'
+                                                                     f'Описание ошибки: {e}\n')
+            else:
+                print('Ошибка подключения E36312A')
 
     def AKIP_connection(self):
         # Проверка USB ресурсов
         self.USB_resources = [res for res in self.rm.list_resources() if res.startswith('USB')]
         n = 0
+        self.instr_check()
         try:
             while n < len(self.USB_resources):
                 try:
@@ -160,16 +161,23 @@ class InstrumentConnection:
 
                 if self.send_IDN == 'ITECH Ltd., IT6333A, 800572020767710004, 1.11-1.08\n':
                     self.AKIP.write("*rst")
-                    self.app_instance.statusBar.showMessage('AKIP подключен успешно')
+                    self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'АКИП подключен успешно\n')
                     break
 
                 n += 1
         except Exception as e:
-            self.app_instance.statusBar.showMessage(f'AKIP не подключен(или не обнаружается) по USB: {e}')
+            if self.app_instance.show_errors_cb.isChecked():
+                self.app_instance.ConsolePTE.appendPlainText(
+                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Ошибка подключения АКИПа!\n'
+                                                                     f'Проверьте IDN\'ы в консоле\n'
+                                                                     f'Описание ошибки: {e}\n')
+            else:
+                print('Ошибка подключения АКИПа')
 
 
     def instr_check(self):
-        """Поочередный вывод IDN всех приборов(для отладки)"""
+        """Поочередный вывод IDN всех приборов по юсб(для отладки)"""
         for i in self.rm.list_resources():
             self.instr = self.rm.open_resource(i)
             print("Для (" + i + ") IDN будет: " + self.instr.query("*IDN?"))
