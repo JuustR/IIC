@@ -32,7 +32,7 @@ class InstrumentConnection:
         # self.daq970A_connection()
         # self.keysight_connection()
         # self.rigol_connection()
-        # self.E36312A_connection()
+        # self.E36312A_connection()  # Не работает, т.к. не задан IP
         # self.AKIP_connection()
 
         # Если нужно будет, чтобы ускорить подключение то можно закоментить
@@ -133,7 +133,7 @@ class InstrumentConnection:
                 print('Ошибка подключения Rigol')
 
     def E36312A_connection(self):
-
+        #! Нужен IP_BP или что-то такое
         try:
             self.E36312A = self.rm.open_resource('TCPIP0::' + str(self.app_instance.IP_BP.text()) + '::inst0::INSTR')
             self.app_instance.ConsolePTE.appendPlainText(
