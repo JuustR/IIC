@@ -14,6 +14,7 @@ class InstrumentConnection:
         self.keithley2000 = None
         self.daq970A = None
         self.rigol = None
+        self.keysight = None
 
         self.BP_allowed = False
         # self.BP_allowed = self.app_instance.BP_allowed

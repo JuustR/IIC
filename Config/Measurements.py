@@ -49,7 +49,7 @@ class Measurements:
         # ТермоЭДС
         requests.get('http://192.168.0.101:10500/turn_on_heater_current_switch')
         #! Тут место для нагревателя)
-        
+
 
 
         pass
