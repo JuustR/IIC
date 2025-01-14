@@ -25,6 +25,7 @@ from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection
 from Config.Measurements import Measurements
 
+
 class App(QMainWindow):
     """GUI основной страницы программы"""
 
@@ -190,7 +191,7 @@ class App(QMainWindow):
                 self.qtimer.start(1000)
             except Exception as e:
                 self.pause()
-                self.log_message("",e)
+                self.log_message("", e)
 
         else:
             self.pause()
@@ -217,7 +218,7 @@ class App(QMainWindow):
         self.settings.setValue("combobox_power", self.combobox_power.currentText())
         self.settings.setValue("rele_cb", self.rele_cb.isChecked())
 
-        for i in range(1, 7):  #Ch1 - Ch6
+        for i in range(1, 7):  # Ch1 - Ch6
             self.settings.setValue(f"ch{i}", self.findChild(QLineEdit, f"ch{i}").text())
             self.settings.setValue(f"delay_ch{i}", self.findChild(QLineEdit, f"delay_ch{i}").text())
             self.settings.setValue(f"range_ch{i}", self.findChild(QLineEdit, f"range_ch{i}").text())
@@ -244,15 +245,13 @@ class App(QMainWindow):
         self.settings.setValue("n_r_updown", self.n_r_updown.text())
         self.settings.setValue("ip_rigol", self.ip_rigol.text())
 
-
-
         # Добавление текста в консоль
         self.log_message('Сохранили настройки программы')
         if self.working_flag:
             self.log_message('Настройки будут применены в следующем цикле')
 
-        #! Добавить сравнение изменений и вывод их в Excel, например
-        #!
+        # ! Добавить сравнение изменений и вывод их в Excel, например
+        # !
 
     def load_tab1_settings(self):
         """Загружает сохранённые значения виджетов пока только для Seebeck+R"""

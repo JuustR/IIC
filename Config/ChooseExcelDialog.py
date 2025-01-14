@@ -28,7 +28,6 @@ class ChooseExcelDialog(QDialog):
         self.excel_settings = 'Smth'
         self.macros_status = None
 
-
         self.setWindowTitle('Choosing Template')
         self.OpenMacrosBtn.clicked.connect(self.open_macros_btn)
         self.OpenTempBtn.clicked.connect(self.open_temp_btn)
@@ -104,17 +103,15 @@ class ChooseExcelDialog(QDialog):
 
         workbook.SaveAs(file_path, 52)
         self.app_instance.excel.Visible = True
-        self.log_message(f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
+        self.log_message(
+            f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
 
-        #! Добавить, если такой-то шаблон, то установки будут такие-то
-
-
+        # ! Добавить, если такой-то шаблон, то установки будут такие-то
 
     def onRejected(self):
         """Отмена создания Excel со сбросом заданных условий"""
         self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
         self.log_message('Отмена создания файла')
-
 
     def getExcelSettings(self):
         return self.excel_settings

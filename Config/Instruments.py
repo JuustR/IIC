@@ -5,6 +5,7 @@
 import pyvisa
 import time
 
+
 class InstrumentConnection:
     def __init__(self, app_instance):
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
@@ -23,7 +24,7 @@ class InstrumentConnection:
         self.USB_resources = []
         self.instr_list = {"Smth1": "IDN...1", "Smth2": "IDN...2"}
         self.powersource_dict = {"PS1": "IDN"}
-        self.instr = None # Для проверки всех подключенных приборов
+        self.instr = None  # Для проверки всех подключенных приборов
 
         self.send_IDN = None
 
@@ -108,7 +109,7 @@ class InstrumentConnection:
                 self.log_message('Ошибка подключения keysight!')
 
     def rigol_connection(self):
-        #! Поменять IP
+        # ! Поменять IP
         try:
             # self.rigol = self.rm.open_resource('TCPIP0::' + str(self.w_root.lineIP_1.text()) + '::inst0::INSTR')
             self.rigol = self.rm.open_resource('TCPIP0::' + "169.254.50.9" + '::inst0::INSTR')
@@ -123,11 +124,11 @@ class InstrumentConnection:
                 self.log_message('Ошибка подключения Rigol!')
 
     def E36312A_connection(self):
-        #! Нужен IP_BP или что-то такое
+        # ! Нужен IP_BP или что-то такое
         try:
             self.E36312A = self.rm.open_resource('TCPIP0::' + str(self.app_instance.IP_BP.text()) + '::inst0::INSTR')
             self.log_message('E36312A подключен успешно')
-            self.powersource_dict["E36312A"] = 'TCPIP0::169.254.50.9::inst0::INSTR' #!
+            self.powersource_dict["E36312A"] = 'TCPIP0::169.254.50.9::inst0::INSTR'  # !
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.log_message('Ошибка подключения E36312A!\n'

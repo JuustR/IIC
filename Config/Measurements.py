@@ -3,13 +3,14 @@
 
 """
 
-
 import time
 import requests
 import pyvisa
 
 from Config.Keithley2010 import Keithley2010
-#from Config.Rigol import Rigol
+
+
+# from Config.Rigol import Rigol
 
 class Measurements:
     def __init__(self, app_instance):
@@ -32,13 +33,13 @@ class Measurements:
 
     def toggle_relay(self, relay_type, state):
         """Управление релюшками, где current - направление тока, sample - ток, heater - нагреватель"""
-        type = {
+        d = {
             "current": "current_switch",
             "sample": "sample_switch",
             "heater": "heater_current_switch",
         }
         try:
-            action = type[relay_type]
+            action = d[relay_type]
             requests.get(f'http://192.168.0.101:10500/turn_{state}_{action}')
         except Exception as e:
             self.log_message(f"Ошибка переключения реле {relay_type} ({state})", e)
@@ -93,11 +94,11 @@ class Measurements:
         # ТермоЭДС
         for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
             # Включаем релюшки
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.toggle_relay("heater", "on")
 
             # Включаем нагреватель
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip1"],
                                 voltage=self.settings["u_ip1"],
                                 state="on")
@@ -110,13 +111,13 @@ class Measurements:
                 self.app_instance.start_line_le.setText(self.number)
 
             # Выключаем нагреватель
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip1"],
                                 voltage="0",
                                 state="on")
 
             # Выключаем релюшки
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.toggle_relay("heater", "off")
 
             # Основные измерения охлаждения для термоЭДС
@@ -131,11 +132,11 @@ class Measurements:
         # Измерения сопротивления
         if self.app_instance.rele_cb.isChecked():
             # Включаем релюшки
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.toggle_relay("sample", "on")
 
             # Включаем нагреватель
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage=self.settings["u_ip2"],
                                 state="on")
@@ -153,17 +154,17 @@ class Measurements:
                     self.toggle_relay("current", "off")
 
             # Выключаем нагреватель
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage="0",
                                 state="on")
             # Выключаем релюшки
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.toggle_relay("sample", "off")
 
         else:
             # Включаем нагреватель
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage=self.settings["u_ip2"],
                                 state="on")
@@ -172,7 +173,7 @@ class Measurements:
                 self.resistance_step()
 
             # Выключаем нагреватель
-            #! Добавить pause через try except
+            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage="0",
                                 state="on")
@@ -195,7 +196,7 @@ class Measurements:
         """
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
-        #! Номер строки эксперимента
+        # ! Номер строки эксперимента
         # self.meas_number Добавить в Excel
 
         # Время 1
@@ -281,16 +282,15 @@ class Measurements:
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
             instrument.set_fres_parameters(float(self.settings['nplc_term']),
-                                      int(self.settings['ch_term1']),
-                                      range=0,
-                                      delay=0)
+                                           int(self.settings['ch_term1']),
+                                           range=0,
+                                           delay=0)
             self.fres_value = instrument.measure(1)
             instrument.reset()  # Сброс настроек перед напряжением
         elif self.app_instance.combobox_scan.currentText() == "Rigol":
             pass
         else:
             self.fres_value = "Error"
-
 
         return self.fres_value
 
@@ -306,19 +306,20 @@ class Measurements:
                 nplc_line_edit = self.settings[f"nplc_ch{i}"]
 
                 instrument.set_dcv_parameters(float(nplc_line_edit),
-                                         int(ch_line_edit),
-                                         float(range_line_edit),
-                                         float(delay_line_edit))  # Первая задержка
+                                              int(ch_line_edit),
+                                              float(range_line_edit),
+                                              float(delay_line_edit))  # Первая задержка
                 res_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
 
                 # Измерения для больше чем одного read
                 if int(self.settings["n_read_ch56"]) > 1:
                     instrument.set_dcv_parameters(float(nplc_line_edit),
-                                             int(ch_line_edit),
-                                             float(range_line_edit),
-                                             delay=0)  # Остальные измерения
+                                                  int(ch_line_edit),
+                                                  float(range_line_edit),
+                                                  delay=0)  # Остальные измерения
                     res_results[f"ch{i}"].extend(
-                        instrument.measure(meas_count=(int(self.settings["n_read_ch56"]) - 1)))  # 4 оставшихся измерения
+                        instrument.measure(
+                            meas_count=(int(self.settings["n_read_ch56"]) - 1)))  # 4 оставшихся измерения
                 else:
                     continue
 
@@ -342,30 +343,32 @@ class Measurements:
                 nplc_line_edit = self.settings[f"nplc_ch{i}"]
 
                 instrument.set_dcv_parameters(float(nplc_line_edit),
-                                         int(ch_line_edit),
-                                         float(range_line_edit),
-                                         float(delay_line_edit))  # Первая задержка
+                                              int(ch_line_edit),
+                                              float(range_line_edit),
+                                              float(delay_line_edit))  # Первая задержка
                 termoemf_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
 
                 # Измерения для больше чем одного read
                 if i < 3:
                     if int(self.settings["n_read_ch12"]) > 1:
                         instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                 int(ch_line_edit),
-                                                 float(range_line_edit),
-                                                 delay=0)  # Остальные измерения
+                                                      int(ch_line_edit),
+                                                      float(range_line_edit),
+                                                      delay=0)  # Остальные измерения
                         termoemf_results[f"ch{i}"].extend(
-                            instrument.measure(meas_count=(int(self.settings["n_read_ch12"]) - 1)))  # 4 оставшихся измерения
+                            instrument.measure(
+                                meas_count=(int(self.settings["n_read_ch12"]) - 1)))  # 4 оставшихся измерения
                     else:
                         continue
                 else:
                     if int(self.settings["n_read_ch34"]) > 1:
                         instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                 int(ch_line_edit),
-                                                 float(range_line_edit),
-                                                 delay=0)  # Остальные измерения
+                                                      int(ch_line_edit),
+                                                      float(range_line_edit),
+                                                      delay=0)  # Остальные измерения
                         termoemf_results[f"ch{i}"].extend(
-                            instrument.measure(meas_count=(int(self.settings["n_read_ch34"]) - 1)))  # 4 оставшихся измерения
+                            instrument.measure(
+                                meas_count=(int(self.settings["n_read_ch34"]) - 1)))  # 4 оставшихся измерения
                     else:
                         continue
 
@@ -377,7 +380,6 @@ class Measurements:
 
     def add_dcv(self):
         pass
-
 
     # def rigol_measurements(self):
     #     instr = Rigol(self)

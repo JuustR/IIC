@@ -6,6 +6,7 @@
 import pyvisa
 import time
 
+
 class Keithley2010:
     def __init__(self, app_instance):
         self.app_instance = app_instance
@@ -17,7 +18,7 @@ class Keithley2010:
         """Сброс настроек прибора"""
         self.instrument.write("*RST")
 
-    def set_dcv_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
+    def set_dcv_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка прибора на измерение постоянного напряжения"""
         self.instrument.write(":SENS:FUNC 'VOLT:DC'")
         self.instrument.write(f":SENS:VOLT:DC:NPLC {nplc}")
@@ -32,7 +33,7 @@ class Keithley2010:
         self.instrument.write(f":TRIG:DEL {delay}")
         self.instrument.write("DISP:ENAB ON")
 
-    def set_fres_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
+    def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка прибора на измерение 4-проводного сопротивления"""
         self.instrument.write(":SENS:FUNC 'FRES'")
         self.instrument.write(f":SENS:FRES:NPLC {nplc}")
@@ -47,7 +48,7 @@ class Keithley2010:
         self.instrument.write(f":TRIG:DEL {delay}")
         self.instrument.write("DISP:ENAB ON")
 
-    def set_res_parameters(self, nplc: float,ch: int, range: float, delay: float) -> None:
+    def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка прибора на измерение 2-проводного сопротивления"""
         self.instrument.write(":SENS:FUNC 'RES'")
         self.instrument.write(f":SENS:RES:NPLC {nplc}")
@@ -61,7 +62,6 @@ class Keithley2010:
             self.instrument.write(f":ROUT:CLOS (@{ch})")
         self.instrument.write(f":TRIG:DEL {delay}")
         self.instrument.write("DISP:ENAB ON")
-
 
     def measure(self, meas_count: int) -> list:
         """Запуск измерения и получение результата(должно быть -> list?)"""
@@ -80,5 +80,3 @@ class Keithley2010:
         # self.instrument.write("*RST")
         self.instrument.write("DISP:ENAB ON")
         return results
-
-

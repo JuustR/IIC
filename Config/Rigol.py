@@ -39,6 +39,7 @@
 
 import pyvisa
 
+
 class Rigol:
     def __init__(self, app_instance):
         self.app_instance = app_instance
@@ -46,7 +47,6 @@ class Rigol:
         self.rm = pyvisa.ResourceManager()
         self.instrument = self.rm.open_resource(self.instr["Rigol"])
         self.additional_inst = self.rm.open_resource(self.instr["keysight"])
-
 
     def reset(self):
         """Сброс настроек прибора"""
@@ -81,7 +81,6 @@ class Rigol:
         else:
             self.additional_inst.write(f"SENS:FRES:RANG {range}")
         self.additional_inst.write(f"TRIG:DEL {delay}")
-
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение 2-проводного сопротивления"""
@@ -118,5 +117,3 @@ class Rigol:
     def close_channel(self, ch: int) -> None:
         rigol_channel = f"10{ch}" if ch < 10 else f"1{ch}"
         self.instrument.write(f":ROUT:CHAN {rigol_channel}, OFF")
-
-
