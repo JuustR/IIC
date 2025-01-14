@@ -19,7 +19,7 @@ import pyvisa
 
 from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import (QMainWindow, QDialog, QFileDialog, QLineEdit)
-from PyQt6.QtCore import QSettings
+from PyQt6.QtCore import QSettings, QTimer
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection
@@ -68,8 +68,8 @@ class App(QMainWindow):
         self.save_settings_pb.clicked.connect(self.save_settings)
 
         # Time and console start settings
-        formatted_time = time.strftime("%d-%m-%Y %H:%M:%S", time.localtime())
-        self.ConsolePTE.setPlainText(formatted_time + "\n" +
+        self.formatted_time = time.strftime("%H:%M:%S | ", time.localtime())
+        self.ConsolePTE.setPlainText(time.strftime("%d-%m-%Y %H:%M:%S", time.localtime()) + "\n" +
                                      """
 Здравствуйте! Для начала работы:
 1. Выберите/создайте шаблон Excel
@@ -95,13 +95,22 @@ class App(QMainWindow):
         self.settings_changed_flag = True
 
         self.inst_list = None
+        self.powersource_list = None
         self.settings_dict = {}
         self.start_time = 0
+
+        self.qtimer = QTimer(self)
 
         # Загрузка настроек для Seebeck+R
         self.load_tab1_settings()
 
         self.show()
+
+    def log_message(self, message, exception=None):
+        error_message = f"{self.formatted_time}{message}\n"
+        if exception:
+            error_message += f"{exception}\n"
+        self.ConsolePTE.appendPlainText(error_message)
 
     def combobox_scan_changed(self):
         """Включение ip для Rigol'a"""
@@ -149,18 +158,19 @@ class App(QMainWindow):
         self.combobox_scan.clear()
         self.combobox_power.clear()
         ic = InstrumentConnection(self)
-        self.inst_list = ic.connect_all()
-        connected_instruments = ', '.join(str(i) for i in self.inst_list)
-        self.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) +
-            'Подключенные приборы: ' + connected_instruments + "\n")
+        self.inst_list, self.powersource_list = ic.connect_all()
+
+        connected_instruments = (', '.join(str(i) for i in self.inst_list) + ", " +
+                                 ', '.join(str(i) for i in self.powersource_list))
+        self.log_message('Подключенные приборы: ' + connected_instruments)
         for _ in self.inst_list:
             self.combobox_scan.addItem(_)
+        for _ in self.powersource_list:
+            self.combobox_power.addItem(_)
 
     def on_create_clicked(self):
         """Создаёт шаблон эксперимента"""
-        self.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'НЕДОСТУПНО! Находится в разработке \n')
+        self.log_message('НЕДОСТУПНО! Находится в разработке')
         pass
 
     def on_start_line_clicked(self):
@@ -173,36 +183,29 @@ class App(QMainWindow):
             self.working_flag = True
             self.start_button.setText('Стоп')
 
-
-            # Копирование настроек
-            try:
-                if self.settings_changed_flag:
-                    self.copy_settings_to_dict()
-
-            except Exception as e:
-                self.ConsolePTE.appendPlainText(
-                    time.strftime("%H:%M:%S | ", time.localtime()) + f'Настройки не скопировались\n{e}')
-
             try:
                 self.start_time = time.time()
-                # self.rigol_measurements()
                 measurement = Measurements(self)
-                measurement.keithley_measurements()
+                self.qtimer.timeout.connect(measurement.cycle_S_R())
+                self.qtimer.start(1000)
             except Exception as e:
-                print(e)
+                self.pause()
+                self.log_message("",e)
 
         else:
+            self.pause()
+            self.log_message("Измерение остановлено")
             self.working_flag = False
             self.start_button.setText('Старт')
 
-
-
-        # self.start_fuct()
+    def pause(self):
+        self.qtimer.stop()
+        self.working_flag = False
+        self.start_button.setText('Старт')
 
     def on_choose_excel_clicked(self):
         """Вызов диалога с созданием нового Excel"""
-        self.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Вызвали создание нового Excel\n')
+        self.log_message('Вызвали создание нового Excel')
         dlg = ChooseExcelDialog(self)
         dlg.exec()
 
@@ -244,11 +247,9 @@ class App(QMainWindow):
 
 
         # Добавление текста в консоль
-        self.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Сохранили настройки программы\n')
+        self.log_message('Сохранили настройки программы')
         if self.working_flag:
-            self.ConsolePTE.appendPlainText(time.strftime("%H:%M:%S | ", time.localtime()) +
-                                            'Настройки будут применены в следующем цикле\n')
+            self.log_message('Настройки будут применены в следующем цикле')
 
         #! Добавить сравнение изменений и вывод их в Excel, например
         #!

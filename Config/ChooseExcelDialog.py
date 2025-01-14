@@ -24,7 +24,9 @@ class ChooseExcelDialog(QDialog):
         # loadUi('assets/chooseDialog.ui', self)
 
         self.app_instance = app_instance
+        self.formatted_time = self.app_instance.formatted_time
         self.excel_settings = 'Smth'
+        self.macros_status = None
 
 
         self.setWindowTitle('Choosing Template')
@@ -42,6 +44,12 @@ class ChooseExcelDialog(QDialog):
         self.FileNameLE.setText(self.data["FileName"])
         self.MacrosLabel.setText(self.data["MacrosName"])
         self.TempLabel.setText(self.data["TempName"])
+
+    def log_message(self, message, exception=None):
+        error_message = f"{self.formatted_time}{message}\n"
+        if exception:
+            error_message += f"{exception}\n"
+        self.app_instance.ConsolePTE.appendPlainText(error_message)
 
     def open_macros_btn(self):
         """Метод для открытия макроса"""
@@ -84,11 +92,11 @@ class ChooseExcelDialog(QDialog):
                 vbacomponent.CodeModule.AddFromFile(self.data["MacrosName"])
                 self.macros_status = f"с макросом \"{os.path.basename(self.data['MacrosName'])}\""
 
-            except:
-                self.app_instance.ConsolePTE.appendPlainText(
-                    time.strftime("%H:%M:%S | ", time.localtime()) + "Макросы не добавлены, т.к. ")
-                self.app_instance.ConsolePTE.appendPlainText(
-                    time.strftime("%H:%M:%S | ", time.localtime()) + "в Центре управления безопасностью \n(Параметры макросов) необходимо поставить галочку на 'Доверять доступ к объектной модели проектов VBA'")
+            except Exception as e:
+                self.log_message('Макросы не добавлены, т.к.\n' +
+                                 "в Центре управления безопасностью \n"
+                                 "(Параметры макросов) необходимо поставить галочку на "
+                                 "'Доверять доступ к объектной модели проектов VBA'", e)
                 self.data["MacrosName"] = "Нет макроса"
                 self.macros_status = "без макроса"
         else:
@@ -96,10 +104,7 @@ class ChooseExcelDialog(QDialog):
 
         workbook.SaveAs(file_path, 52)
         self.app_instance.excel.Visible = True
-
-        self.app_instance.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) +
-            f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}\n")
+        self.log_message(f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
 
         #! Добавить, если такой-то шаблон, то установки будут такие-то
 
@@ -108,8 +113,8 @@ class ChooseExcelDialog(QDialog):
     def onRejected(self):
         """Отмена создания Excel со сбросом заданных условий"""
         self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
-        self.app_instance.ConsolePTE.appendPlainText(
-            time.strftime("%H:%M:%S | ", time.localtime()) + 'Отмена создания файла')
+        self.log_message('Отмена создания файла')
+
 
     def getExcelSettings(self):
         return self.excel_settings

@@ -12,7 +12,6 @@ class Keithley2010:
         self.instr = self.app_instance.inst_list
         self.rm = pyvisa.ResourceManager()
         self.instrument = self.rm.open_resource(self.instr["keithley2010"])
-        self.instrument.timeout = 10000  # Большее время таймаута для корректного выполнения команды fetch
 
     def reset(self):
         """Сброс настроек прибора"""
@@ -71,7 +70,6 @@ class Keithley2010:
         # self.instrument.write(":INIT")
         self.instrument.write("DISP:ENAB ON")
         self.instrument.write(":INIT:CONT 1")
-        time.sleep(1)
         self.instrument.write(":INIT:CONT 0")
         # self.instrument.write(":TRIG:SOUR IMM")
         results = []

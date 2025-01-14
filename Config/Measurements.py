@@ -1,28 +1,65 @@
 """
 Класс содержащий основной цикл измерений
 
-Релюшки:
-requests.get('http://192.168.0.101:10500/turn_off_current_switch')
-requests.get('http://192.168.0.101:10500/turn_off_sample_switch')
-requests.get('http://192.168.0.101:10500/turn_off_heater_current_switch')
 """
 
 
 import time
 import requests
+import pyvisa
 
 from Config.Keithley2010 import Keithley2010
 #from Config.Rigol import Rigol
 
 class Measurements:
     def __init__(self, app_instance):
+        self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
+
         self.app_instance = app_instance
         self.settings = self.app_instance.settings_dict
         self.inst_list = self.app_instance.inst_list
+        self.powersource_list = self.app_instance.powersource_list
+        self.formatted_time = self.app_instance.formatted_time
+
+        # Инициализация ИП
+        self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
+
+        self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
 
         self.fres_value = None
+        self.number = 11
+        self.meas_number = 1
 
-    def cycle(self):
+    def toggle_relay(self, relay_type, state):
+        """Управление релюшками, где current - направление тока, sample - ток, heater - нагреватель"""
+        type = {
+            "current": "current_switch",
+            "sample": "sample_switch",
+            "heater": "heater_current_switch",
+        }
+        try:
+            action = type[relay_type]
+            requests.get(f'http://192.168.0.101:10500/turn_{state}_{action}')
+        except Exception as e:
+            self.log_message(f"Ошибка переключения реле {relay_type} ({state})", e)
+
+    def control_heater(self, channel, voltage, state):
+        """Управление нагревателем"""
+        try:
+            if self.app_instance.combobox_power.currentText() == "AKIP":
+                self.AKIP.write(f'INSTrument:NSELect {channel}')
+                self.AKIP.write(f'APPL CH{channel},{voltage},1')
+                self.AKIP.write(f'CHANnel:OUTPut {1 if state == "on" else 0}')
+        except Exception as e:
+            self.log_message(f"Ошибка управления нагревателем ({state})", e)
+
+    def log_message(self, message, exception=None):
+        error_message = f"{self.formatted_time}{message}\n"
+        if exception:
+            error_message += f"{exception}\n"
+        self.app_instance.ConsolePTE.appendPlainText(error_message)
+
+    def cycle_S_R(self):
         """
         План по измерениям
 
@@ -46,14 +83,99 @@ class Measurements:
                 3.2.6. Выставляем паузу, если нужно
         4. Остановка измерений и сохранение файла
         """
+        # Проверка обновления настроек
+        try:
+            if self.app_instance.settings_changed_flag:
+                self.app_instance.copy_settings_to_dict()
+        except Exception as e:
+            self.log_message('Настройки не скопировались', e)
+
         # ТермоЭДС
-        requests.get('http://192.168.0.101:10500/turn_on_heater_current_switch')
-        #! Тут место для нагревателя)
+        for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
+            # Включаем релюшки
+            #! Добавить pause через try except
+            self.toggle_relay("heater", "on")
 
+            # Включаем нагреватель
+            #! Добавить pause через try except
+            self.control_heater(channel=self.settings["ch_ip1"],
+                                voltage=self.settings["u_ip1"],
+                                state="on")
 
+            # Основные измерения нагрева для термоЭДС
+            for _ in range(int(self.settings["n_heat"])):
+                self.termoemf_step()
+                self.meas_number += 1
+                self.number += 1
+                self.app_instance.start_line_le.setText(self.number)
 
-        pass
+            # Выключаем нагреватель
+            #! Добавить pause через try except
+            self.control_heater(channel=self.settings["ch_ip1"],
+                                voltage="0",
+                                state="on")
 
+            # Выключаем релюшки
+            #! Добавить pause через try except
+            self.toggle_relay("heater", "off")
+
+            # Основные измерения охлаждения для термоЭДС
+            for _ in range(int(self.settings["n_heat"])):
+                self.termoemf_step()
+                self.meas_number += 1
+                self.number += 1
+                self.app_instance.start_line_le.setText(self.number)
+
+            time.sleep(int(self.app_instance.pause_S.text()))
+
+        # Измерения сопротивления
+        if self.app_instance.rele_cb.isChecked():
+            # Включаем релюшки
+            #! Добавить pause через try except
+            self.toggle_relay("sample", "on")
+
+            # Включаем нагреватель
+            #! Добавить pause через try except
+            self.control_heater(channel=self.settings["ch_ip2"],
+                                voltage=self.settings["u_ip2"],
+                                state="on")
+
+            # Основные измерения сопротивления
+            for _ in range(int(self.settings["n_r_updown"])):
+                self.resistance_step()
+                if not self.change_volt_flag:
+                    # Включаем релюшки
+                    # ! Добавить pause через try except
+                    self.toggle_relay("current", "on")
+                else:
+                    # Выключаем релюшки
+                    # ! Добавить pause через try except
+                    self.toggle_relay("current", "off")
+
+            # Выключаем нагреватель
+            #! Добавить pause через try except
+            self.control_heater(channel=self.settings["ch_ip2"],
+                                voltage="0",
+                                state="on")
+            # Выключаем релюшки
+            #! Добавить pause через try except
+            self.toggle_relay("sample", "off")
+
+        else:
+            # Включаем нагреватель
+            #! Добавить pause через try except
+            self.control_heater(channel=self.settings["ch_ip2"],
+                                voltage=self.settings["u_ip2"],
+                                state="on")
+
+            for _ in range(int(self.settings["n_r_up"])):
+                self.resistance_step()
+
+            # Выключаем нагреватель
+            #! Добавить pause через try except
+            self.control_heater(channel=self.settings["ch_ip2"],
+                                voltage="0",
+                                state="on")
 
     def termoemf_step(self):
         """
@@ -71,8 +193,10 @@ class Measurements:
         Время 2
         Системное время
         """
-        # Номер строки
-        number = self.app_instance.start_line_le.text()
+        # Номер строки в Excel
+        self.number = int(self.app_instance.start_line_le.text())
+        #! Номер строки эксперимента
+        # self.meas_number Добавить в Excel
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
@@ -99,6 +223,8 @@ class Measurements:
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
 
+        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1} | {r1} | {r2} | "
+              f"{r3} | {r4} | {termometer2} | {time2} | {system_time}")
 
     def resistance_step(self):
         """
@@ -119,8 +245,10 @@ class Measurements:
         Время 2
         Системное время
         """
-        # Номер строки
-        number = self.app_instance.start_line_le.text()
+        # Номер строки в Excel
+        self.number = int(self.app_instance.start_line_le.text())
+        # ! Номер строки эксперимента
+        # self.meas_number Добавить в Excel
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
@@ -134,7 +262,7 @@ class Measurements:
         r6 = [i for i in all_res["ch6"]]
 
         # Катушка
-        kat = self.app_instance.r_cell.text()
+        kat = int(self.app_instance.r_cell.text())
 
         # R термометра 2
         termometer2 = self.temperature()
@@ -144,6 +272,9 @@ class Measurements:
 
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
+
+        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1} | {r5} | {r6} | "
+              f"{kat} | {termometer2} | {time2} | {system_time}")
 
     def temperature(self):
         """Функция измерения температуры"""
@@ -155,6 +286,8 @@ class Measurements:
                                       delay=0)
             self.fres_value = instrument.measure(1)
             instrument.reset()  # Сброс настроек перед напряжением
+        elif self.app_instance.combobox_scan.currentText() == "Rigol":
+            pass
         else:
             self.fres_value = "Error"
 
@@ -188,10 +321,10 @@ class Measurements:
                         instrument.measure(meas_count=(int(self.settings["n_read_ch56"]) - 1)))  # 4 оставшихся измерения
                 else:
                     continue
-            #! Убрать
-            for channel, results in res_results.items():
-                print(f"DCV on channel {channel}: {results}")
+
             instrument.reset()  # Сброс настроек перед сопротивлением
+        elif self.app_instance.combobox_scan.currentText() == "Rigol":
+            pass
         else:
             res_results["ch5"] = "Error"
 
@@ -235,9 +368,7 @@ class Measurements:
                             instrument.measure(meas_count=(int(self.settings["n_read_ch34"]) - 1)))  # 4 оставшихся измерения
                     else:
                         continue
-            #! Убрать
-            for channel, results in termoemf_results.items():
-                print(f"DCV on channel {channel}: {results}")
+
             instrument.reset()  # Сброс настроек перед сопротивлением
         else:
             termoemf_results["ch1"] = "Error"
