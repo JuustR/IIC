@@ -8,9 +8,8 @@ import requests
 import pyvisa
 
 from Config.Keithley2010 import Keithley2010
+from Config.Rigol import Rigol
 
-
-# from Config.Rigol import Rigol
 
 class Measurements:
     def __init__(self, app_instance):
@@ -281,16 +280,18 @@ class Measurements:
         """Функция измерения температуры"""
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
-            instrument.set_fres_parameters(float(self.settings['nplc_term']),
-                                           int(self.settings['ch_term1']),
-                                           range=0,
-                                           delay=0)
-            self.fres_value = instrument.measure(1)
-            instrument.reset()  # Сброс настроек перед напряжением
         elif self.app_instance.combobox_scan.currentText() == "Rigol":
-            pass
+            instrument = Rigol(self)
         else:
             self.fres_value = "Error"
+            return self.fres_value
+
+        instrument.set_fres_parameters(float(self.settings['nplc_term']),
+                                       int(self.settings['ch_term1']),
+                                       range=0,
+                                       delay=0)
+        self.fres_value = instrument.measure(1)
+        instrument.reset()  # Сброс настроек перед напряжением
 
         return self.fres_value
 
@@ -299,35 +300,37 @@ class Measurements:
         res_results = {}
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
-            for i in range(5, 7):
-                ch_line_edit = self.settings[f"ch{i}"]
-                delay_line_edit = self.settings[f"delay_ch{i}"]
-                range_line_edit = self.settings[f"range_ch{i}"]
-                nplc_line_edit = self.settings[f"nplc_ch{i}"]
+        elif self.app_instance.combobox_scan.currentText() == "Rigol":
+            instrument = Rigol(self)
+        else:
+            res_results["ch5"] = "Error"
+            return res_results
 
+        for i in range(5, 7):
+            ch_line_edit = self.settings[f"ch{i}"]
+            delay_line_edit = self.settings[f"delay_ch{i}"]
+            range_line_edit = self.settings[f"range_ch{i}"]
+            nplc_line_edit = self.settings[f"nplc_ch{i}"]
+
+            instrument.set_dcv_parameters(float(nplc_line_edit),
+                                          int(ch_line_edit),
+                                          float(range_line_edit),
+                                          float(delay_line_edit))  # Первая задержка
+            res_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
+
+            # Измерения для больше чем одного read
+            if int(self.settings["n_read_ch56"]) > 1:
                 instrument.set_dcv_parameters(float(nplc_line_edit),
                                               int(ch_line_edit),
                                               float(range_line_edit),
-                                              float(delay_line_edit))  # Первая задержка
-                res_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
+                                              delay=0)  # Остальные измерения
+                res_results[f"ch{i}"].extend(
+                    instrument.measure(
+                        meas_count=(int(self.settings["n_read_ch56"]) - 1)))  # 4 оставшихся измерения
+            else:
+                continue
 
-                # Измерения для больше чем одного read
-                if int(self.settings["n_read_ch56"]) > 1:
-                    instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                  int(ch_line_edit),
-                                                  float(range_line_edit),
-                                                  delay=0)  # Остальные измерения
-                    res_results[f"ch{i}"].extend(
-                        instrument.measure(
-                            meas_count=(int(self.settings["n_read_ch56"]) - 1)))  # 4 оставшихся измерения
-                else:
-                    continue
-
-            instrument.reset()  # Сброс настроек перед сопротивлением
-        elif self.app_instance.combobox_scan.currentText() == "Rigol":
-            pass
-        else:
-            res_results["ch5"] = "Error"
+        instrument.reset()  # Сброс настроек перед сопротивлением
 
         return res_results
 

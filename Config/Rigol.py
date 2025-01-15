@@ -38,6 +38,7 @@
 """
 
 import pyvisa
+import time
 
 
 class Rigol:
@@ -45,42 +46,64 @@ class Rigol:
         self.app_instance = app_instance
         self.instr = self.app_instance.inst_list
         self.rm = pyvisa.ResourceManager()
-        self.instrument = self.rm.open_resource(self.instr["Rigol"])
-        self.additional_inst = self.rm.open_resource(self.instr["keysight"])
+        self.Rigol = self.rm.open_resource(self.instr["Rigol"])
+        self.keysight = self.rm.open_resource(self.instr["keysight"])
 
     def reset(self):
         """Сброс настроек прибора"""
-        self.instrument.write("*RST")
+        self.Rigol.write("*RST")
+        self.keysight.write("*RST")
 
     def set_dcv_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение постоянного напряжения"""
-        # Настройка Keysight для измерения постоянного напряжения
-        nplc = int(nplc) if nplc.is_integer() else float(nplc)
-        range = int(range) if range.is_integer() else float(range)
-        delay = int(delay) if delay.is_integer() else float(delay)
+        # nplc = int(nplc) if nplc.is_integer() else float(nplc)
+        # range = int(range) if range.is_integer() else float(range)
+        # delay = int(delay) if delay.is_integer() else float(delay)
 
-        self.additional_inst.write("SENS:FUNC 'VOLT:DC'")
-        self.additional_inst.write(f"SENS:VOLT:NPLC {nplc}")
-        if range == 0:
-            self.additional_inst.write("SENS:VOLT:RANG:AUTO ON")
+        self.keysight.write('CONF:VOLTage')
+        self.Rigol.write('INST:DMM OFF')
+        if int(ch) > 9:
+            self.Rigol.write('ROUT:SCAN (@2' + str(ch) + ')')
         else:
-            self.additional_inst.write(f"SENS:VOLT:RANG {range}")
-        self.additional_inst.write(f"TRIG:DEL {delay}")
+            self.Rigol.write('ROUT:SCAN (@20' + str(ch) + ')')
+
+        self.Rigol.write('ROUT:CHAN:ADV:SOUR BUS')
+        self.Rigol.write('INIT')
+
+        self.keysight.write(f"VOLTage:DC:NPLC {nplc}")
+        if range == 0:
+            self.keysight.write("VOLTage:DC:RANGe:AUTO ON")
+        else:
+            self.keysight.write(f"VOLTage:DC:RANGe {range}")
+        self.keysight.write('SYST:LOC')
+        time.sleep(delay)
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение 4-проводного сопротивления"""
-        # Настройка Keysight для измерения 4-проводного сопротивления
-        nplc = int(nplc) if nplc.is_integer() else float(nplc)
-        range = int(range) if range.is_integer() else float(range)
-        delay = int(delay) if delay.is_integer() else float(delay)
+        # nplc = int(nplc) if nplc.is_integer() else float(nplc)
+        # range = int(range) if range.is_integer() else float(range)
+        # delay = int(delay) if delay.is_integer() else float(delay)
 
-        self.additional_inst.write("SENS:FUNC 'FRES'")
-        self.additional_inst.write(f"SENS:FRES:NPLC {nplc}")
-        if range == 0:
-            self.additional_inst.write("SENS:FRES:RANG:AUTO ON")
+        self.Rigol.write('INST:DMM OFF')
+        if int(ch) > 9:
+            self.Rigol.write('ROUT:SCAN (@2' + str(ch) + ')')
+            self.Rigol.write('ROUT:CHAN:FWIR ON,(@2' + str(ch) + ')')
         else:
-            self.additional_inst.write(f"SENS:FRES:RANG {range}")
-        self.additional_inst.write(f"TRIG:DEL {delay}")
+            self.Rigol.write('ROUT:SCAN (@20' + str(ch) + ')')
+            self.Rigol.write('ROUT:CHAN:FWIR ON,(@20' + str(ch) + ')')
+
+        self.Rigol.write('ROUT:CHAN:ADV:SOUR BUS')
+        self.Rigol.write('INIT')
+
+        self.keysight.write('CONF:FRES')
+        self.keysight.write(f"FRES:NPLC {nplc}")
+        if range == 0:
+            self.keysight.write("FRES:RANGe:AUTO ON")
+        else:
+            self.keysight.write(f"FRES:RANGe {range}")
+        self.keysight.write('SYST:LOC')
+        time.sleep(delay)
+
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение 2-проводного сопротивления"""
@@ -89,31 +112,26 @@ class Rigol:
         range = int(range) if range.is_integer() else float(range)
         delay = int(delay) if delay.is_integer() else float(delay)
 
-        self.additional_inst.write(":SENS:FUNC 'RES'")
-        self.additional_inst.write(f":SENS:RES:NPLC {nplc}")
+        self.keysight.write(":SENS:FUNC 'RES'")
+        self.keysight.write(f":SENS:RES:NPLC {nplc}")
         if range == 0:
-            self.additional_inst.write(":SENS:RES:RANG:AUTO ON")
+            self.keysight.write(":SENS:RES:RANG:AUTO ON")
         else:
-            self.additional_inst.write(f":SENS:RES:RANG {range}")
-        self.additional_inst.write(f":TRIG:DEL {delay}")
+            self.keysight.write(f":SENS:RES:RANG {range}")
+        self.keysight.write(f":TRIG:DEL {delay}")
 
     def measure(self, meas_count: int) -> list:
         """Запуск измерений и получение результатов с Keysight"""
-        # Настройка Keysight на количество измерений
-        self.additional_inst.write(f":TRIG:COUN {meas_count}")
-        self.additional_inst.write(":INIT")
-
-        # Сбор результатов измерений
         results = []
         for _ in range(meas_count):
-            results.append(float(self.additional_inst.query(":FETCh?")))
-
+            results.append(float(self.keysight.query_ascii_values(":READ?")))
+        self.Rigol.write('*TRG')
         return results
 
     def open_channel(self, ch: int) -> None:
         rigol_channel = f"10{ch}" if ch < 10 else f"1{ch}"
-        self.instrument.write(f":ROUT:CHAN {rigol_channel}, ON")
+        self.Rigol.write(f":ROUT:CHAN {rigol_channel}, ON")
 
     def close_channel(self, ch: int) -> None:
         rigol_channel = f"10{ch}" if ch < 10 else f"1{ch}"
-        self.instrument.write(f":ROUT:CHAN {rigol_channel}, OFF")
+        self.Rigol.write(f":ROUT:CHAN {rigol_channel}, OFF")
