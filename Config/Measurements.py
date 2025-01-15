@@ -107,7 +107,7 @@ class Measurements:
                 self.termoemf_step()
                 self.meas_number += 1
                 self.number += 1
-                self.app_instance.start_line_le.setText(self.number)
+                self.app_instance.start_line_le.setText(str(self.number))
 
             # Выключаем нагреватель
             # ! Добавить pause через try except
@@ -124,9 +124,9 @@ class Measurements:
                 self.termoemf_step()
                 self.meas_number += 1
                 self.number += 1
-                self.app_instance.start_line_le.setText(self.number)
+                self.app_instance.start_line_le.setText(str(self.number))
 
-            time.sleep(int(self.app_instance.pause_S.text()))
+            time.sleep(int(self.app_instance.pause_s.text()))
 
         # Измерения сопротивления
         if self.app_instance.rele_cb.isChecked():
@@ -195,8 +195,9 @@ class Measurements:
         """
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
+
         # ! Номер строки эксперимента
-        # self.meas_number Добавить в Excel
+        # self.meas_number  # Добавить в Excel
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
@@ -205,7 +206,10 @@ class Measurements:
         termometer1 = self.temperature()
 
         # Термопары
-        all_tc = self.termoemf()
+        try:
+            all_tc = self.termoemf()
+        except Exception as e:
+            self.log_message("Ошибка termoemf", e)
         r1 = [i for i in all_tc["ch1"]]
         r2 = [i for i in all_tc["ch2"]]
 
@@ -223,8 +227,8 @@ class Measurements:
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
 
-        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1} | {r1} | {r2} | "
-              f"{r3} | {r4} | {termometer2} | {time2} | {system_time}")
+        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r1[0]} | {r2[0]} | "
+              f"{r3[0]} | {r4[0]} | {termometer2[0]} | {time2} | {system_time}")
 
     def resistance_step(self):
         """
@@ -248,7 +252,7 @@ class Measurements:
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
         # ! Номер строки эксперимента
-        # self.meas_number Добавить в Excel
+        # self.meas_number  # Добавить в Excel
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
@@ -257,7 +261,10 @@ class Measurements:
         termometer1 = self.temperature()
 
         # Сопротивления
-        all_res = self.resistance()
+        try:
+            all_res = self.resistance()
+        except Exception as e:
+            self.log_message("Ошибка resistance", e)
         r5 = [i for i in all_res["ch5"]]
         r6 = [i for i in all_res["ch6"]]
 
@@ -273,8 +280,8 @@ class Measurements:
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
 
-        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1} | {r5} | {r6} | "
-              f"{kat} | {termometer2} | {time2} | {system_time}")
+        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r5[0]} | {r6[0]} | "
+              f"{kat} | {termometer2[0]} | {time2} | {system_time}")
 
     def temperature(self):
         """Функция измерения температуры"""
@@ -285,12 +292,17 @@ class Measurements:
         else:
             self.fres_value = "Error"
             return self.fres_value
-
-        instrument.set_fres_parameters(float(self.settings['nplc_term']),
-                                       int(self.settings['ch_term1']),
-                                       range=0,
-                                       delay=0)
-        self.fres_value = instrument.measure(1)
+        try:
+            instrument.set_fres_parameters(float(self.settings['nplc_term']),
+                                           int(self.settings['ch_term1']),
+                                           range=0,
+                                           delay=0)
+        except Exception as e:
+            self.log_message("Ошибка задания параметров", e)
+        try:
+            self.fres_value = instrument.measure(1)
+        except Exception as e:
+            self.log_message("Ошибка измерения", e)
         instrument.reset()  # Сброс настроек перед напряжением
 
         return self.fres_value
@@ -339,46 +351,50 @@ class Measurements:
         termoemf_results = {}
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
-            for i in range(1, 5):
-                ch_line_edit = self.settings[f"ch{i}"]
-                delay_line_edit = self.settings[f"delay_ch{i}"]
-                range_line_edit = self.settings[f"range_ch{i}"]
-                nplc_line_edit = self.settings[f"nplc_ch{i}"]
-
-                instrument.set_dcv_parameters(float(nplc_line_edit),
-                                              int(ch_line_edit),
-                                              float(range_line_edit),
-                                              float(delay_line_edit))  # Первая задержка
-                termoemf_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
-
-                # Измерения для больше чем одного read
-                if i < 3:
-                    if int(self.settings["n_read_ch12"]) > 1:
-                        instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                      int(ch_line_edit),
-                                                      float(range_line_edit),
-                                                      delay=0)  # Остальные измерения
-                        termoemf_results[f"ch{i}"].extend(
-                            instrument.measure(
-                                meas_count=(int(self.settings["n_read_ch12"]) - 1)))  # 4 оставшихся измерения
-                    else:
-                        continue
-                else:
-                    if int(self.settings["n_read_ch34"]) > 1:
-                        instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                      int(ch_line_edit),
-                                                      float(range_line_edit),
-                                                      delay=0)  # Остальные измерения
-                        termoemf_results[f"ch{i}"].extend(
-                            instrument.measure(
-                                meas_count=(int(self.settings["n_read_ch34"]) - 1)))  # 4 оставшихся измерения
-                    else:
-                        continue
-
-            instrument.reset()  # Сброс настроек перед сопротивлением
+        elif self.app_instance.combobox_scan.currentText() == "Rigol":
+            instrument = Rigol(self)
         else:
             termoemf_results["ch1"] = "Error"
+            return termoemf_results
 
+        for i in range(1, 5):
+            ch_line_edit = self.settings[f"ch{i}"]
+            delay_line_edit = self.settings[f"delay_ch{i}"]
+            range_line_edit = self.settings[f"range_ch{i}"]
+            nplc_line_edit = self.settings[f"nplc_ch{i}"]
+
+            instrument.set_dcv_parameters(float(nplc_line_edit),
+                                          int(ch_line_edit),
+                                          float(range_line_edit),
+                                          float(delay_line_edit))  # Первая задержка
+            termoemf_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
+
+            # Измерения для больше чем одного read
+            if i < 3:
+                if int(self.settings["n_read_ch12"]) > 1:
+                    instrument.set_dcv_parameters(float(nplc_line_edit),
+                                                  int(ch_line_edit),
+                                                  float(range_line_edit),
+                                                  delay=0)  # Остальные измерения
+                    termoemf_results[f"ch{i}"].extend(
+                        instrument.measure(
+                            meas_count=(int(self.settings["n_read_ch12"]) - 1)))  # 4 оставшихся измерения
+                else:
+                    continue
+            else:
+                if int(self.settings["n_read_ch34"]) > 1:
+                    instrument.set_dcv_parameters(float(nplc_line_edit),
+                                                  int(ch_line_edit),
+                                                  float(range_line_edit),
+                                                  delay=0)  # Остальные измерения
+                    termoemf_results[f"ch{i}"].extend(
+                        instrument.measure(
+                            meas_count=(int(self.settings["n_read_ch34"]) - 1)))  # 4 оставшихся измерения
+                else:
+                    continue
+
+        instrument.reset()  # Сброс настроек перед сопротивлением
+        # print("termoemf_results:" + termoemf_results)
         return termoemf_results
 
     def add_dcv(self):

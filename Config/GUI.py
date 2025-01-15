@@ -188,7 +188,7 @@ class App(QMainWindow):
                 self.start_time = time.time()
                 measurement = Measurements(self)
                 self.qtimer.timeout.connect(measurement.cycle_S_R())
-                self.qtimer.start(1000)
+                self.qtimer.start()
             except Exception as e:
                 self.pause()
                 self.log_message("", e)
@@ -250,6 +250,7 @@ class App(QMainWindow):
         if self.working_flag:
             self.log_message('Настройки будут применены в следующем цикле')
 
+        self.settings_changed_flag = True
         # ! Добавить сравнение изменений и вывод их в Excel, например
         # !
 

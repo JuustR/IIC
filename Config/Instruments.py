@@ -36,13 +36,13 @@ class InstrumentConnection:
 
     def connect_all(self):
         """Функция для подключения всех выбранных приборов"""
-        self.keithley2010_connection()
+        # self.keithley2010_connection()
         # self.keithley2000_connection()
         # self.daq970A_connection()
-        # self.keysight_connection()
-        # self.rigol_connection()
+        self.keysight_connection()
+        self.rigol_connection()
         # self.E36312A_connection()  # Не работает, т.к. не задан IP
-        # self.AKIP_connection()
+        self.akip_connection()
 
         # Если нужно будет, чтобы ускорить подключение то можно закоментить
         # Все приборы: keithley2010, keithley2000, daq970A, keysight, rigol, E36312A, AKIP
@@ -97,14 +97,14 @@ class InstrumentConnection:
     def keysight_connection(self):
         try:
             # self.keysight = self.rm.open_resource('TCPIP0::' + str(self.w_root.lineIP_1.text()) + '::inst0::INSTR')
-            self.keysight = self.rm.open_resource('TCPIP0::' + "192.168.0.103" + '::inst0::INSTR')
+            self.keysight = self.rm.open_resource('TCPIP0::' + "192.168.0.100" + '::inst0::INSTR')
             self.keysight.write("*RST")
             self.log_message('keysight подключен успешно')
-            self.instr_list["keysight"] = 'TCPIP0::192.168.0.103::inst0::INSTR'
+            self.instr_list["keysight"] = 'TCPIP0::192.168.0.100::inst0::INSTR'
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.log_message('Ошибка подключения keysight!\n'
-                                 'IP прибора должен быть 192.168.0.103\nОписание ошибки:', e)
+                                 'IP прибора должен быть 192.168.0.100\nОписание ошибки:', e)
             else:
                 self.log_message('Ошибка подключения keysight!')
 
@@ -136,20 +136,23 @@ class InstrumentConnection:
             else:
                 self.log_message('Ошибка подключения E36312A!')
 
-    def AKIP_connection(self):
+    def akip_connection(self):
         # Проверка USB ресурсов
         self.USB_resources = [res for res in self.rm.list_resources() if res.startswith('USB')]
+        # print(self.USB_resources)
+        # print(self.rm.list_resources())
         n = 0
-        self.instr_check()  # ожно закоментить
+        # self.instr_check()  # ожно закоментить
         try:
             while n < len(self.USB_resources):
                 try:
                     self.AKIP = self.rm.open_resource(self.USB_resources[n])
                     self.send_IDN = self.AKIP.query("*IDN?")
+                    print(self.send_IDN)
                 except Exception as e:
                     self.send_IDN = None
 
-                if self.send_IDN == 'ITECH Ltd., IT6333A, 800572020767710004, 1.11-1.08\n':
+                if self.send_IDN == 'ITECH Ltd., IT6333A, 800572020777870001, 1.11-1.08\n':
                     self.AKIP.write("*rst")
                     self.powersource_dict["AKIP"] = self.USB_resources[n]
                     self.log_message('АКИП подключен успешно')

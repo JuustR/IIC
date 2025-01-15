@@ -56,9 +56,6 @@ class Rigol:
 
     def set_dcv_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение постоянного напряжения"""
-        # nplc = int(nplc) if nplc.is_integer() else float(nplc)
-        # range = int(range) if range.is_integer() else float(range)
-        # delay = int(delay) if delay.is_integer() else float(delay)
 
         self.keysight.write('CONF:VOLTage')
         self.Rigol.write('INST:DMM OFF')
@@ -80,9 +77,6 @@ class Rigol:
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение 4-проводного сопротивления"""
-        # nplc = int(nplc) if nplc.is_integer() else float(nplc)
-        # range = int(range) if range.is_integer() else float(range)
-        # delay = int(delay) if delay.is_integer() else float(delay)
 
         self.Rigol.write('INST:DMM OFF')
         if int(ch) > 9:
@@ -124,7 +118,8 @@ class Rigol:
         """Запуск измерений и получение результатов с Keysight"""
         results = []
         for _ in range(meas_count):
-            results.append(float(self.keysight.query_ascii_values(":READ?")))
+            one_read = self.keysight.query_ascii_values(":READ?")
+            results.append(float(one_read[0]))
         self.Rigol.write('*TRG')
         return results
 
