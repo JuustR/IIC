@@ -7,9 +7,26 @@ import time
 import requests
 import pyvisa
 
+from PyQt6.QtCore import QThread, pyqtSignal
+
 from Config.Keithley2010 import Keithley2010
 from Config.Rigol import Rigol
 
+class MeasurementThread(QThread):
+    log_signal = pyqtSignal(str)
+    finished_signal = pyqtSignal()
+
+    def __init__(self, meas_instance):
+        super().__init__()
+        self.meas_instance = meas_instance
+
+    def run(self):
+        try:
+            self.meas_instance.cycle_S_R()
+        except Exception as e:
+            self.log_signal.emit(f"Ошибка: {e}")
+        finally:
+            self.finished_signal.emit()
 
 class Measurements:
     def __init__(self, app_instance):

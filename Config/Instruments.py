@@ -5,6 +5,25 @@
 import pyvisa
 import time
 
+from PyQt6.QtCore import QThread, pyqtSignal
+
+
+class ConnectionThread(QThread):
+    log_signal = pyqtSignal(str)
+    result_signal = pyqtSignal(list, list)
+
+    def __init__(self, inst_instance):
+        super().__init__()
+        self.inst_instance = inst_instance
+
+    def run(self):
+        # try:
+        #     instr_list, powersource_list = self.inst_instance.connect_all()
+        #     self.result_signal.emit(instr_list, powersource_list)
+        # except Exception as e:
+        #     self.log_signal.emit(f"Ошибка: {e}")
+        instr_list, powersource_list = self.inst_instance.connect_all()
+        self.result_signal.emit(instr_list, powersource_list)
 
 class InstrumentConnection:
     def __init__(self, app_instance):
@@ -46,7 +65,7 @@ class InstrumentConnection:
 
         # Если нужно будет, чтобы ускорить подключение то можно закоментить
         # Все приборы: keithley2010, keithley2000, daq970A, keysight, rigol, E36312A, AKIP
-        self.log_message('Подключения к keithley2000, daq970A, keysight, rigol, E36312A, AKIP закомменчены')
+        self.log_message('Подключения к keithley2010, keithley2000, daq970A, E36312A закомменчены')
 
         # Должен возвращаться словарь подключенных приборов с их IP/GPIB
         return self.instr_list, self.powersource_dict

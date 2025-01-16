@@ -936,6 +936,9 @@
                 <property name="text">
                  <string>Релюшки на R</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -959,7 +962,7 @@
                   <item>
                    <widget class="QLineEdit" name="n_r_updown">
                     <property name="enabled">
-                     <bool>false</bool>
+                     <bool>true</bool>
                     </property>
                     <property name="text">
                      <string>2</string>
@@ -975,6 +978,9 @@
                   </item>
                   <item>
                    <widget class="QLineEdit" name="n_r_up">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="text">
                      <string>4</string>
                     </property>

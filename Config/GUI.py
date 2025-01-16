@@ -18,12 +18,12 @@ import json
 import pyvisa
 
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import (QMainWindow, QDialog, QFileDialog, QLineEdit)
+from PyQt6.QtWidgets import QMainWindow, QLineEdit
 from PyQt6.QtCore import QSettings, QTimer
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
-from Config.Instruments import InstrumentConnection
-from Config.Measurements import Measurements
+from Config.Instruments import InstrumentConnection, ConnectionThread
+from Config.Measurements import Measurements, MeasurementThread
 
 
 class App(QMainWindow):
@@ -159,11 +159,22 @@ class App(QMainWindow):
         self.combobox_scan.clear()
         self.combobox_power.clear()
         ic = InstrumentConnection(self)
-        self.inst_list, self.powersource_list = ic.connect_all()
+        # self.inst_list, self.powersource_list = ic.connect_all()
+
+        self.connection_thread = ConnectionThread(ic)
+        self.connection_thread.log_signal.connect(self.log_message)
+        self.connection_thread.result_signal.connect(self.connection_finished)
+
+        self.connection_thread.start()
+
+    def connection_finished(self, inst_list, powersource_list):
+        self.inst_list = inst_list
+        self.powersource_list = powersource_list
 
         connected_instruments = (', '.join(str(i) for i in self.inst_list) + ", " +
                                  ', '.join(str(i) for i in self.powersource_list))
         self.log_message('Подключенные приборы: ' + connected_instruments)
+
         for _ in self.inst_list:
             self.combobox_scan.addItem(_)
         for _ in self.powersource_list:
@@ -187,8 +198,13 @@ class App(QMainWindow):
             try:
                 self.start_time = time.time()
                 measurement = Measurements(self)
-                self.qtimer.timeout.connect(measurement.cycle_S_R())
-                self.qtimer.start()
+                self.measurement_thread = MeasurementThread(measurement)
+                self.measurement_thread.log_signal.connect(self.log_message)
+                self.measurement_thread.finished_signal.connect(self.measurement_finished)
+
+                self.measurement_thread.start()
+                # self.qtimer.timeout.connect(measurement.cycle_S_R())
+                # self.qtimer.start()
             except Exception as e:
                 self.pause()
                 self.log_message("", e)
@@ -196,11 +212,16 @@ class App(QMainWindow):
         else:
             self.pause()
             self.log_message("Измерение остановлено")
-            self.working_flag = False
-            self.start_button.setText('Старт')
+
+    def measurement_finished(self):
+        self.log_message("Измерение остановлено")
+        self.working_flag = False
+        self.start_button.setText('Старт')
 
     def pause(self):
-        self.qtimer.stop()
+        # self.qtimer.stop()
+        if self.measurement_thread and self.measurement_thread.isRunning():
+            self.measurement_thread.terminate()
         self.working_flag = False
         self.start_button.setText('Старт')
 
