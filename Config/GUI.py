@@ -19,7 +19,7 @@ import pyvisa
 
 from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import QMainWindow, QLineEdit
-from PyQt6.QtCore import QSettings, QTimer
+from PyQt6.QtCore import QSettings, QTimer, pyqtSignal
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection, ConnectionThread
@@ -28,6 +28,7 @@ from Config.Measurements import Measurements, MeasurementThread
 
 class App(QMainWindow):
     """GUI основной страницы программы"""
+    log_signal = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,10 +96,14 @@ class App(QMainWindow):
         self.data_reset_flag = False
         self.settings_changed_flag = True
 
+
         self.inst_list = None
         self.powersource_list = None
+        self.measurement = None
         self.settings_dict = {}
         self.start_time = 0
+
+        self.log_signal.connect(self.log_message)
 
         self.qtimer = QTimer(self)
 
@@ -114,11 +119,12 @@ class App(QMainWindow):
         self.ConsolePTE.appendPlainText(error_message)
 
     def combobox_scan_changed(self):
-        """Включение ip для Rigol'a"""
-        if self.combobox_scan.currentText() == "Rigol":
-            self.ip_rigol.setEnabled(True)
-        else:
-            self.ip_rigol.setEnabled(False)
+        """Было включение ip для Rigol'a, но тогда пришлось бы несколько раз подключаться к приборам"""
+        # if self.combobox_scan.currentText() == "Rigol":
+        #     self.ip_rigol.setEnabled(True)
+        # else:
+        #     self.ip_rigol.setEnabled(False)
+        pass
 
     def combobox_power_changed(self):
         pass
@@ -194,11 +200,10 @@ class App(QMainWindow):
         if not self.working_flag:
             self.working_flag = True
             self.start_button.setText('Стоп')
-
             try:
                 self.start_time = time.time()
-                measurement = Measurements(self)
-                self.measurement_thread = MeasurementThread(measurement)
+                self.measurement = Measurements(self)
+                self.measurement_thread = MeasurementThread(self.measurement)
                 self.measurement_thread.log_signal.connect(self.log_message)
                 self.measurement_thread.finished_signal.connect(self.measurement_finished)
 
@@ -206,14 +211,17 @@ class App(QMainWindow):
                 # self.qtimer.timeout.connect(measurement.cycle_S_R())
                 # self.qtimer.start()
             except Exception as e:
-                self.pause()
+                # self.pause()
                 self.log_message("", e)
+                self.working_flag = False
+                self.start_button.setText('Старт')
 
         else:
             self.pause()
             self.log_message("Измерение остановлено")
 
     def measurement_finished(self):
+        self.measurement.pause()
         self.log_message("Измерение остановлено")
         self.working_flag = False
         self.start_button.setText('Старт')
@@ -221,7 +229,9 @@ class App(QMainWindow):
     def pause(self):
         # self.qtimer.stop()
         if self.measurement_thread and self.measurement_thread.isRunning():
-            self.measurement_thread.terminate()
+            self.measurement_thread.stop()
+            self.measurement_thread.wait()
+        self.measurement.pause()
         self.working_flag = False
         self.start_button.setText('Старт')
 
@@ -265,6 +275,7 @@ class App(QMainWindow):
         self.settings.setValue("n_r_up", self.n_r_up.text())
         self.settings.setValue("n_r_updown", self.n_r_updown.text())
         self.settings.setValue("ip_rigol", self.ip_rigol.text())
+        self.settings.setValue("r_cell", self.r_cell.text())
 
         # Добавление текста в консоль
         self.log_message('Сохранили настройки программы')
@@ -307,6 +318,7 @@ class App(QMainWindow):
         self.n_r_up.setText(self.settings.value("n_r_up", ""))
         self.n_r_up.setText(self.settings.value("n_r_up", ""))
         self.ip_rigol.setText(self.settings.value("ip_rigol", ""))
+        self.r_cell.setText(self.settings.value("r_cell", ""))
 
         # (мб необ) Копирование настроек в словарь
         self.copy_settings_to_dict()

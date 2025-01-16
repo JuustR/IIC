@@ -29,6 +29,7 @@ class InstrumentConnection:
     def __init__(self, app_instance):
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
         self.app_instance = app_instance
+        self.log_signal = app_instance.log_signal
         self.formatted_time = self.app_instance.formatted_time
 
         self.keithley2010 = None
@@ -48,10 +49,11 @@ class InstrumentConnection:
         self.send_IDN = None
 
     def log_message(self, message, exception=None):
-        error_message = f"{self.formatted_time}{message}\n"
+        error_message = f"{message}"
         if exception:
-            error_message += f"{exception}\n"
-        self.app_instance.ConsolePTE.appendPlainText(error_message)
+            error_message += f"\n{exception}"
+        self.log_signal.emit(error_message)
+        # self.app_instance.ConsolePTE.appendPlainText(error_message)
 
     def connect_all(self):
         """Функция для подключения всех выбранных приборов"""
@@ -116,10 +118,11 @@ class InstrumentConnection:
     def keysight_connection(self):
         try:
             # self.keysight = self.rm.open_resource('TCPIP0::' + str(self.w_root.lineIP_1.text()) + '::inst0::INSTR')
-            self.keysight = self.rm.open_resource('TCPIP0::' + "192.168.0.100" + '::inst0::INSTR')
+            ip = f'TCPIP0::{self.app_instance.ip_rigol.text()}::inst0::INSTR'
+            self.keysight = self.rm.open_resource(ip)
             self.keysight.write("*RST")
             self.log_message('keysight подключен успешно')
-            self.instr_list["keysight"] = 'TCPIP0::192.168.0.100::inst0::INSTR'
+            self.instr_list["keysight"] = ip
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.log_message('Ошибка подключения keysight!\n'

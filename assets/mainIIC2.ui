@@ -227,7 +227,7 @@
               <item>
                <widget class="QLineEdit" name="ip_rigol">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>

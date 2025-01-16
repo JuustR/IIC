@@ -13,12 +13,13 @@ from Config.Keithley2010 import Keithley2010
 from Config.Rigol import Rigol
 
 class MeasurementThread(QThread):
-    log_signal = pyqtSignal(str)
+    log_signal = pyqtSignal()
     finished_signal = pyqtSignal()
 
     def __init__(self, meas_instance):
         super().__init__()
         self.meas_instance = meas_instance
+        self.running = True
 
     def run(self):
         try:
@@ -28,18 +29,28 @@ class MeasurementThread(QThread):
         finally:
             self.finished_signal.emit()
 
+    def stop(self):
+        self.running = False
+        self.meas_instance.pause()
+
 class Measurements:
     def __init__(self, app_instance):
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
 
         self.app_instance = app_instance
+        self.log_signal = app_instance.log_signal
         self.settings = self.app_instance.settings_dict
         self.inst_list = self.app_instance.inst_list
         self.powersource_list = self.app_instance.powersource_list
         self.formatted_time = self.app_instance.formatted_time
 
         # Инициализация ИП
-        self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
+        try:
+            self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
+        except Exception as e:
+            self.pause()
+            self.log_message("Не выбран АКИП в ИП", e)
+
 
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
 
@@ -58,6 +69,7 @@ class Measurements:
             action = d[relay_type]
             requests.get(f'http://192.168.0.101:10500/turn_{state}_{action}')
         except Exception as e:
+            # self.pause()  #! Можно раскоментить, наверное
             self.log_message(f"Ошибка переключения реле {relay_type} ({state})", e)
 
     def control_heater(self, channel, voltage, state):
@@ -68,13 +80,33 @@ class Measurements:
                 self.AKIP.write(f'APPL CH{channel},{voltage},1')
                 self.AKIP.write(f'CHANnel:OUTPut {1 if state == "on" else 0}')
         except Exception as e:
+            # self.pause()  #! Можно раскоментить, наверное
             self.log_message(f"Ошибка управления нагревателем ({state})", e)
 
     def log_message(self, message, exception=None):
-        error_message = f"{self.formatted_time}{message}\n"
+        error_message = f"{message}"
         if exception:
-            error_message += f"{exception}\n"
-        self.app_instance.ConsolePTE.appendPlainText(error_message)
+            error_message += f"\n{exception}"
+        self.log_signal.emit(error_message)
+        # self.app_instance.ConsolePTE.appendPlainText(error_message)
+
+    def pause(self):
+        """Функция паузы, останавливающая измерения и обнуляющая всё"""
+        try:
+            self.control_heater(channel=1, voltage=0, state="off")
+            self.control_heater(channel=2, voltage=0, state="off")
+            self.control_heater(channel=3, voltage=0, state="off")
+            self.AKIP.write("*rst")  # На всякий случай)
+        except Exception as e:
+            self.log_message("Ошибка отключения нагревателя", e)
+
+        try:
+            self.toggle_relay("heater", "off")
+            self.toggle_relay("sample", "off")
+            self.toggle_relay("current", "off")
+        except Exception as e:
+            self.log_message("Ошибка отключения релюшек\nВыключите их вручную для корректной работы", e)
+
 
     def cycle_S_R(self):
         """
@@ -110,11 +142,9 @@ class Measurements:
         # ТермоЭДС
         for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
             # Включаем релюшки
-            # ! Добавить pause через try except
             self.toggle_relay("heater", "on")
 
             # Включаем нагреватель
-            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip1"],
                                 voltage=self.settings["u_ip1"],
                                 state="on")
@@ -127,13 +157,11 @@ class Measurements:
                 self.app_instance.start_line_le.setText(str(self.number))
 
             # Выключаем нагреватель
-            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip1"],
                                 voltage="0",
                                 state="on")
 
             # Выключаем релюшки
-            # ! Добавить pause через try except
             self.toggle_relay("heater", "off")
 
             # Основные измерения охлаждения для термоЭДС
@@ -148,11 +176,9 @@ class Measurements:
         # Измерения сопротивления
         if self.app_instance.rele_cb.isChecked():
             # Включаем релюшки
-            # ! Добавить pause через try except
             self.toggle_relay("sample", "on")
 
             # Включаем нагреватель
-            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage=self.settings["u_ip2"],
                                 state="on")
@@ -162,25 +188,20 @@ class Measurements:
                 self.resistance_step()
                 if not self.change_volt_flag:
                     # Включаем релюшки
-                    # ! Добавить pause через try except
                     self.toggle_relay("current", "on")
                 else:
                     # Выключаем релюшки
-                    # ! Добавить pause через try except
                     self.toggle_relay("current", "off")
 
             # Выключаем нагреватель
-            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage="0",
                                 state="on")
             # Выключаем релюшки
-            # ! Добавить pause через try except
             self.toggle_relay("sample", "off")
 
         else:
             # Включаем нагреватель
-            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage=self.settings["u_ip2"],
                                 state="on")
@@ -189,7 +210,6 @@ class Measurements:
                 self.resistance_step()
 
             # Выключаем нагреватель
-            # ! Добавить pause через try except
             self.control_heater(channel=self.settings["ch_ip2"],
                                 voltage="0",
                                 state="on")
