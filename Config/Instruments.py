@@ -30,7 +30,7 @@ class InstrumentConnection:
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
         self.app_instance = app_instance
         self.log_signal = app_instance.log_signal
-        self.formatted_time = self.app_instance.formatted_time
+        # self.formatted_time = self.app_instance.formatted_time
 
         self.keithley2010 = None
         self.keithley2000 = None

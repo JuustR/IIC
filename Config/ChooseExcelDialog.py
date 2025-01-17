@@ -24,7 +24,7 @@ class ChooseExcelDialog(QDialog):
         # loadUi('assets/chooseDialog.ui', self)
 
         self.app_instance = app_instance
-        self.formatted_time = self.app_instance.formatted_time
+        # self.formatted_time = self.app_instance.formatted_time
         self.excel_settings = 'Smth'
         self.macros_status = None
 
@@ -45,7 +45,7 @@ class ChooseExcelDialog(QDialog):
         self.TempLabel.setText(self.data["TempName"])
 
     def log_message(self, message, exception=None):
-        error_message = f"{self.formatted_time}{message}\n"
+        error_message = time.strftime("%H:%M:%S | ", time.localtime()) + f"{message}\n"
         if exception:
             error_message += f"{exception}\n"
         self.app_instance.ConsolePTE.appendPlainText(error_message)
@@ -70,24 +70,34 @@ class ChooseExcelDialog(QDialog):
 
     def onAccepted(self):
         """Метод создающий новый Excel на основе заданных ранее параметров"""
+
         self.data["FileName"] = self.FileNameLE.text()
-        # print(self.data["FileName"])
+        # print(os.path.dirname(os.path.abspath(__file__)))
 
         script_path = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(script_path, '..', "Measurements", self.data["FileName"])  # without '.xlsm'
+        # print(os.path.exists("E:\IIC\Measurements\\" + self.data["FileName"] + ".xlsm"))
+
+        # Проверка на наличие файлов с таким же именем
+        if os.path.exists("E:\IIC\Measurements\\" + self.data["FileName"] + ".xlsm"):
+            self.log_message("Файл с таким именем уже существует, создайте другой")
+            return
+        else:
+            self.app_instance.wb = None
 
         if self.data["TempName"] == "Нет шаблона":
             temp_path = os.path.join(script_path, "..", "templates", "Base_temp.xltm")
-            workbook = self.app_instance.excel.Workbooks.Open(temp_path)
+            # workbook = self.app_instance.excel.Workbooks.Open(temp_path)
+            self.app_instance.wb = self.app_instance.excel.Workbooks.Open(temp_path)
         else:
             temp_path = os.path.join(script_path, "templates", self.data["TempName"])
-            workbook = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
-            # workbook.SaveAs(file_path, 52)
+            # workbook = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
+            self.app_instance.wb = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
 
         # Формат .xlsm будет при 52, а .xlsx при 51
         if self.data["MacrosName"] != "Нет макроса":
             try:
-                vbacomponent = workbook.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
+                vbacomponent = self.app_instance.wb.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
                 vbacomponent.CodeModule.AddFromFile(self.data["MacrosName"])
                 self.macros_status = f"с макросом \"{os.path.basename(self.data['MacrosName'])}\""
 
@@ -101,12 +111,13 @@ class ChooseExcelDialog(QDialog):
         else:
             self.macros_status = "без макроса"
 
-        workbook.SaveAs(file_path, 52)
+        self.app_instance.wb.SaveAs(file_path, 52)
         self.app_instance.excel.Visible = True
         self.log_message(
             f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
 
         # ! Добавить, если такой-то шаблон, то установки будут такие-то
+
 
     def onRejected(self):
         """Отмена создания Excel со сбросом заданных условий"""

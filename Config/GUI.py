@@ -2,8 +2,6 @@
 Окно основного графического интерфейса и его настройки
 
 Tasks:
-1) Добавить словарь со всеми настройками, чтоб в него заносились настройки и
-   чтоб была возможность обновлять их между циклами измерений
 3) data И base_data реализовать через settings
 4) Пауза
 4.1) Либо сделать счетчик действий, чтоб следующий старт начинал измерения с
@@ -70,7 +68,7 @@ class App(QMainWindow):
         self.save_settings_pb.clicked.connect(self.save_settings)
 
         # Time and console start settings
-        self.formatted_time = time.strftime("%H:%M:%S | ", time.localtime())
+        # self.formatted_time = time.strftime("%H:%M:%S | ", time.localtime())
         self.ConsolePTE.setPlainText(time.strftime("%d-%m-%Y %H:%M:%S", time.localtime()) + "\n" +
                                      """
 Здравствуйте! Для начала работы:
@@ -96,7 +94,7 @@ class App(QMainWindow):
         self.data_reset_flag = False
         self.settings_changed_flag = True
 
-
+        self.wb = None
         self.inst_list = None
         self.powersource_list = None
         self.measurement = None
@@ -113,7 +111,7 @@ class App(QMainWindow):
         self.show()
 
     def log_message(self, message, exception=None):
-        error_message = f"{self.formatted_time}{message}\n"
+        error_message = time.strftime("%H:%M:%S | ", time.localtime()) + f"{message}\n"
         if exception:
             error_message += f"{exception}\n"
         self.ConsolePTE.appendPlainText(error_message)
@@ -196,29 +194,32 @@ class App(QMainWindow):
         pass
 
     def on_start_clicked(self):
-        """Запускает эксперимент"""
-        if not self.working_flag:
+        if self.working_flag:
+            # Если поток активен, останавливаем его
+            self.measurement_thread.stop()
+            self.working_flag = False
+            self.start_button.setText('Старт')
+            self.log_message("Измерения остановлены.")
+        else:
+            # Инициализация и запуск потока
             self.working_flag = True
             self.start_button.setText('Стоп')
             try:
-                self.start_time = time.time()
+                if not self.inst_list or not self.powersource_list:
+                    self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены.")
+                    self.working_flag = False
+                    self.start_button.setText('Старт')
+                    return
                 self.measurement = Measurements(self)
                 self.measurement_thread = MeasurementThread(self.measurement)
                 self.measurement_thread.log_signal.connect(self.log_message)
                 self.measurement_thread.finished_signal.connect(self.measurement_finished)
-
                 self.measurement_thread.start()
-                # self.qtimer.timeout.connect(measurement.cycle_S_R())
-                # self.qtimer.start()
             except Exception as e:
-                # self.pause()
-                self.log_message("", e)
+                self.log_message("Ошибка запуска измерений.", e)
                 self.working_flag = False
                 self.start_button.setText('Старт')
 
-        else:
-            self.pause()
-            self.log_message("Измерение остановлено")
 
     def measurement_finished(self):
         self.measurement.pause()
