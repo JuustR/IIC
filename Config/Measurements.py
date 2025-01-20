@@ -6,11 +6,13 @@
 import time
 import requests
 import pyvisa
+import win32com.client as win32
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from Config.Keithley2010 import Keithley2010
 from Config.Rigol import Rigol
+
 
 class MeasurementThread(QThread):
     log_signal = pyqtSignal()
@@ -39,6 +41,7 @@ class MeasurementThread(QThread):
         self.quit()
         self.wait()
 
+
 class Measurements:
     def __init__(self, app_instance):
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
@@ -48,22 +51,21 @@ class Measurements:
         self.settings = self.app_instance.settings_dict
         self.inst_list = self.app_instance.inst_list
         self.powersource_list = self.app_instance.powersource_list
-        # self.formatted_time = self.app_instance.formatted_time
+        self.excel_cash = self.app_instance.excel_cash
+        self.wb = self.app_instance.wb
 
         # Инициализация ИП
-        try:
-            if self.powersource_list and "AKIP" in self.powersource_list:
-                self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
-            else:
-                raise ValueError("Список источников питания пуст или AKIP не выбран.")
-        except Exception as e:
-            self.log_message("Ошибка при инициализации AKIP.", e)
+        if "AKIP" in self.powersource_list:
+            self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
+        else:
             self.pause()
 
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
+        self.cash_flag = False
 
+        self.ws = self.wb.Worksheets(1)  # Выбор первого листа
         self.fres_value = None
-        self.number = 11
+        self.number = self.app_instance.start_line_le.text()
         self.meas_number = 1
 
     def toggle_relay(self, relay_type, state):
@@ -100,7 +102,9 @@ class Measurements:
 
     def pause(self):
         """Функция паузы, останавливающая измерения и обнуляющая всё"""
-        if self.powersource_list and "AKIP" in self.powersource_list:
+        # ! Обнуление добавить
+        self.app_instance.working_flag = False
+        if "AKIP" in self.powersource_list:
             try:
                 self.control_heater(channel=1, voltage=0, state="off")
                 self.control_heater(channel=2, voltage=0, state="off")
@@ -116,10 +120,9 @@ class Measurements:
             except Exception as e:
                 self.log_message("Ошибка отключения релюшек\nВыключите их вручную для корректной работы", e)
 
-
     def cycle_S_R(self):
         """
-        План по измерениям
+        План по измерениям (в коде он немного переработан, но суть таже)
 
         1. Проверка подключения к приборам
         2. Запись начальных условий
@@ -149,14 +152,21 @@ class Measurements:
             except Exception as e:
                 self.log_message('Настройки не скопировались', e)
 
+            try:
+                if self.app_instance.startline_changed_flag:
+                    self.number = self.app_instance.start_line_le.text()
+            except Exception as e:
+                self.log_message('Начальная строка не изменилась', e)
+
             # ТермоЭДС
             for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
+
+                if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
+                    self.log_message("Цикл измерений прерван на измерении термоЭДС")
+                    break
+
                 # Включаем релюшки
                 self.toggle_relay("heater", "on")
-
-                if not self.app_instance.measurement_thread.running:
-                    self.log_message("Цикл измерений прерван.")
-                    break
 
                 # Включаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip1"],
@@ -167,7 +177,7 @@ class Measurements:
                 for _ in range(int(self.settings["n_heat"])):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        # self.log_message("Цикл измерений прерван.")
                         break
 
                     self.termoemf_step()
@@ -187,7 +197,7 @@ class Measurements:
                 for _ in range(int(self.settings["n_heat"])):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        self.log_message("Цикл измерений прерван на измерении термоЭДС")
                         break
 
                     self.termoemf_step()
@@ -200,7 +210,7 @@ class Measurements:
             # Измерения сопротивления
             # Условия остановки измерений
             if not self.app_instance.measurement_thread.running:
-                self.log_message("Цикл измерений прерван.")
+                self.log_message("Цикл измерений прерван после измерения термоЭДС")
                 break
 
             if self.app_instance.rele_cb.isChecked():
@@ -213,10 +223,10 @@ class Measurements:
                                     state="on")
 
                 # Основные измерения сопротивления
-                for _ in range(int(self.settings["n_r_updown"])):
+                for _ in range(int(self.settings["n_r_updown"]) * 2):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        self.log_message("Цикл измерений прерван на сопротивлении")
                         break
 
                     self.resistance_step()
@@ -226,6 +236,10 @@ class Measurements:
                     else:
                         # Выключаем релюшки
                         self.toggle_relay("current", "off")
+
+                    self.meas_number += 1
+                    self.number += 1
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
@@ -243,15 +257,24 @@ class Measurements:
                 for _ in range(int(self.settings["n_r_up"])):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        self.log_message("Цикл измерений прерван на сопротивлении")
                         break
 
                     self.resistance_step()
+
+                    self.meas_number += 1
+                    self.number += 1
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
                                     voltage="0",
                                     state="on")
+
+            # Условия остановки измерений
+            if not self.app_instance.measurement_thread.running:
+                self.log_message("Цикл измерений прерван.")
+                break
 
     def termoemf_step(self):
         """
@@ -269,39 +292,116 @@ class Measurements:
         Время 2
         Системное время
         """
+        # Проверка на наличие кэша и заполнение значений из него
+        if self.cash_flag:
+            while self.excel_cash:
+                x = self.excel_cash.pop(0)
+                try:
+                    self.ws.Cells(x[0], x[1]).Value = x[2]
+                except:
+                    continue
+            self.cash_flag = False
+
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
+        start_row = 1
 
-        # ! Номер строки эксперимента
-        # self.meas_number  # Добавить в Excel
+        # Номер строки эксперимента
+        try:
+            self.ws.Cells(self.number, start_row).Value = self.meas_number
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, self.meas_number])
+        start_row += 1
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
+        try:
+            self.ws.Cells(self.number, start_row).Value = time1
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, time1])
+        start_row += 1
 
         # R термометра 1
         termometer1 = self.temperature()
+        try:
+            self.ws.Cells(self.number, start_row).Value = termometer1
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, termometer1])
+        start_row += 1
 
         # Термопары
+        # ! Можно оптимизировать и р3 р4 тоже
         try:
             all_tc = self.termoemf()
         except Exception as e:
             self.log_message("Ошибка termoemf", e)
         r1 = [i for i in all_tc["ch1"]]
         r2 = [i for i in all_tc["ch2"]]
+        for i in range(len(r1)):
+            try:
+                self.ws.Cells(self.number, start_row).Value = r1[i]
+            except:
+                self.cash_flag = True
+                self.excel_cash.append([self.number, start_row, r1[i]])
+            start_row += 1
+        for i in range(len(r2)):
+            try:
+                self.ws.Cells(self.number, start_row).Value = r2[i]
+            except:
+                self.cash_flag = True
+                self.excel_cash.append([self.number, start_row, r2[i]])
+            start_row += 1
 
         # Между
         all_tc = self.termoemf()
         r3 = [i for i in all_tc["ch3"]]
         r4 = [i for i in all_tc["ch4"]]
+        for i in range(len(r3)):
+            try:
+                self.ws.Cells(self.number, start_row).Value = r3[i]
+            except:
+                self.cash_flag = True
+                self.excel_cash.append([self.number, start_row, r3[i]])
+            start_row += 1
+        for i in range(len(r4)):
+            try:
+                self.ws.Cells(self.number, start_row).Value = r4[i]
+            except:
+                self.cash_flag = True
+                self.excel_cash.append([self.number, start_row, r4[i]])
+            start_row += 1
+
+        # Пропуск измерений сопротивления + катушка
+        start_row += int(self.settings["n_read_ch56"]) + 1
 
         # R термометра 2
         termometer2 = self.temperature()
+        try:
+           self.ws.Cells(self.number, start_row).Value = termometer2
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, termometer2])
+        start_row += 1
 
         # Время 2
         time2 = time.time() - self.app_instance.start_time
+        try:
+            self.ws.Cells(self.number, start_row).Value = time2
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, time2])
+        start_row += 1
 
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
+        try:
+            self.ws.Cells(self.number, start_row).Value = system_time
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, system_time])
 
         print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r1[0]} | {r2[0]} | "
               f"{r3[0]} | {r4[0]} | {termometer2[0]} | {time2} | {system_time}")
@@ -327,14 +427,30 @@ class Measurements:
         """
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
+        start_row = 1
         # ! Номер строки эксперимента
         # self.meas_number  # Добавить в Excel
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
+        try:
+            self.ws.Cells(self.number, start_row).Value = time1
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, time1])
+        start_row += 1
 
         # R термометра 1
         termometer1 = self.temperature()
+        try:
+            self.ws.Cells(self.number, start_row).Value = termometer1
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, termometer1])
+        start_row += 1
+
+        # Пропуск измерений термоЭДС
+        start_row += int(self.settings["n_read_ch12"]) + int(self.settings["n_read_ch34"])
 
         # Сопротивления
         try:
@@ -344,17 +460,55 @@ class Measurements:
         r5 = [i for i in all_res["ch5"]]
         r6 = [i for i in all_res["ch6"]]
 
+        for i in range(len(r5)):
+            try:
+                self.ws.Cells(self.number, start_row).Value = r5[i]
+            except:
+                self.cash_flag = True
+                self.excel_cash.append([self.number, start_row, r5[i]])
+            start_row += 1
+        for i in range(len(r6)):
+            try:
+                self.ws.Cells(self.number, start_row).Value = r6[i]
+            except:
+                self.cash_flag = True
+                self.excel_cash.append([self.number, start_row, r6[i]])
+            start_row += 1
+
         # Катушка
         kat = int(self.app_instance.r_cell.text())
+        try:
+            self.ws.Cells(self.number, start_row).Value = kat
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, kat])
+        start_row += 1
 
         # R термометра 2
         termometer2 = self.temperature()
+        try:
+            self.ws.Cells(self.number, start_row).Value = termometer2
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, termometer2])
+        start_row += 1
 
         # Время 2
         time2 = time.time() - self.app_instance.start_time
+        try:
+            self.ws.Cells(self.number, start_row).Value = time2
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, time2])
+        start_row += 1
 
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
+        try:
+            self.ws.Cells(self.number, start_row).Value = system_time
+        except:
+            self.cash_flag = True
+            self.excel_cash.append([self.number, start_row, system_time])
 
         print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r5[0]} | {r6[0]} | "
               f"{kat} | {termometer2[0]} | {time2} | {system_time}")
