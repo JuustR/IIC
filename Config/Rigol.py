@@ -58,6 +58,7 @@ class Rigol:
         """Настройка Rigol на переключение канала и Keysight на измерение постоянного напряжения"""
 
         self.keysight.write('CONF:VOLTage')
+        self.keysight.write("VOLTage:DC:IMP:AUTO ON")  # High-Z
         self.Rigol.write('INST:DMM OFF')
         if int(ch) > 9:
             self.Rigol.write('ROUT:SCAN (@2' + str(ch) + ')')
@@ -101,7 +102,7 @@ class Rigol:
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """Настройка Rigol на переключение канала и Keysight на измерение 2-проводного сопротивления"""
-        # Настройка Keysight для измерения 2-проводного сопротивления
+        # ! НЕ РАБОТАЕТ
         nplc = int(nplc) if nplc.is_integer() else float(nplc)
         range = int(range) if range.is_integer() else float(range)
         delay = int(delay) if delay.is_integer() else float(delay)

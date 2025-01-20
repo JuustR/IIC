@@ -156,7 +156,7 @@ class Measurements:
                 if self.app_instance.startline_changed_flag:
                     self.number = self.app_instance.start_line_le.text()
             except Exception as e:
-                self.log_message('Начальная строка не изменилась', e)
+                self.log_message('Начальная строка не изменилась (наверное)', e)
 
             # ТермоЭДС
             for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
@@ -425,6 +425,16 @@ class Measurements:
         Время 2
         Системное время
         """
+        # Проверка на наличие кэша и заполнение значений из него
+        if self.cash_flag:
+            while self.excel_cash:
+                x = self.excel_cash.pop(0)
+                try:
+                    self.ws.Cells(x[0], x[1]).Value = x[2]
+                except:
+                    continue
+            self.cash_flag = False
+
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
         start_row = 1
