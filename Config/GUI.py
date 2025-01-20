@@ -99,7 +99,7 @@ class App(QMainWindow):
         self.powersource_list = None
         self.measurement = None
         self.settings_dict = {}
-        self.start_time = 0
+        self.start_time = time.time()
 
         self.log_signal.connect(self.log_message)
 
