@@ -100,6 +100,7 @@ class App(QMainWindow):
         self.measurement = None
         self.settings_dict = {}
         self.start_time = time.time()
+        self.excel_cash = []
 
         self.log_signal.connect(self.log_message)
 
@@ -205,6 +206,12 @@ class App(QMainWindow):
             self.working_flag = True
             self.start_button.setText('Стоп')
             try:
+                if self.wb == None:
+                    self.log_message("Перед запуском создайте файл Excel")
+                    self.working_flag = False
+                    self.start_button.setText('Старт')
+                    return
+
                 if not self.inst_list or not self.powersource_list:
                     self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены.")
                     self.working_flag = False
