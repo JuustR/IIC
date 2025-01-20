@@ -12,6 +12,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from Config.Keithley2010 import Keithley2010
 from Config.Rigol import Rigol
 
+
 class MeasurementThread(QThread):
     log_signal = pyqtSignal()
     finished_signal = pyqtSignal()
@@ -39,6 +40,7 @@ class MeasurementThread(QThread):
         self.quit()
         self.wait()
 
+
 class Measurements:
     def __init__(self, app_instance):
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
@@ -51,19 +53,23 @@ class Measurements:
         # self.formatted_time = self.app_instance.formatted_time
 
         # Инициализация ИП
-        try:
-            if self.powersource_list and "AKIP" in self.powersource_list:
-                self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
-            else:
-                raise ValueError("Список источников питания пуст или AKIP не выбран.")
-        except Exception as e:
-            self.log_message("Ошибка при инициализации AKIP.", e)
+        if "AKIP" in self.powersource_list:
+            self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
+        else:
             self.pause()
+        # try:
+        #     if self.powersource_list and "AKIP" in self.powersource_list:
+        #         self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
+        #     else:
+        #         raise ValueError("Список источников питания пуст или AKIP не выбран.")
+        # except Exception as e:
+        #     self.log_message("Ошибка при инициализации AKIP.", e)
+        #     self.pause()
 
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
 
         self.fres_value = None
-        self.number = 11
+        self.number = self.app_instance.start_line_le.text()
         self.meas_number = 1
 
     def toggle_relay(self, relay_type, state):
@@ -100,7 +106,9 @@ class Measurements:
 
     def pause(self):
         """Функция паузы, останавливающая измерения и обнуляющая всё"""
-        if self.powersource_list and "AKIP" in self.powersource_list:
+        # ! Обнуление добавить
+        self.app_instance.working_flag = False
+        if "AKIP" in self.powersource_list:
             try:
                 self.control_heater(channel=1, voltage=0, state="off")
                 self.control_heater(channel=2, voltage=0, state="off")
@@ -116,10 +124,9 @@ class Measurements:
             except Exception as e:
                 self.log_message("Ошибка отключения релюшек\nВыключите их вручную для корректной работы", e)
 
-
     def cycle_S_R(self):
         """
-        План по измерениям
+        План по измерениям (в коде он немного переработан, но суть таже)
 
         1. Проверка подключения к приборам
         2. Запись начальных условий
@@ -149,14 +156,21 @@ class Measurements:
             except Exception as e:
                 self.log_message('Настройки не скопировались', e)
 
+            try:
+                if self.app_instance.startline_changed_flag:
+                    self.number = self.app_instance.start_line_le.text()
+            except Exception as e:
+                self.log_message('Начальная строка не изменилась', e)
+
             # ТермоЭДС
             for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
+
+                if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
+                    self.log_message("Цикл измерений прерван на измерении термоЭДС")
+                    break
+
                 # Включаем релюшки
                 self.toggle_relay("heater", "on")
-
-                if not self.app_instance.measurement_thread.running:
-                    self.log_message("Цикл измерений прерван.")
-                    break
 
                 # Включаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip1"],
@@ -167,7 +181,7 @@ class Measurements:
                 for _ in range(int(self.settings["n_heat"])):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        # self.log_message("Цикл измерений прерван.")
                         break
 
                     self.termoemf_step()
@@ -187,7 +201,7 @@ class Measurements:
                 for _ in range(int(self.settings["n_heat"])):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        self.log_message("Цикл измерений прерван на измерении термоЭДС")
                         break
 
                     self.termoemf_step()
@@ -200,7 +214,7 @@ class Measurements:
             # Измерения сопротивления
             # Условия остановки измерений
             if not self.app_instance.measurement_thread.running:
-                self.log_message("Цикл измерений прерван.")
+                self.log_message("Цикл измерений прерван после измерения термоЭДС")
                 break
 
             if self.app_instance.rele_cb.isChecked():
@@ -213,10 +227,10 @@ class Measurements:
                                     state="on")
 
                 # Основные измерения сопротивления
-                for _ in range(int(self.settings["n_r_updown"])):
+                for _ in range(int(self.settings["n_r_updown"]) * 2):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        self.log_message("Цикл измерений прерван на сопротивлении")
                         break
 
                     self.resistance_step()
@@ -226,6 +240,10 @@ class Measurements:
                     else:
                         # Выключаем релюшки
                         self.toggle_relay("current", "off")
+
+                    self.meas_number += 1
+                    self.number += 1
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
@@ -243,15 +261,24 @@ class Measurements:
                 for _ in range(int(self.settings["n_r_up"])):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван.")
+                        self.log_message("Цикл измерений прерван на сопротивлении")
                         break
 
                     self.resistance_step()
+
+                    self.meas_number += 1
+                    self.number += 1
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
                                     voltage="0",
                                     state="on")
+
+            # Условия остановки измерений
+            if not self.app_instance.measurement_thread.running:
+                self.log_message("Цикл измерений прерван.")
+                break
 
     def termoemf_step(self):
         """

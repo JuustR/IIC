@@ -13,7 +13,6 @@ import os
 import win32com.client as win32
 import time
 import json
-import pyvisa
 
 from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import QMainWindow, QLineEdit
@@ -93,6 +92,7 @@ class App(QMainWindow):
         self.working_flag = False
         self.data_reset_flag = False
         self.settings_changed_flag = True
+        self.startline_changed_flag = False
 
         self.wb = None
         self.inst_list = None
@@ -117,7 +117,7 @@ class App(QMainWindow):
         self.ConsolePTE.appendPlainText(error_message)
 
     def combobox_scan_changed(self):
-        """Было включение ip для Rigol'a, но тогда пришлось бы несколько раз подключаться к приборам"""
+        """Было включение ip для Rigol'a, но тогда пришлось бы несколько раз подключаться к приборам, поэтому убрал"""
         # if self.combobox_scan.currentText() == "Rigol":
         #     self.ip_rigol.setEnabled(True)
         # else:
@@ -191,7 +191,7 @@ class App(QMainWindow):
 
     def on_start_line_clicked(self):
         """Задаёт начало строки, по дефолту выставляет начало строки на 11 (реализовать по созданию Excel)"""
-        pass
+        self.startline_changed_flag = True
 
     def on_start_clicked(self):
         if self.working_flag:

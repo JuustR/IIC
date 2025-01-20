@@ -10,7 +10,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 class ConnectionThread(QThread):
     log_signal = pyqtSignal(str)
-    result_signal = pyqtSignal(list, list)
+    result_signal = pyqtSignal(dict, dict)
 
     def __init__(self, inst_instance):
         super().__init__()
@@ -42,8 +42,10 @@ class InstrumentConnection:
         self.AKIP = None
 
         self.USB_resources = []
-        self.instr_list = {"Smth1": "IDN...1", "Smth2": "IDN...2"}
-        self.powersource_dict = {"PS1": "IDN"}
+        self.instr_list = {}
+        # self.instr_list = {"Smth1": "IDN...1", "Smth2": "IDN...2"}
+        # self.powersource_dict = {"PS1": "IDN"}
+        self.powersource_dict = {}
         self.instr = None  # Для проверки всех подключенных приборов
 
         self.send_IDN = None
