@@ -24,14 +24,15 @@ from Config.Measurements import Measurements, MeasurementThread
 
 
 class App(QMainWindow):
-    """GUI основной страницы программы"""
+    """
+    GUI основной страницы программы
+    """
     log_signal = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         try:
-            # Относительно долго грузится, можно разделить на 2 потока и добавить анимацию включения программы
             self.excel = win32.Dispatch('Excel.Application')  # Создаем COM объект
             self.excel.Visible = True  # Excel visible, тк invisible скрывает уже открытые файлы
         except Exception as e:
@@ -94,7 +95,9 @@ class App(QMainWindow):
         self.settings_changed_flag = True
         self.startline_changed_flag = False
 
+        self.wb_path = None
         self.wb = None
+        self.ws = None
         self.inst_list = None
         self.powersource_list = None
         self.measurement = None
@@ -118,7 +121,9 @@ class App(QMainWindow):
         self.ConsolePTE.appendPlainText(error_message)
 
     def combobox_scan_changed(self):
-        """Было включение ip для Rigol'a, но тогда пришлось бы несколько раз подключаться к приборам, поэтому убрал"""
+        """
+        Было включение ip для Rigol'a, но тогда пришлось бы несколько раз подключаться к приборам, поэтому убрал
+        """
         # if self.combobox_scan.currentText() == "Rigol":
         #     self.ip_rigol.setEnabled(True)
         # else:
@@ -129,7 +134,9 @@ class App(QMainWindow):
         pass
 
     def instr1_cb_clicked(self):
-        """Добавление ещё одного прибора"""
+        """
+        Добавление ещё одного прибора
+        """
         if self.instr1_cb.isChecked():
             self.ip_instr1.setEnabled(True)
             self.excel_instr1.setEnabled(True)
@@ -140,7 +147,9 @@ class App(QMainWindow):
             self.instr1_connect.setEnabled(False)
 
     def instr2_cb_clicked(self):
-        """Добавление ещё одного прибора"""
+        """
+        Добавление ещё одного прибора
+        """
         if self.instr2_cb.isChecked():
             self.ip_instr2.setEnabled(True)
             self.excel_instr2.setEnabled(True)
@@ -151,7 +160,9 @@ class App(QMainWindow):
             self.instr2_connect.setEnabled(False)
 
     def rele_cb_clicked(self):
-        """Подключение к релюшкам"""
+        """
+        Подключение к релюшкам
+        """
         if self.rele_cb.isChecked():
             self.n_r_up.setEnabled(False)
             self.n_r_updown.setEnabled(True)
@@ -160,7 +171,9 @@ class App(QMainWindow):
             self.n_r_up.setEnabled(True)
 
     def on_instruments_clicked(self):
-        """Подключается ко всем доступным приборам, которые обнаружит"""
+        """
+        Подключается ко всем доступным приборам, которые обнаружит
+        """
         self.combobox_scan.clear()
         self.combobox_power.clear()
         ic = InstrumentConnection(self)
@@ -186,12 +199,16 @@ class App(QMainWindow):
             self.combobox_power.addItem(_)
 
     def on_create_clicked(self):
-        """Создаёт шаблон эксперимента"""
+        """
+        Создаёт шаблон эксперимента
+        """
         self.log_message('НЕДОСТУПНО! Находится в разработке')
         pass
 
     def on_start_line_clicked(self):
-        """Задаёт начало строки, по дефолту выставляет начало строки на 11 (реализовать по созданию Excel)"""
+        """
+        Задаёт начало строки, по дефолту выставляет начало строки на 11 (реализовать по созданию Excel)
+        """
         self.startline_changed_flag = True
 
     def on_start_clicked(self):
@@ -207,18 +224,20 @@ class App(QMainWindow):
             self.start_button.setText('Стоп')
             try:
                 if self.wb == None:
-                    self.log_message("Перед запуском создайте файл Excel")
+                    self.log_message("Перед запуском убедитесь, что Excel создан")
                     self.working_flag = False
                     self.start_button.setText('Старт')
                     return
-
+                else:
+                    self.ws = self.wb.Worksheets(1)
                 if not self.inst_list or not self.powersource_list:
-                    self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены.")
+                    self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены")
                     self.working_flag = False
                     self.start_button.setText('Старт')
                     return
                 self.measurement = Measurements(self)
                 self.measurement_thread = MeasurementThread(self.measurement)
+                self.measurement.update_excel_signal.connect(self.update_excel)
                 self.measurement_thread.log_signal.connect(self.log_message)
                 self.measurement_thread.finished_signal.connect(self.measurement_finished)
                 self.measurement_thread.start()
@@ -227,6 +246,13 @@ class App(QMainWindow):
                 self.working_flag = False
                 self.start_button.setText('Старт')
 
+    def update_excel(self, row, col, value):
+        """Выполняет изменения в Excel в основном потоке."""
+        try:
+            self.ws.Cells(row, col).Value = value
+        except Exception as e:
+            #! Сюда перевести кэш
+            self.log_message(f"Ошибка записи в Excel: {e}")
 
     def measurement_finished(self):
         self.measurement.pause()
@@ -244,10 +270,13 @@ class App(QMainWindow):
         self.start_button.setText('Старт')
 
     def on_choose_excel_clicked(self):
-        """Вызов диалога с созданием нового Excel"""
+        """
+        Вызов диалога с созданием нового Excel
+        """
         self.log_message('Вызвали создание нового Excel')
         dlg = ChooseExcelDialog(self)
         dlg.exec()
+
 
     def save_settings(self):
         """
@@ -295,7 +324,9 @@ class App(QMainWindow):
         # !
 
     def load_tab1_settings(self):
-        """Загружает сохранённые значения виджетов пока только для Seebeck+R"""
+        """
+        Загружает сохранённые значения виджетов пока только для Seebeck+R
+        """
         self.combobox_scan.setCurrentText(self.settings.value("combobox_scan", ""))
         self.combobox_power.setCurrentText(self.settings.value("combobox_power", ""))
         self.rele_cb.setChecked(self.settings.value("rele_cb", "false") == "true")
@@ -332,7 +363,9 @@ class App(QMainWindow):
         self.copy_settings_to_dict()
 
     def copy_settings_to_dict(self):
-        """Копирует настройки из self.settings в словарь settings_dict"""
+        """
+        Копирует настройки из self.settings в словарь settings_dict
+        """
 
         def copy_to_dict(element):
             self.settings_dict[element] = self.settings.value(element)
@@ -351,3 +384,19 @@ class App(QMainWindow):
 
         for key in keys:
             copy_to_dict(key)
+
+    def closeEvent(self, event):
+        """
+        Завершает работу Excel перед выходом
+        """
+        try:
+            if self.wb:
+                self.wb.SaveAs(self.wb_path, 52)
+                self.wb.Close(SaveChanges=1)
+            if self.excel:
+                self.excel.Quit()
+            print("Excel успешно закрыт")
+        except Exception as e:
+            print(f"Ошибка при закрытии Excel: {e}")
+        finally:
+            event.accept()

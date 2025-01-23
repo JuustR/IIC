@@ -7,6 +7,7 @@ import time
 import requests
 import pyvisa
 import win32com.client as win32
+from PyQt6.QtCore import QObject
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -37,13 +38,22 @@ class MeasurementThread(QThread):
     def stop(self):
         """Завершает работу потока"""
         self.running = False
-        self.meas_instance.pause()
         self.quit()
         self.wait()
+        self.meas_instance.pause()
 
 
-class Measurements:
+class Measurements(QObject):
+    """
+    Класс для работы с измерениями
+
+    Note: Для связи с GUI использовать сигналы и слоты(не знаю что это), т.к. они не вызывают ошибки,
+    связанные с многозадачностью/многопоточностью
+    """
+    update_excel_signal = pyqtSignal(int, int, object)  # Сигнал для обновления GUI
+
     def __init__(self, app_instance):
+        super().__init__()
         self.rm = pyvisa.ResourceManager()  # Инициализируем ResourceManager
 
         self.app_instance = app_instance
@@ -52,7 +62,8 @@ class Measurements:
         self.inst_list = self.app_instance.inst_list
         self.powersource_list = self.app_instance.powersource_list
         self.excel_cash = self.app_instance.excel_cash
-        self.wb = self.app_instance.wb
+        # self.wb = self.excel.Workbooks.Open(self.app_instance.wb_path)
+        # self.wb = self.app_instance.wb
 
         # Инициализация ИП
         if "AKIP" in self.powersource_list:
@@ -63,13 +74,15 @@ class Measurements:
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
         self.cash_flag = False
 
-        self.ws = self.wb.Worksheets(1)  # Выбор первого листа
+        # self.ws = self.wb.Worksheets(1)  # Выбор первого листа
         self.fres_value = None
         self.number = self.app_instance.start_line_le.text()
         self.meas_number = 1
 
     def toggle_relay(self, relay_type, state):
-        """Управление релюшками, где current - направление тока, sample - ток, heater - нагреватель"""
+        """
+        Управление релюшками, где current - направление тока, sample - ток, heater - нагреватель
+        """
         d = {
             "current": "current_switch",
             "sample": "sample_switch",
@@ -162,7 +175,7 @@ class Measurements:
             for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
 
                 if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
-                    self.log_message("Цикл измерений прерван на измерении термоЭДС")
+                    # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                     break
 
                 # Включаем релюшки
@@ -176,7 +189,7 @@ class Measurements:
                 # Основные измерения нагрева для термоЭДС
                 for _ in range(int(self.settings["n_heat"])):
                     # Условия остановки измерений
-                    if not self.app_instance.measurement_thread.running:
+                    if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
                         # self.log_message("Цикл измерений прерван.")
                         break
 
@@ -196,8 +209,8 @@ class Measurements:
                 # Основные измерения охлаждения для термоЭДС
                 for _ in range(int(self.settings["n_heat"])):
                     # Условия остановки измерений
-                    if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван на измерении термоЭДС")
+                    if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
+                        # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                         break
 
                     self.termoemf_step()
@@ -209,8 +222,8 @@ class Measurements:
 
             # Измерения сопротивления
             # Условия остановки измерений
-            if not self.app_instance.measurement_thread.running:
-                self.log_message("Цикл измерений прерван после измерения термоЭДС")
+            if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
+                # self.log_message("Цикл измерений прерван после измерения термоЭДС")
                 break
 
             if self.app_instance.rele_cb.isChecked():
@@ -225,17 +238,19 @@ class Measurements:
                 # Основные измерения сопротивления
                 for _ in range(int(self.settings["n_r_updown"]) * 2):
                     # Условия остановки измерений
-                    if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван на сопротивлении")
+                    if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
+                        # self.log_message("Цикл измерений прерван на сопротивлении")
                         break
 
                     self.resistance_step()
                     if not self.change_volt_flag:
                         # Включаем релюшки
                         self.toggle_relay("current", "on")
+                        self.change_volt_flag = True
                     else:
                         # Выключаем релюшки
                         self.toggle_relay("current", "off")
+                        self.change_volt_flag = False
 
                     self.meas_number += 1
                     self.number += 1
@@ -256,8 +271,8 @@ class Measurements:
 
                 for _ in range(int(self.settings["n_r_up"])):
                     # Условия остановки измерений
-                    if not self.app_instance.measurement_thread.running:
-                        self.log_message("Цикл измерений прерван на сопротивлении")
+                    if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
+                        # self.log_message("Цикл измерений прерван на сопротивлении")
                         break
 
                     self.resistance_step()
@@ -272,7 +287,7 @@ class Measurements:
                                     state="on")
 
             # Условия остановки измерений
-            if not self.app_instance.measurement_thread.running:
+            if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
                 self.log_message("Цикл измерений прерван.")
                 break
 
@@ -293,43 +308,58 @@ class Measurements:
         Системное время
         """
         # Проверка на наличие кэша и заполнение значений из него
-        if self.cash_flag:
-            while self.excel_cash:
-                x = self.excel_cash.pop(0)
-                try:
-                    self.ws.Cells(x[0], x[1]).Value = x[2]
-                except:
-                    continue
-            self.cash_flag = False
+        # if self.cash_flag:
+        #     while self.excel_cash:
+        #         x = self.excel_cash.pop(0)
+        #         try:
+        #             self.ws.Cells(int(x[0]), int(x[1])).Value = x[2]
+        #         except Exception as e:
+        #             print(e)
+        #             continue
+        #     self.cash_flag = False
+
 
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
         start_row = 1
 
+        # self.app_instance.wb.SaveAs(self.app_instance.wb_path, 52)
+
         # Номер строки эксперимента
-        try:
-            self.ws.Cells(self.number, start_row).Value = self.meas_number
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, self.meas_number])
+        self.update_excel_signal.emit(self.number, start_row, self.meas_number)
+
+        # try:
+        #     self.ws.Cells(int(self.number), int(start_row)).Value = self.meas_number
+        # except Exception as e:
+        #     print(e)
+        #     print("No")
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, self.meas_number])
+        #     print(self.excel_cash)
         start_row += 1
+
+        # self.app_instance.excel.CalculateFullRebuild()
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
-        try:
-            self.ws.Cells(self.number, start_row).Value = time1
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, time1])
+        self.update_excel_signal.emit(self.number, start_row, time1)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = time1
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, time1])
         start_row += 1
 
         # R термометра 1
         termometer1 = self.temperature()
-        try:
-            self.ws.Cells(self.number, start_row).Value = termometer1
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, termometer1])
+        self.update_excel_signal.emit(self.number, start_row, termometer1)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = termometer1
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, termometer1])
         start_row += 1
 
         # Термопары
@@ -341,18 +371,22 @@ class Measurements:
         r1 = [i for i in all_tc["ch1"]]
         r2 = [i for i in all_tc["ch2"]]
         for i in range(len(r1)):
-            try:
-                self.ws.Cells(self.number, start_row).Value = r1[i]
-            except:
-                self.cash_flag = True
-                self.excel_cash.append([self.number, start_row, r1[i]])
+            self.update_excel_signal.emit(self.number, start_row, r1[i])
+            # try:
+            #     self.ws.Cells(self.number, start_row).Value = r1[i]
+            # except Exception as e:
+            #     print(e)
+            #     self.cash_flag = True
+            #     self.excel_cash.append([self.number, start_row, r1[i]])
             start_row += 1
         for i in range(len(r2)):
-            try:
-                self.ws.Cells(self.number, start_row).Value = r2[i]
-            except:
-                self.cash_flag = True
-                self.excel_cash.append([self.number, start_row, r2[i]])
+            self.update_excel_signal.emit(self.number, start_row, r2[i])
+            # try:
+            #     self.ws.Cells(self.number, start_row).Value = r2[i]
+            # except Exception as e:
+            #     print(e)
+            #     self.cash_flag = True
+            #     self.excel_cash.append([self.number, start_row, r2[i]])
             start_row += 1
 
         # Между
@@ -360,48 +394,58 @@ class Measurements:
         r3 = [i for i in all_tc["ch3"]]
         r4 = [i for i in all_tc["ch4"]]
         for i in range(len(r3)):
-            try:
-                self.ws.Cells(self.number, start_row).Value = r3[i]
-            except:
-                self.cash_flag = True
-                self.excel_cash.append([self.number, start_row, r3[i]])
+            self.update_excel_signal.emit(self.number, start_row, r3[i])
+            # try:
+            #     self.ws.Cells(self.number, start_row).Value = r3[i]
+            # except Exception as e:
+            #     print(e)
+            #     self.cash_flag = True
+            #     self.excel_cash.append([self.number, start_row, r3[i]])
             start_row += 1
         for i in range(len(r4)):
-            try:
-                self.ws.Cells(self.number, start_row).Value = r4[i]
-            except:
-                self.cash_flag = True
-                self.excel_cash.append([self.number, start_row, r4[i]])
+            self.update_excel_signal.emit(self.number, start_row, r4[i])
+            # try:
+            #     self.ws.Cells(self.number, start_row).Value = r4[i]
+            # except Exception as e:
+            #     print(e)
+            #     self.cash_flag = True
+            #     self.excel_cash.append([self.number, start_row, r4[i]])
             start_row += 1
 
         # Пропуск измерений сопротивления + катушка
-        start_row += int(self.settings["n_read_ch56"]) + 1
+        start_row += int(self.settings["n_read_ch56"]) * 2 + 1
 
         # R термометра 2
         termometer2 = self.temperature()
-        try:
-           self.ws.Cells(self.number, start_row).Value = termometer2
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, termometer2])
+        self.update_excel_signal.emit(self.number, start_row, termometer2)
+        # try:
+        #    self.ws.Cells(self.number, start_row).Value = termometer2
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, termometer2])
         start_row += 1
 
         # Время 2
         time2 = time.time() - self.app_instance.start_time
-        try:
-            self.ws.Cells(self.number, start_row).Value = time2
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, time2])
+        self.update_excel_signal.emit(self.number, start_row, time2)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = time2
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, time2])
         start_row += 1
 
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
-        try:
-            self.ws.Cells(self.number, start_row).Value = system_time
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, system_time])
+        self.update_excel_signal.emit(self.number, start_row, system_time)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = system_time
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, system_time])
 
         print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r1[0]} | {r2[0]} | "
               f"{r3[0]} | {r4[0]} | {termometer2[0]} | {time2} | {system_time}")
@@ -426,41 +470,48 @@ class Measurements:
         Системное время
         """
         # Проверка на наличие кэша и заполнение значений из него
-        if self.cash_flag:
-            while self.excel_cash:
-                x = self.excel_cash.pop(0)
-                try:
-                    self.ws.Cells(x[0], x[1]).Value = x[2]
-                except:
-                    continue
-            self.cash_flag = False
+        # if self.cash_flag:
+        #     while self.excel_cash:
+        #         x = self.excel_cash.pop(0)
+        #         try:
+        #             self.ws.Cells(x[0], x[1]).Value = x[2]
+        #         except Exception as e:
+        #             print(e)
+        #             continue
+        #     self.cash_flag = False
 
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
         start_row = 1
         # ! Номер строки эксперимента
         # self.meas_number  # Добавить в Excel
+        self.update_excel_signal.emit(self.number, start_row, self.meas_number)
+        start_row += 1
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
-        try:
-            self.ws.Cells(self.number, start_row).Value = time1
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, time1])
+        self.update_excel_signal.emit(self.number, start_row, time1)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = time1
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, time1])
         start_row += 1
 
         # R термометра 1
         termometer1 = self.temperature()
-        try:
-            self.ws.Cells(self.number, start_row).Value = termometer1
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, termometer1])
+        self.update_excel_signal.emit(self.number, start_row, termometer1)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = termometer1
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, termometer1])
         start_row += 1
 
         # Пропуск измерений термоЭДС
-        start_row += int(self.settings["n_read_ch12"]) + int(self.settings["n_read_ch34"])
+        start_row += int(self.settings["n_read_ch12"]) * 2 + int(self.settings["n_read_ch34"]) * 2
 
         # Сопротивления
         try:
@@ -471,54 +522,66 @@ class Measurements:
         r6 = [i for i in all_res["ch6"]]
 
         for i in range(len(r5)):
-            try:
-                self.ws.Cells(self.number, start_row).Value = r5[i]
-            except:
-                self.cash_flag = True
-                self.excel_cash.append([self.number, start_row, r5[i]])
+            self.update_excel_signal.emit(self.number, start_row, r5[i])
+            # try:
+            #     self.ws.Cells(self.number, start_row).Value = r5[i]
+            # except Exception as e:
+            #     print(e)
+            #     self.cash_flag = True
+            #     self.excel_cash.append([self.number, start_row, r5[i]])
             start_row += 1
         for i in range(len(r6)):
-            try:
-                self.ws.Cells(self.number, start_row).Value = r6[i]
-            except:
-                self.cash_flag = True
-                self.excel_cash.append([self.number, start_row, r6[i]])
+            self.update_excel_signal.emit(self.number, start_row, r6[i])
+            # try:
+            #     self.ws.Cells(self.number, start_row).Value = r6[i]
+            # except Exception as e:
+            #     print(e)
+            #     self.cash_flag = True
+            #     self.excel_cash.append([self.number, start_row, r6[i]])
             start_row += 1
 
         # Катушка
         kat = int(self.app_instance.r_cell.text())
-        try:
-            self.ws.Cells(self.number, start_row).Value = kat
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, kat])
+        self.update_excel_signal.emit(self.number, start_row, kat)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = kat
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, kat])
         start_row += 1
 
         # R термометра 2
         termometer2 = self.temperature()
-        try:
-            self.ws.Cells(self.number, start_row).Value = termometer2
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, termometer2])
+        self.update_excel_signal.emit(self.number, start_row, termometer2)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = termometer2
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, termometer2])
         start_row += 1
 
         # Время 2
         time2 = time.time() - self.app_instance.start_time
-        try:
-            self.ws.Cells(self.number, start_row).Value = time2
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, time2])
+        self.update_excel_signal.emit(self.number, start_row, time2)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = time2
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, time2])
         start_row += 1
 
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
-        try:
-            self.ws.Cells(self.number, start_row).Value = system_time
-        except:
-            self.cash_flag = True
-            self.excel_cash.append([self.number, start_row, system_time])
+        self.update_excel_signal.emit(self.number, start_row, system_time)
+        # try:
+        #     self.ws.Cells(self.number, start_row).Value = system_time
+        # except Exception as e:
+        #     print(e)
+        #     self.cash_flag = True
+        #     self.excel_cash.append([self.number, start_row, system_time])
 
         print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r5[0]} | {r6[0]} | "
               f"{kat} | {termometer2[0]} | {time2} | {system_time}")

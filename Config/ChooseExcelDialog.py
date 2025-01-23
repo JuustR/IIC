@@ -27,6 +27,7 @@ class ChooseExcelDialog(QDialog):
         # self.formatted_time = self.app_instance.formatted_time
         self.excel_settings = 'Smth'
         self.macros_status = None
+        self.wb = None
 
         self.setWindowTitle('Choosing Template')
         self.OpenMacrosBtn.clicked.connect(self.open_macros_btn)
@@ -87,17 +88,19 @@ class ChooseExcelDialog(QDialog):
 
         if self.data["TempName"] == "Нет шаблона":
             temp_path = os.path.join(script_path, "..", "templates", "Base_temp.xltm")
-            # workbook = self.app_instance.excel.Workbooks.Open(temp_path)
+            # workbook = self.excel.Workbooks.Open(temp_path)
             self.app_instance.wb = self.app_instance.excel.Workbooks.Open(temp_path)
+            self.app_instance.wb_path = file_path
         else:
             temp_path = os.path.join(script_path, "templates", self.data["TempName"])
-            # workbook = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
+            # workbook = self.excel.Workbooks.Open(self.data["TempName"])
             self.app_instance.wb = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
+            self.app_instance.wb_path = file_path
 
         # Формат .xlsm будет при 52, а .xlsx при 51
         if self.data["MacrosName"] != "Нет макроса":
             try:
-                vbacomponent = self.app_instance.wb.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
+                vbacomponent = self.wb.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
                 vbacomponent.CodeModule.AddFromFile(self.data["MacrosName"])
                 self.macros_status = f"с макросом \"{os.path.basename(self.data['MacrosName'])}\""
 
@@ -126,3 +129,4 @@ class ChooseExcelDialog(QDialog):
 
     def getExcelSettings(self):
         return self.excel_settings
+
