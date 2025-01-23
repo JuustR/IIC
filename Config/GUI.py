@@ -385,6 +385,20 @@ class App(QMainWindow):
         for key in keys:
             copy_to_dict(key)
 
+    def start_disable_le(self):
+        """
+        Отключение фрагментов интерфейса при старте измерений
+        """
+        if self.working_flag:
+            
+        else:
+
+        # if self.combobox_scan.currentText() == "Rigol":
+        #     self.ip_rigol.setEnabled(True)
+        # else:
+        #     self.ip_rigol.setEnabled(False)
+        pass
+
     def closeEvent(self, event):
         """
         Завершает работу Excel перед выходом
