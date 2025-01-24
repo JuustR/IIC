@@ -1,6 +1,7 @@
 """
 Класс с настройками и запуском измерений на Keithley 2010
 
+Переписать под версию с Rigol, когда выходит на канал и ждет time.sleep(delay)
 """
 
 import pyvisa
@@ -15,11 +16,15 @@ class Keithley2010:
         self.instrument = self.rm.open_resource(self.instr["keithley2010"])
 
     def reset(self):
-        """Сброс настроек прибора"""
+        """
+        Сброс настроек прибора
+        """
         self.instrument.write("*RST")
 
     def set_dcv_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
-        """Настройка прибора на измерение постоянного напряжения"""
+        """
+        Настройка прибора на измерение постоянного напряжения
+        """
         self.instrument.write(":SENS:FUNC 'VOLT:DC'")
         self.instrument.write(f":SENS:VOLT:DC:NPLC {nplc}")
         if range == 0:
@@ -34,7 +39,9 @@ class Keithley2010:
         self.instrument.write("DISP:ENAB ON")
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
-        """Настройка прибора на измерение 4-проводного сопротивления"""
+        """
+        Настройка прибора на измерение 4-проводного сопротивления
+        """
         self.instrument.write(":SENS:FUNC 'FRES'")
         self.instrument.write(f":SENS:FRES:NPLC {nplc}")
         if range == 0:
@@ -49,7 +56,9 @@ class Keithley2010:
         self.instrument.write("DISP:ENAB ON")
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
-        """Настройка прибора на измерение 2-проводного сопротивления"""
+        """
+        Настройка прибора на измерение 2-проводного сопротивления
+        """
         self.instrument.write(":SENS:FUNC 'RES'")
         self.instrument.write(f":SENS:RES:NPLC {nplc}")
         if range == 0:
@@ -64,7 +73,9 @@ class Keithley2010:
         self.instrument.write("DISP:ENAB ON")
 
     def measure(self, meas_count: int) -> list:
-        """Запуск измерения и получение результата(должно быть -> list?)"""
+        """
+        Запуск измерения и получение результата
+        """
         print(time.strftime("%H:%M:%S | ", time.localtime()))
         # self.instrument.write(f":TRIG:COUN {meas_count}")
         # self.instrument.write(":INIT")

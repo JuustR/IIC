@@ -6,7 +6,6 @@
 import time
 import requests
 import pyvisa
-import win32com.client as win32
 from PyQt6.QtCore import QObject
 
 from PyQt6.QtCore import QThread, pyqtSignal
@@ -36,7 +35,9 @@ class MeasurementThread(QThread):
             self.finished_signal.emit()
 
     def stop(self):
-        """Завершает работу потока"""
+        """
+        Завершает работу потока
+        """
         self.running = False
         self.quit()
         self.wait()
@@ -62,8 +63,6 @@ class Measurements(QObject):
         self.inst_list = self.app_instance.inst_list
         self.powersource_list = self.app_instance.powersource_list
         self.excel_cash = self.app_instance.excel_cash
-        # self.wb = self.excel.Workbooks.Open(self.app_instance.wb_path)
-        # self.wb = self.app_instance.wb
 
         # Инициализация ИП
         if "AKIP" in self.powersource_list:
@@ -74,7 +73,6 @@ class Measurements(QObject):
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
         self.cash_flag = False
 
-        # self.ws = self.wb.Worksheets(1)  # Выбор первого листа
         self.fres_value = None
         self.number = self.app_instance.start_line_le.text()
         self.meas_number = 1
@@ -96,7 +94,9 @@ class Measurements(QObject):
             self.log_message(f"Ошибка переключения реле {relay_type} ({state})", e)
 
     def control_heater(self, channel, voltage, state):
-        """Управление нагревателем"""
+        """
+        Управление нагревателем
+        """
         try:
             if self.app_instance.combobox_power.currentText() == "AKIP":
                 self.AKIP.write(f'INSTrument:NSELect {channel}')
@@ -111,11 +111,11 @@ class Measurements(QObject):
         if exception:
             error_message += f"\n{exception}"
         self.log_signal.emit(error_message)
-        # self.app_instance.ConsolePTE.appendPlainText(error_message)
 
     def pause(self):
-        """Функция паузы, останавливающая измерения и обнуляющая всё"""
-        # ! Обнуление добавить
+        """
+        Функция паузы, останавливающая измерения и обнуляющая всё
+        """
         self.app_instance.working_flag = False
         if "AKIP" in self.powersource_list:
             try:
@@ -135,27 +135,7 @@ class Measurements(QObject):
 
     def cycle_S_R(self):
         """
-        План по измерениям (в коде он немного переработан, но суть таже)
-
-        1. Проверка подключения к приборам
-        2. Запись начальных условий
-        3. Старт измерений
-            3.1. Измерение сопротивления
-                3.1.1. Замыкание релюшек на ток
-                3.1.2. Подача напряжения на токовые контакты
-                3.1.3. Запись измеренных данных
-                3.1.4. Переключение направления тока (мб секундную задержку между переключениями)
-                3.1.5. Повторение пунктов 2-3
-                3.1.6. Если измерений >1, то повторяем 4-2-3-4-2-3 умноженное на кол-во измерений (4-2-3 можно в одну ф-ю)
-                3.1.7. Размыкание токовых релюшек, отключение нагревателя и пауза (если нужно)
-            3.2. Измерения термоЭДС (если нужно)
-                3.2.1. Замыкание релюшки на нагреватель
-                3.2.2. Подаём напряжение на нагреватель
-                3.2.3. Измеряем и записываем n точек полуцикла нагрева
-                3.2.4. Размыкаем релюшку нагревателя и отключаем нагреватель
-                3.2.5. Измеряем и записываем m точек полуцикла охлаждения
-                3.2.6. Выставляем паузу, если нужно
-        4. Остановка измерений и сохранение файла
+        Основной цикл измерений термоЭДС и сопротивления
         """
         while self.app_instance.working_flag and self.app_instance.measurement_thread.running:
             # Проверка обновления настроек
@@ -172,13 +152,14 @@ class Measurements(QObject):
                 self.log_message('Начальная строка не изменилась (наверное)', e)
 
             # ТермоЭДС
-            for i in range(int(self.settings["n_cycles"])):  # Количество полных цилов термо эдс
+            for i in range(int(self.settings["n_cycles"])):  # Количество полных циклов термо эдс
 
                 if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
                     # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                     break
 
                 # Включаем релюшки
+                # ! Если измерения без релюшек, то нужен try(наверное)
                 self.toggle_relay("heater", "on")
 
                 # Включаем нагреватель
@@ -323,43 +304,18 @@ class Measurements(QObject):
         self.number = int(self.app_instance.start_line_le.text())
         start_row = 1
 
-        # self.app_instance.wb.SaveAs(self.app_instance.wb_path, 52)
-
         # Номер строки эксперимента
         self.update_excel_signal.emit(self.number, start_row, self.meas_number)
-
-        # try:
-        #     self.ws.Cells(int(self.number), int(start_row)).Value = self.meas_number
-        # except Exception as e:
-        #     print(e)
-        #     print("No")
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, self.meas_number])
-        #     print(self.excel_cash)
         start_row += 1
-
-        # self.app_instance.excel.CalculateFullRebuild()
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
         self.update_excel_signal.emit(self.number, start_row, time1)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = time1
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, time1])
         start_row += 1
 
         # R термометра 1
         termometer1 = self.temperature()
         self.update_excel_signal.emit(self.number, start_row, termometer1)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = termometer1
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, termometer1])
         start_row += 1
 
         # Термопары
@@ -372,21 +328,9 @@ class Measurements(QObject):
         r2 = [i for i in all_tc["ch2"]]
         for i in range(len(r1)):
             self.update_excel_signal.emit(self.number, start_row, r1[i])
-            # try:
-            #     self.ws.Cells(self.number, start_row).Value = r1[i]
-            # except Exception as e:
-            #     print(e)
-            #     self.cash_flag = True
-            #     self.excel_cash.append([self.number, start_row, r1[i]])
             start_row += 1
         for i in range(len(r2)):
             self.update_excel_signal.emit(self.number, start_row, r2[i])
-            # try:
-            #     self.ws.Cells(self.number, start_row).Value = r2[i]
-            # except Exception as e:
-            #     print(e)
-            #     self.cash_flag = True
-            #     self.excel_cash.append([self.number, start_row, r2[i]])
             start_row += 1
 
         # Между
@@ -395,21 +339,9 @@ class Measurements(QObject):
         r4 = [i for i in all_tc["ch4"]]
         for i in range(len(r3)):
             self.update_excel_signal.emit(self.number, start_row, r3[i])
-            # try:
-            #     self.ws.Cells(self.number, start_row).Value = r3[i]
-            # except Exception as e:
-            #     print(e)
-            #     self.cash_flag = True
-            #     self.excel_cash.append([self.number, start_row, r3[i]])
             start_row += 1
         for i in range(len(r4)):
             self.update_excel_signal.emit(self.number, start_row, r4[i])
-            # try:
-            #     self.ws.Cells(self.number, start_row).Value = r4[i]
-            # except Exception as e:
-            #     print(e)
-            #     self.cash_flag = True
-            #     self.excel_cash.append([self.number, start_row, r4[i]])
             start_row += 1
 
         # Пропуск измерений сопротивления + катушка
@@ -418,37 +350,19 @@ class Measurements(QObject):
         # R термометра 2
         termometer2 = self.temperature()
         self.update_excel_signal.emit(self.number, start_row, termometer2)
-        # try:
-        #    self.ws.Cells(self.number, start_row).Value = termometer2
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, termometer2])
         start_row += 1
 
         # Время 2
         time2 = time.time() - self.app_instance.start_time
         self.update_excel_signal.emit(self.number, start_row, time2)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = time2
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, time2])
         start_row += 1
 
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
         self.update_excel_signal.emit(self.number, start_row, system_time)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = system_time
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, system_time])
 
-        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r1[0]} | {r2[0]} | "
-              f"{r3[0]} | {r4[0]} | {termometer2[0]} | {time2} | {system_time}")
+        # print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r1[0]} | {r2[0]} | "
+        #       f"{r3[0]} | {r4[0]} | {termometer2[0]} | {time2} | {system_time}")
 
     def resistance_step(self):
         """
@@ -483,31 +397,19 @@ class Measurements(QObject):
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
         start_row = 1
-        # ! Номер строки эксперимента
-        # self.meas_number  # Добавить в Excel
+
+        # Номер строки эксперимента
         self.update_excel_signal.emit(self.number, start_row, self.meas_number)
         start_row += 1
 
         # Время 1
         time1 = time.time() - self.app_instance.start_time
         self.update_excel_signal.emit(self.number, start_row, time1)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = time1
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, time1])
         start_row += 1
 
         # R термометра 1
         termometer1 = self.temperature()
         self.update_excel_signal.emit(self.number, start_row, termometer1)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = termometer1
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, termometer1])
         start_row += 1
 
         # Пропуск измерений термоЭДС
@@ -520,77 +422,42 @@ class Measurements(QObject):
             self.log_message("Ошибка resistance", e)
         r5 = [i for i in all_res["ch5"]]
         r6 = [i for i in all_res["ch6"]]
-
         for i in range(len(r5)):
             self.update_excel_signal.emit(self.number, start_row, r5[i])
-            # try:
-            #     self.ws.Cells(self.number, start_row).Value = r5[i]
-            # except Exception as e:
-            #     print(e)
-            #     self.cash_flag = True
-            #     self.excel_cash.append([self.number, start_row, r5[i]])
             start_row += 1
         for i in range(len(r6)):
             self.update_excel_signal.emit(self.number, start_row, r6[i])
-            # try:
-            #     self.ws.Cells(self.number, start_row).Value = r6[i]
-            # except Exception as e:
-            #     print(e)
-            #     self.cash_flag = True
-            #     self.excel_cash.append([self.number, start_row, r6[i]])
             start_row += 1
 
         # Катушка
         kat = int(self.app_instance.r_cell.text())
         self.update_excel_signal.emit(self.number, start_row, kat)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = kat
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, kat])
         start_row += 1
 
         # R термометра 2
         termometer2 = self.temperature()
         self.update_excel_signal.emit(self.number, start_row, termometer2)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = termometer2
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, termometer2])
         start_row += 1
 
         # Время 2
         time2 = time.time() - self.app_instance.start_time
         self.update_excel_signal.emit(self.number, start_row, time2)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = time2
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, time2])
         start_row += 1
 
         # Системное время
         system_time = str(time.strftime("%d.%m.%Y  %H:%M:%S", time.localtime()))
         self.update_excel_signal.emit(self.number, start_row, system_time)
-        # try:
-        #     self.ws.Cells(self.number, start_row).Value = system_time
-        # except Exception as e:
-        #     print(e)
-        #     self.cash_flag = True
-        #     self.excel_cash.append([self.number, start_row, system_time])
 
-        print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r5[0]} | {r6[0]} | "
-              f"{kat} | {termometer2[0]} | {time2} | {system_time}")
+        # print(f"{self.number} | {self.meas_number} | {time1} | {termometer1[0]} | {r5[0]} | {r6[0]} | "
+        #       f"{kat} | {termometer2[0]} | {time2} | {system_time}")
 
     def temperature(self):
-        """Функция измерения температуры"""
+        """
+        Функция измерения температуры
+        """
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
-        elif self.app_instance.combobox_scan.currentText() == "Rigol":
+        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
             instrument = Rigol(self)
         else:
             self.fres_value = "Error"
@@ -611,11 +478,13 @@ class Measurements(QObject):
         return self.fres_value
 
     def resistance(self):
-        """Функция измерения сопротивления"""
+        """
+        Функция измерения сопротивления
+        """
         res_results = {}
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
-        elif self.app_instance.combobox_scan.currentText() == "Rigol":
+        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
             instrument = Rigol(self)
         else:
             res_results["ch5"] = "Error"
@@ -641,7 +510,7 @@ class Measurements(QObject):
                                               delay=0)  # Остальные измерения
                 res_results[f"ch{i}"].extend(
                     instrument.measure(
-                        meas_count=(int(self.settings["n_read_ch56"]) - 1)))  # 4 оставшихся измерения
+                        meas_count=(int(self.settings["n_read_ch56"]) - 1)))
             else:
                 continue
 
@@ -650,11 +519,13 @@ class Measurements(QObject):
         return res_results
 
     def termoemf(self):
-        """Функция измерения термоЭДС"""
+        """
+        Функция измерения термоЭДС
+        """
         termoemf_results = {}
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             instrument = Keithley2010(self)
-        elif self.app_instance.combobox_scan.currentText() == "Rigol":
+        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
             instrument = Rigol(self)
         else:
             termoemf_results["ch1"] = "Error"
@@ -681,7 +552,7 @@ class Measurements(QObject):
                                                   delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
                         instrument.measure(
-                            meas_count=(int(self.settings["n_read_ch12"]) - 1)))  # 4 оставшихся измерения
+                            meas_count=(int(self.settings["n_read_ch12"]) - 1)))
                 else:
                     continue
             else:
@@ -692,84 +563,14 @@ class Measurements(QObject):
                                                   delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
                         instrument.measure(
-                            meas_count=(int(self.settings["n_read_ch34"]) - 1)))  # 4 оставшихся измерения
+                            meas_count=(int(self.settings["n_read_ch34"]) - 1)))
                 else:
                     continue
 
         instrument.reset()  # Сброс настроек перед сопротивлением
-        # print("termoemf_results:" + termoemf_results)
+
         return termoemf_results
 
     def add_dcv(self):
         pass
 
-    # def rigol_measurements(self):
-    #     instr = Rigol(self)
-    #
-    #     # Настройка и измерение 4-проводного сопротивления на канале 101
-    #     instr.set_fres_parameters(
-    #         float(self.nplc_term.text()),
-    #         int(self.ch_term1.text()),
-    #         range=0,
-    #         delay=0
-    #     )
-    #     fres_res_1 = instr.measure(1)
-    #     print(f"FRES on channel 101: {fres_res_1}")
-    #
-    #     # Словарь для хранения результатов измерений
-    #     dcv_results = {}
-    #
-    #     # Перебор каналов с параметрами
-    #     for i in range(1, 7):
-    #         ch_line_edit = self.findChild(QLineEdit, f"ch{i}")  # Поиск элемента с именем ch{i}
-    #         delay_line_edit = self.findChild(QLineEdit, f"dealy_ch{i}")
-    #         range_line_edit = self.findChild(QLineEdit, f"range_ch{i}")
-    #         nplc_line_edit = self.findChild(QLineEdit, f"nplc_ch{i}")
-    #
-    #
-    #         try:
-    #             # Открытие канала
-    #             instr.open_channel(ch_line_edit)
-    #
-    #             # Настройка и измерение на текущем канале
-    #             instr.set_dcv_parameters(
-    #                 float(nplc_line_edit.text()),
-    #                 int(ch_line_edit.text()),
-    #                 float(range_line_edit.text()),
-    #                 float(delay_line_edit.text())
-    #             )
-    #             dcv_results[f"ch{i}"] = instr.measure(meas_count=1)
-    #
-    #             # Дополнительные измерения (если требуется)
-    #             if i < 3:
-    #                 additional_reads = int(self.n_read_ch12.text()) - 1
-    #             elif 2 < i < 5:
-    #                 additional_reads = int(self.n_read_ch34.text()) - 1
-    #             else:
-    #                 additional_reads = int(self.n_read_ch56.text()) - 1
-    #
-    #             if additional_reads > 0:
-    #                 instr.set_dcv_parameters(
-    #                     float(nplc_line_edit.text()),
-    #                     int(ch_line_edit.text()),
-    #                     float(range_line_edit.text()),
-    #                     delay=0  # Установка задержки для оставшихся измерений
-    #                 )
-    #                 dcv_results[f"ch{i}"].extend(instr.measure(meas_count=additional_reads))
-    #         finally:
-    #             # Закрытие канала
-    #             instr.close_channel(ch_line_edit)
-    #
-    #     # Вывод результатов измерений
-    #     for channel, results in dcv_results.items():
-    #         print(f"DCV on channel {channel}: {results}")
-    #
-    #     # Повторное измерение 4-проводного сопротивления на канале 101
-    #     instr.set_fres_parameters(
-    #         float(self.nplc_term.text()),
-    #         int(self.ch_term1.text()),
-    #         range=0,
-    #         delay=0
-    #     )
-    #     fres_result_2 = instr.measure(1)
-    #     print(f"FRES on channel 101 (repeat): {fres_result_2}")

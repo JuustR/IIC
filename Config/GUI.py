@@ -1,12 +1,7 @@
 """
 Окно основного графического интерфейса и его настройки
 
-Tasks:
-3) data И base_data реализовать через settings
-4) Пауза
-4.1) Либо сделать счетчик действий, чтоб следующий старт начинал измерения с
-     определенного действия. При этом, когда задаётся начало строки счетчик сбрасывался
-4.2) Либо ждать окончания измерения, но тогда реализовать выход из длительной задержки
+© 01.2025 Frolov Dmitriy. All Rights Reserved. Any copying or distribution without the consent of the author is prohibited.
 """
 
 import os
@@ -33,7 +28,7 @@ class App(QMainWindow):
         super().__init__(*args, **kwargs)
 
         try:
-            self.excel = win32.Dispatch('Excel.Application')  # Создаем COM объект
+            self.excel = win32.Dispatch('Excel.Application')
             self.excel.Visible = True  # Excel visible, тк invisible скрывает уже открытые файлы
         except Exception as e:
             print(f"Очистите gen_py\nМожно это сделать запустив программу gen_cache_clear.py\n{e}")
@@ -67,8 +62,7 @@ class App(QMainWindow):
         # Подключаем кнопки меню настроек
         self.save_settings_pb.clicked.connect(self.save_settings)
 
-        # Time and console start settings
-        # self.formatted_time = time.strftime("%H:%M:%S | ", time.localtime())
+        # Начальные настройки консоли
         self.ConsolePTE.setPlainText(time.strftime("%d-%m-%Y %H:%M:%S", time.localtime()) + "\n" +
                                      """
 Здравствуйте! Для начала работы:
@@ -89,7 +83,7 @@ class App(QMainWindow):
                           "MacrosName": "Нет макроса",
                           "FileName": time.strftime("%d-%m-%Y_Example", time.localtime())}
 
-        # Flag for start button
+        # Флаги
         self.working_flag = False
         self.data_reset_flag = False
         self.settings_changed_flag = True
@@ -115,23 +109,16 @@ class App(QMainWindow):
         self.show()
 
     def log_message(self, message, exception=None):
+        """
+        Выводит в консоль pyqt логи
+
+        :param message: Сообщение, которое будет выведено (str)
+        :param exception: Вывод исключения/ошибки (exception)
+        """
         error_message = time.strftime("%H:%M:%S | ", time.localtime()) + f"{message}\n"
         if exception:
             error_message += f"{exception}\n"
         self.ConsolePTE.appendPlainText(error_message)
-
-    def combobox_scan_changed(self):
-        """
-        Было включение ip для Rigol'a, но тогда пришлось бы несколько раз подключаться к приборам, поэтому убрал
-        """
-        # if self.combobox_scan.currentText() == "Rigol":
-        #     self.ip_rigol.setEnabled(True)
-        # else:
-        #     self.ip_rigol.setEnabled(False)
-        pass
-
-    def combobox_power_changed(self):
-        pass
 
     def instr1_cb_clicked(self):
         """
@@ -177,7 +164,6 @@ class App(QMainWindow):
         self.combobox_scan.clear()
         self.combobox_power.clear()
         ic = InstrumentConnection(self)
-        # self.inst_list, self.powersource_list = ic.connect_all()
 
         self.connection_thread = ConnectionThread(ic)
         self.connection_thread.log_signal.connect(self.log_message)
@@ -186,6 +172,12 @@ class App(QMainWindow):
         self.connection_thread.start()
 
     def connection_finished(self, inst_list, powersource_list):
+        """
+        Добавляет в соответствующие комбобоксы имена подключенных приборов
+
+        :param inst_list: Список сканеров/мультиметров (list/dict)
+        :param powersource_list: Список источников питания (list/dict)
+        """
         self.inst_list = inst_list
         self.powersource_list = powersource_list
 
@@ -212,6 +204,9 @@ class App(QMainWindow):
         self.startline_changed_flag = True
 
     def on_start_clicked(self):
+        """
+        Тут осуществляется запуск эксперимента
+        """
         if self.working_flag:
             # Если поток активен, останавливаем его
             self.measurement_thread.stop()
@@ -251,7 +246,13 @@ class App(QMainWindow):
                 self.start_button.setText('Старт')
 
     def update_excel(self, row, col, value):
-        """Выполняет изменения в Excel в основном потоке."""
+        """
+        Выполняет изменения в Excel в основном потоке
+
+        :param row: Номер строки (int)
+        :param col: Номер или имя столбца (int/str)
+        :param value: Значение, которое будет записано в ячейку (object)
+        """
         try:
             self.ws.Cells(row, col).Value = value
         except Exception as e:
@@ -265,7 +266,6 @@ class App(QMainWindow):
         self.start_button.setText('Старт')
 
     def pause(self):
-        # self.qtimer.stop()
         if self.measurement_thread and self.measurement_thread.isRunning():
             self.measurement_thread.stop()
             self.measurement_thread.wait()
@@ -395,7 +395,8 @@ class App(QMainWindow):
         """
         widgets_to_disable = [self.combobox_scan, self.combobox_power, self.ip_rigol, self.n_read_ch12, self.n_read_ch34,
                               self.n_read_ch56, self.n_cycles, self.n_heat, self.n_cool, self.ch1, self.ch2, self.ch3,
-                              self.ch4, self.ch5, self.ch6, self.ch_term1]
+                              self.ch4, self.ch5, self.ch6, self.ch_term1, self.instruments_button, self.choose_button,
+                              self.create_button]
         if self.working_flag:
             for widget in widgets_to_disable:
                 widget.setEnabled(False)

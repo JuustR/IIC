@@ -2,8 +2,6 @@
 Диалоговое окно для создания нового файла Excel
 """
 import os
-import win32com.client as win32
-import pathlib
 import time
 
 from PyQt6.uic import loadUi
@@ -18,13 +16,11 @@ class ChooseExcelDialog(QDialog):
 
         # Путь к основной директории
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        # Загрузка ui, путем выхода в основную директорию
 
+        # Загрузка ui, путем выхода в основную директорию
         loadUi(os.path.join(current_dir, '..', 'assets', 'chooseDialog.ui'), self)
-        # loadUi('assets/chooseDialog.ui', self)
 
         self.app_instance = app_instance
-        # self.formatted_time = self.app_instance.formatted_time
         self.excel_settings = 'Smth'
         self.macros_status = None
         self.wb = None
@@ -52,7 +48,9 @@ class ChooseExcelDialog(QDialog):
         self.app_instance.ConsolePTE.appendPlainText(error_message)
 
     def open_macros_btn(self):
-        """Метод для открытия макроса"""
+        """
+        Метод для открытия макроса
+        """
         current_dir = os.path.dirname(os.path.abspath(__file__))
         dir_path = os.path.join(current_dir, '..', 'macroses')
         file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path, 'Macros (*txt)')
@@ -61,7 +59,9 @@ class ChooseExcelDialog(QDialog):
             self.MacrosLabel.setText(file_dir[0][0])
 
     def open_temp_btn(self):
-        """Метод для открытия шаблона"""
+        """
+        Метод для открытия шаблона
+        """
         current_dir = os.path.dirname(os.path.abspath(__file__))
         dir_path = os.path.join(current_dir, '..', 'templates')
         file_dir = QFileDialog.getOpenFileNames(self, 'Open File', dir_path, 'Excel file (*xltm)')
@@ -70,14 +70,12 @@ class ChooseExcelDialog(QDialog):
             self.TempLabel.setText(file_dir[0][0])
 
     def onAccepted(self):
-        """Метод создающий новый Excel на основе заданных ранее параметров"""
-
+        """
+        Метод создающий новый Excel на основе заданных ранее параметров
+        """
         self.data["FileName"] = self.FileNameLE.text()
-        # print(os.path.dirname(os.path.abspath(__file__)))
-
         script_path = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(script_path, '..', "Measurements", self.data["FileName"])  # without '.xlsm'
-        # print(os.path.exists("E:\IIC\Measurements\\" + self.data["FileName"] + ".xlsm"))
 
         # Проверка на наличие файлов с таким же именем
         if os.path.exists("E:\IIC\Measurements\\" + self.data["FileName"] + ".xlsm"):
@@ -123,7 +121,9 @@ class ChooseExcelDialog(QDialog):
 
 
     def onRejected(self):
-        """Отмена создания Excel со сбросом заданных условий"""
+        """
+        Отмена создания Excel со сбросом заданных условий
+        """
         self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
         self.log_message('Отмена создания файла')
 

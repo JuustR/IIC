@@ -55,7 +55,9 @@ class Rigol:
         self.keysight.write("*RST")
 
     def set_dcv_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
-        """Настройка Rigol на переключение канала и Keysight на измерение постоянного напряжения"""
+        """
+        Настройка Rigol на переключение канала и Keysight на измерение постоянного напряжения
+        """
 
         self.keysight.write('CONF:VOLTage')
         self.keysight.write("VOLTage:DC:IMP:AUTO ON")  # High-Z
@@ -77,7 +79,9 @@ class Rigol:
         time.sleep(delay)
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
-        """Настройка Rigol на переключение канала и Keysight на измерение 4-проводного сопротивления"""
+        """
+        Настройка Rigol на переключение канала и Keysight на измерение 4-проводного сопротивления
+        """
 
         self.Rigol.write('INST:DMM OFF')
         if int(ch) > 9:
@@ -101,7 +105,9 @@ class Rigol:
 
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
-        """Настройка Rigol на переключение канала и Keysight на измерение 2-проводного сопротивления"""
+        """
+        Настройка Rigol на переключение канала и Keysight на измерение 2-проводного сопротивления
+        """
         # ! НЕ РАБОТАЕТ
         nplc = int(nplc) if nplc.is_integer() else float(nplc)
         range = int(range) if range.is_integer() else float(range)
@@ -116,7 +122,9 @@ class Rigol:
         self.keysight.write(f":TRIG:DEL {delay}")
 
     def measure(self, meas_count: int) -> list:
-        """Запуск измерений и получение результатов с Keysight"""
+        """
+        Запуск измерений и получение результатов с Keysight
+        """
         results = []
         for _ in range(meas_count):
             one_read = self.keysight.query_ascii_values(":READ?")
