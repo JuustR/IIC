@@ -216,6 +216,7 @@ class App(QMainWindow):
             # Если поток активен, останавливаем его
             self.measurement_thread.stop()
             self.working_flag = False
+            self.start_disable_le()
             self.start_button.setText('Старт')
             self.log_message("Измерения остановлены.")
         else:
@@ -241,9 +242,12 @@ class App(QMainWindow):
                 self.measurement_thread.log_signal.connect(self.log_message)
                 self.measurement_thread.finished_signal.connect(self.measurement_finished)
                 self.measurement_thread.start()
+                self.start_disable_le()
+                self.log_message("Начало измерений")
             except Exception as e:
                 self.log_message("Ошибка запуска измерений.", e)
                 self.working_flag = False
+                self.start_disable_le()
                 self.start_button.setText('Старт')
 
     def update_excel(self, row, col, value):
@@ -296,7 +300,7 @@ class App(QMainWindow):
         self.settings.setValue("n_read_ch34", self.n_read_ch34.text())
         self.settings.setValue("n_read_ch56", self.n_read_ch56.text())
         self.settings.setValue("ch_term1", self.ch_term1.text())
-        self.settings.setValue("ch_term2", self.ch_term2.text())
+        # self.settings.setValue("ch_term2", self.ch_term2.text())
         self.settings.setValue("delay_term", self.delay_term.text())
         self.settings.setValue("range_term", self.range_term.text())
         self.settings.setValue("nplc_term", self.nplc_term.text())
@@ -341,7 +345,7 @@ class App(QMainWindow):
         self.n_read_ch34.setText(self.settings.value("n_read_ch34", ""))
         self.n_read_ch56.setText(self.settings.value("n_read_ch56", ""))
         self.ch_term1.setText(self.settings.value("ch_term1", ""))
-        self.ch_term2.setText(self.settings.value("ch_term2", ""))
+        # self.ch_term2.setText(self.settings.value("ch_term2", ""))
         self.ch_ip1.setText(self.settings.value("ch_ip1", ""))
         self.ch_ip2.setText(self.settings.value("ch_ip2", ""))
         self.u_ip1.setText(self.settings.value("u_ip1", ""))
@@ -389,15 +393,24 @@ class App(QMainWindow):
         """
         Отключение фрагментов интерфейса при старте измерений
         """
+        widgets_to_disable = [self.combobox_scan, self.combobox_power, self.ip_rigol, self.n_read_ch12, self.n_read_ch34,
+                              self.n_read_ch56, self.n_cycles, self.n_heat, self.n_cool, self.ch1, self.ch2, self.ch3,
+                              self.ch4, self.ch5, self.ch6, self.ch_term1]
         if self.working_flag:
-            
+            for widget in widgets_to_disable:
+                widget.setEnabled(False)
+            if self.rele_cb.isChecked():
+                self.n_r_updown.setEnabled(False)
+            else:
+                self.n_r_up.setEnabled(False)
         else:
+            for widget in widgets_to_disable:
+                widget.setEnabled(True)
+            if self.rele_cb.isChecked():
+                self.n_r_updown.setEnabled(True)
+            else:
+                self.n_r_up.setEnabled(True)
 
-        # if self.combobox_scan.currentText() == "Rigol":
-        #     self.ip_rigol.setEnabled(True)
-        # else:
-        #     self.ip_rigol.setEnabled(False)
-        pass
 
     def closeEvent(self, event):
         """
