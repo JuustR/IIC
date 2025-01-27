@@ -56,8 +56,8 @@ class App(QMainWindow):
         self.instr2_cb.stateChanged.connect(self.instr2_cb_clicked)
 
         # ComboBox'ы
-        self.combobox_scan.currentTextChanged.connect(self.combobox_scan_changed)
-        self.combobox_power.currentTextChanged.connect(self.combobox_power_changed)
+        # self.combobox_scan.currentTextChanged.connect(self.combobox_scan_changed)
+        # self.combobox_power.currentTextChanged.connect(self.combobox_power_changed)
 
         # Подключаем кнопки меню настроек
         self.save_settings_pb.clicked.connect(self.save_settings)
@@ -235,6 +235,7 @@ class App(QMainWindow):
                 self.measurement = Measurements(self)
                 self.measurement_thread = MeasurementThread(self.measurement)
                 self.measurement.update_excel_signal.connect(self.update_excel)
+                self.measurement.update_values_signal.connect(self.update_values)
                 self.measurement_thread.log_signal.connect(self.log_message)
                 self.measurement_thread.finished_signal.connect(self.measurement_finished)
                 self.measurement_thread.start()
@@ -245,6 +246,15 @@ class App(QMainWindow):
                 self.working_flag = False
                 self.start_disable_le()
                 self.start_button.setText('Старт')
+
+    def update_values(self, dict):
+        """
+        Обновляет различные параметры, которые получает из Measurements
+
+        :param dict: Словарь в котором содержатся пункты, которые нужно обновить
+        """
+        if "start_line_le" in dict:
+            self.start_line_le.setText(dict["start_line_le"])
 
     def update_excel(self, row, col, value):
         """

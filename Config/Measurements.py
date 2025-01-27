@@ -52,6 +52,7 @@ class Measurements(QObject):
     связанные с многозадачностью/многопоточностью
     """
     update_excel_signal = pyqtSignal(int, int, object)  # Сигнал для обновления GUI
+    update_values_signal = pyqtSignal(dict)  # Сигнал для обновления различных значений, напр. номера строки
 
     def __init__(self, app_instance):
         super().__init__()
@@ -177,7 +178,8 @@ class Measurements(QObject):
                     self.termoemf_step()
                     self.meas_number += 1
                     self.number += 1
-                    self.app_instance.start_line_le.setText(str(self.number))
+                    self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    # self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip1"],
@@ -188,7 +190,7 @@ class Measurements(QObject):
                 self.toggle_relay("heater", "off")
 
                 # Основные измерения охлаждения для термоЭДС
-                for _ in range(int(self.settings["n_heat"])):
+                for _ in range(int(self.settings["n_cool"])):
                     # Условия остановки измерений
                     if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
                         # self.log_message("Цикл измерений прерван на измерении термоЭДС")
@@ -197,7 +199,8 @@ class Measurements(QObject):
                     self.termoemf_step()
                     self.meas_number += 1
                     self.number += 1
-                    self.app_instance.start_line_le.setText(str(self.number))
+                    self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    # self.app_instance.start_line_le.setText(str(self.number))
 
                 time.sleep(int(self.app_instance.pause_s.text()))
 
@@ -235,7 +238,8 @@ class Measurements(QObject):
 
                     self.meas_number += 1
                     self.number += 1
-                    self.app_instance.start_line_le.setText(str(self.number))
+                    self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    # self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
@@ -260,7 +264,8 @@ class Measurements(QObject):
 
                     self.meas_number += 1
                     self.number += 1
-                    self.app_instance.start_line_le.setText(str(self.number))
+                    self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    # self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
@@ -270,6 +275,14 @@ class Measurements(QObject):
             # Условия остановки измерений
             if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
                 self.log_message("Цикл измерений прерван.")
+                # ! Смещение на невыполненые строки (нужно тестить)
+                step = (int(self.settings["n_cycles"]) * (int(self.settings["n_heat"]) + int(self.settings["n_cool"])) +
+                        int(2 * self.settings["n_r_updown"] if self.app_instance.rele_cb.isChecked() else self.settings["n_r_up"]))
+                if (self.number - 10) % step == 0:
+                    self.update_values_signal.emit({"start_line_le": str(self.number)})
+                else:
+                    self.number += step - (self.number - 10) % step
+                    self.update_values_signal.emit({"start_line_le": str(self.number)})
                 break
 
     def termoemf_step(self):
@@ -288,17 +301,6 @@ class Measurements(QObject):
         Время 2
         Системное время
         """
-        # Проверка на наличие кэша и заполнение значений из него
-        # if self.cash_flag:
-        #     while self.excel_cash:
-        #         x = self.excel_cash.pop(0)
-        #         try:
-        #             self.ws.Cells(int(x[0]), int(x[1])).Value = x[2]
-        #         except Exception as e:
-        #             print(e)
-        #             continue
-        #     self.cash_flag = False
-
 
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
@@ -383,17 +385,6 @@ class Measurements(QObject):
         Время 2
         Системное время
         """
-        # Проверка на наличие кэша и заполнение значений из него
-        # if self.cash_flag:
-        #     while self.excel_cash:
-        #         x = self.excel_cash.pop(0)
-        #         try:
-        #             self.ws.Cells(x[0], x[1]).Value = x[2]
-        #         except Exception as e:
-        #             print(e)
-        #             continue
-        #     self.cash_flag = False
-
         # Номер строки в Excel
         self.number = int(self.app_instance.start_line_le.text())
         start_row = 1
