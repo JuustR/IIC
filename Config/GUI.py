@@ -88,6 +88,7 @@ class App(QMainWindow):
         self.data_reset_flag = False
         self.settings_changed_flag = True
         self.startline_changed_flag = False
+        self.excel_cash_flag = False
 
         self.wb_path = None
         self.wb = None
@@ -255,8 +256,19 @@ class App(QMainWindow):
         """
         try:
             self.ws.Cells(row, col).Value = value
+            if self.excel_cash_flag:
+                while self.excel_cash:
+                    x = self.excel_cash[0]
+                    try:
+                        self.ws.Cells(x[0], x[1]).Value = x[2]
+                        self.excel_cash.pop(0)
+                    except Exception as e:
+                        self.excel_cash_flag = True
+                        print(e)
+                        break
         except Exception as e:
-            #! Сюда перевести кэш
+            self.excel_cash.append([row, col, value])
+            self.excel_cash_flag = True
             self.log_message(f"Ошибка записи в Excel: {e}")
 
     def measurement_finished(self):
