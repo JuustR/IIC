@@ -71,6 +71,13 @@ class Measurements(QObject):
         else:
             self.pause()
 
+        if self.app_instance.combobox_scan.currentText() == "keithley2010":
+            self.instrument = Keithley2010(self)
+        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
+            self.instrument = Rigol(self)
+        else:
+            return
+
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
         self.cash_flag = False
 
@@ -320,6 +327,8 @@ class Measurements(QObject):
         self.update_excel_signal.emit(self.number, start_row, termometer1)
         start_row += 1
 
+        self.instrument.reset()
+
         # Термопары
         # ! Можно оптимизировать и р3 р4 тоже
         try:
@@ -336,7 +345,7 @@ class Measurements(QObject):
             start_row += 1
 
         # Между
-        all_tc = self.termoemf()
+        # all_tc = self.termoemf()
         r3 = [i for i in all_tc["ch3"]]
         r4 = [i for i in all_tc["ch4"]]
         for i in range(len(r3)):
@@ -345,6 +354,8 @@ class Measurements(QObject):
         for i in range(len(r4)):
             self.update_excel_signal.emit(self.number, start_row, r4[i])
             start_row += 1
+
+        self.instrument.reset()
 
         # Пропуск измерений сопротивления + катушка
         start_row += int(self.settings["n_read_ch56"]) * 2 + 1
@@ -403,6 +414,8 @@ class Measurements(QObject):
         self.update_excel_signal.emit(self.number, start_row, termometer1)
         start_row += 1
 
+        self.instrument.reset()
+
         # Пропуск измерений термоЭДС
         start_row += int(self.settings["n_read_ch12"]) * 2 + int(self.settings["n_read_ch34"]) * 2
 
@@ -419,6 +432,8 @@ class Measurements(QObject):
         for i in range(len(r6)):
             self.update_excel_signal.emit(self.number, start_row, r6[i])
             start_row += 1
+
+        self.instrument.reset()
 
         # Катушка
         kat = int(self.app_instance.r_cell.text())
@@ -446,25 +461,19 @@ class Measurements(QObject):
         """
         Функция измерения температуры
         """
-        if self.app_instance.combobox_scan.currentText() == "keithley2010":
-            instrument = Keithley2010(self)
-        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
-            instrument = Rigol(self)
-        else:
-            self.fres_value = "Error"
-            return self.fres_value
         try:
-            instrument.set_fres_parameters(float(self.settings['nplc_term']),
+            self.instrument.set_fres_parameters(float(self.settings['nplc_term']),
                                            int(self.settings['ch_term1']),
                                            range=0,
                                            delay=0)
         except Exception as e:
             self.log_message("Ошибка задания параметров", e)
         try:
-            self.fres_value = instrument.measure(1)
+            self.fres_value = self.instrument.measure(1)
         except Exception as e:
             self.log_message("Ошибка измерения", e)
-        instrument.reset()  # Сброс настроек перед напряжением
+
+        # self.instrument.reset()  # Сброс настроек перед напряжением
 
         return self.fres_value
 
@@ -473,13 +482,6 @@ class Measurements(QObject):
         Функция измерения сопротивления
         """
         res_results = {}
-        if self.app_instance.combobox_scan.currentText() == "keithley2010":
-            instrument = Keithley2010(self)
-        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
-            instrument = Rigol(self)
-        else:
-            res_results["ch5"] = "Error"
-            return res_results
 
         for i in range(5, 7):
             ch_line_edit = self.settings[f"ch{i}"]
@@ -487,25 +489,25 @@ class Measurements(QObject):
             range_line_edit = self.settings[f"range_ch{i}"]
             nplc_line_edit = self.settings[f"nplc_ch{i}"]
 
-            instrument.set_dcv_parameters(float(nplc_line_edit),
+            self.instrument.set_dcv_parameters(float(nplc_line_edit),
                                           int(ch_line_edit),
                                           float(range_line_edit),
                                           float(delay_line_edit))  # Первая задержка
-            res_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
+            res_results[f"ch{i}"] = self.instrument.measure(meas_count=1)  # Первое измерение
 
             # Измерения для больше чем одного read
             if int(self.settings["n_read_ch56"]) > 1:
-                instrument.set_dcv_parameters(float(nplc_line_edit),
+                self.instrument.set_dcv_parameters(float(nplc_line_edit),
                                               int(ch_line_edit),
                                               float(range_line_edit),
                                               delay=0)  # Остальные измерения
                 res_results[f"ch{i}"].extend(
-                    instrument.measure(
+                    self.instrument.measure(
                         meas_count=(int(self.settings["n_read_ch56"]) - 1)))
             else:
                 continue
 
-        instrument.reset()  # Сброс настроек перед сопротивлением
+        # self.instrument.reset()  # Сброс настроек перед сопротивлением
 
         return res_results
 
@@ -514,13 +516,6 @@ class Measurements(QObject):
         Функция измерения термоЭДС
         """
         termoemf_results = {}
-        if self.app_instance.combobox_scan.currentText() == "keithley2010":
-            instrument = Keithley2010(self)
-        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
-            instrument = Rigol(self)
-        else:
-            termoemf_results["ch1"] = "Error"
-            return termoemf_results
 
         for i in range(1, 5):
             ch_line_edit = self.settings[f"ch{i}"]
@@ -528,37 +523,37 @@ class Measurements(QObject):
             range_line_edit = self.settings[f"range_ch{i}"]
             nplc_line_edit = self.settings[f"nplc_ch{i}"]
 
-            instrument.set_dcv_parameters(float(nplc_line_edit),
+            self.instrument.set_dcv_parameters(float(nplc_line_edit),
                                           int(ch_line_edit),
                                           float(range_line_edit),
                                           float(delay_line_edit))  # Первая задержка
-            termoemf_results[f"ch{i}"] = instrument.measure(meas_count=1)  # Первое измерение
+            termoemf_results[f"ch{i}"] = self.instrument.measure(meas_count=1)  # Первое измерение
 
             # Измерения для больше чем одного read
             if i < 3:
                 if int(self.settings["n_read_ch12"]) > 1:
-                    instrument.set_dcv_parameters(float(nplc_line_edit),
+                    self.instrument.set_dcv_parameters(float(nplc_line_edit),
                                                   int(ch_line_edit),
                                                   float(range_line_edit),
                                                   delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
-                        instrument.measure(
+                        self.instrument.measure(
                             meas_count=(int(self.settings["n_read_ch12"]) - 1)))
                 else:
                     continue
             else:
                 if int(self.settings["n_read_ch34"]) > 1:
-                    instrument.set_dcv_parameters(float(nplc_line_edit),
+                    self.instrument.set_dcv_parameters(float(nplc_line_edit),
                                                   int(ch_line_edit),
                                                   float(range_line_edit),
                                                   delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
-                        instrument.measure(
+                        self.instrument.measure(
                             meas_count=(int(self.settings["n_read_ch34"]) - 1)))
                 else:
                     continue
 
-        instrument.reset()  # Сброс настроек перед сопротивлением
+        # self.instrument.reset()  # Сброс настроек перед сопротивлением
 
         return termoemf_results
 
