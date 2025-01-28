@@ -185,8 +185,8 @@ class Measurements(QObject):
                     self.termoemf_step()
                     self.meas_number += 1
                     self.number += 1
-                    self.update_values_signal.emit({"start_line_le": str(self.number)})
-                    # self.app_instance.start_line_le.setText(str(self.number))
+                    # self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip1"],
@@ -206,8 +206,8 @@ class Measurements(QObject):
                     self.termoemf_step()
                     self.meas_number += 1
                     self.number += 1
-                    self.update_values_signal.emit({"start_line_le": str(self.number)})
-                    # self.app_instance.start_line_le.setText(str(self.number))
+                    # self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 time.sleep(int(self.app_instance.pause_s.text()))
 
@@ -245,8 +245,8 @@ class Measurements(QObject):
 
                     self.meas_number += 1
                     self.number += 1
-                    self.update_values_signal.emit({"start_line_le": str(self.number)})
-                    # self.app_instance.start_line_le.setText(str(self.number))
+                    # self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
@@ -271,8 +271,8 @@ class Measurements(QObject):
 
                     self.meas_number += 1
                     self.number += 1
-                    self.update_values_signal.emit({"start_line_le": str(self.number)})
-                    # self.app_instance.start_line_le.setText(str(self.number))
+                    # self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    self.app_instance.start_line_le.setText(str(self.number))
 
                 # Выключаем нагреватель
                 self.control_heater(channel=self.settings["ch_ip2"],
@@ -286,10 +286,12 @@ class Measurements(QObject):
                 step = (int(self.settings["n_cycles"]) * (int(self.settings["n_heat"]) + int(self.settings["n_cool"])) +
                         int(2 * self.settings["n_r_updown"] if self.app_instance.rele_cb.isChecked() else self.settings["n_r_up"]))
                 if (self.number - 10) % step == 0:
-                    self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    # self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    self.app_instance.start_line_le.setText(str(self.number))
                 else:
                     self.number += step - (self.number - 10) % step
-                    self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    # self.update_values_signal.emit({"start_line_le": str(self.number)})
+                    self.app_instance.start_line_le.setText(str(self.number))
                 break
 
     def termoemf_step(self):
