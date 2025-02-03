@@ -279,7 +279,8 @@ class App(QMainWindow):
         except Exception as e:
             self.excel_cash.append([row, col, value])
             self.excel_cash_flag = True
-            self.log_message(f"Ошибка записи в Excel: {e}")
+            # self.log_message(f"Ошибка записи в Excel: {e}")
+            print(f"Ошибка записи в Excel: {e}")
 
     def measurement_finished(self):
         self.measurement.pause()

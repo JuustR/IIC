@@ -5,6 +5,7 @@ __pycache__/
 
 # My files
 Measurements/
+test.py
 
 # C extensions
 *.so

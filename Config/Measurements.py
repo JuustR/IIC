@@ -331,31 +331,29 @@ class Measurements(QObject):
 
         self.instrument.reset()
 
-        # Термопары
-        # ! Можно оптимизировать и р3 р4 тоже
+        # Термопары и между ними
         try:
             all_tc = self.termoemf()
+
+            r1 = [i for i in all_tc["ch1"]]
+            r2 = [i for i in all_tc["ch2"]]
+            for i in range(len(r1)):
+                self.update_excel_signal.emit(self.number, start_row, r1[i])
+                start_row += 1
+            for i in range(len(r2)):
+                self.update_excel_signal.emit(self.number, start_row, r2[i])
+                start_row += 1
+
+            r3 = [i for i in all_tc["ch3"]]
+            r4 = [i for i in all_tc["ch4"]]
+            for i in range(len(r3)):
+                self.update_excel_signal.emit(self.number, start_row, r3[i])
+                start_row += 1
+            for i in range(len(r4)):
+                self.update_excel_signal.emit(self.number, start_row, r4[i])
+                start_row += 1
         except Exception as e:
             self.log_message("Ошибка termoemf", e)
-        r1 = [i for i in all_tc["ch1"]]
-        r2 = [i for i in all_tc["ch2"]]
-        for i in range(len(r1)):
-            self.update_excel_signal.emit(self.number, start_row, r1[i])
-            start_row += 1
-        for i in range(len(r2)):
-            self.update_excel_signal.emit(self.number, start_row, r2[i])
-            start_row += 1
-
-        # Между
-        # all_tc = self.termoemf()
-        r3 = [i for i in all_tc["ch3"]]
-        r4 = [i for i in all_tc["ch4"]]
-        for i in range(len(r3)):
-            self.update_excel_signal.emit(self.number, start_row, r3[i])
-            start_row += 1
-        for i in range(len(r4)):
-            self.update_excel_signal.emit(self.number, start_row, r4[i])
-            start_row += 1
 
         self.instrument.reset()
 
