@@ -473,6 +473,7 @@ class Measurements(QObject):
         except Exception as e:
             self.log_message("Ошибка измерения", e)
 
+        self.instrument.trig_rigol()
         # self.instrument.reset()  # Сброс настроек перед напряжением
 
         return self.fres_value
@@ -497,16 +498,17 @@ class Measurements(QObject):
 
             # Измерения для больше чем одного read
             if int(self.settings["n_read_ch56"]) > 1:
-                self.instrument.set_dcv_parameters(float(nplc_line_edit),
-                                              int(ch_line_edit),
-                                              float(range_line_edit),
-                                              delay=0)  # Остальные измерения
+                # self.instrument.set_dcv_parameters(float(nplc_line_edit),
+                #                               int(ch_line_edit),
+                #                               float(range_line_edit),
+                #                               delay=0)  # Остальные измерения
                 res_results[f"ch{i}"].extend(
                     self.instrument.measure(
                         meas_count=(int(self.settings["n_read_ch56"]) - 1)))
             else:
                 continue
 
+            self.instrument.trig_rigol()
         # self.instrument.reset()  # Сброс настроек перед сопротивлением
 
         return res_results
@@ -532,26 +534,29 @@ class Measurements(QObject):
             # Измерения для больше чем одного read
             if i < 3:
                 if int(self.settings["n_read_ch12"]) > 1:
-                    self.instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                  int(ch_line_edit),
-                                                  float(range_line_edit),
-                                                  delay=0)  # Остальные измерения
+                    # self.instrument.set_dcv_parameters(float(nplc_line_edit),
+                    #                               int(ch_line_edit),
+                    #                               float(range_line_edit),
+                    #                               delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
                         self.instrument.measure(
                             meas_count=(int(self.settings["n_read_ch12"]) - 1)))
                 else:
                     continue
+                # self.instrument.trig_rigol()
             else:
                 if int(self.settings["n_read_ch34"]) > 1:
-                    self.instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                  int(ch_line_edit),
-                                                  float(range_line_edit),
-                                                  delay=0)  # Остальные измерения
+                    # self.instrument.set_dcv_parameters(float(nplc_line_edit),
+                    #                               int(ch_line_edit),
+                    #                               float(range_line_edit),
+                    #                               delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
                         self.instrument.measure(
                             meas_count=(int(self.settings["n_read_ch34"]) - 1)))
                 else:
                     continue
+
+            self.instrument.trig_rigol()
 
         # self.instrument.reset()  # Сброс настроек перед сопротивлением
 

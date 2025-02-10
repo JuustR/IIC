@@ -129,8 +129,11 @@ class Rigol:
         for _ in range(meas_count):
             one_read = self.keysight.query_ascii_values(":READ?")
             results.append(float(one_read[0]))
-        self.Rigol.write('*TRG')
+        # self.Rigol.write('*TRG')
         return results
+
+    def trig_rigol(self):
+        self.Rigol.write('*TRG')
 
     def open_channel(self, ch: int) -> None:
         rigol_channel = f"10{ch}" if ch < 10 else f"1{ch}"
