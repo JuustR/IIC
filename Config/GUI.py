@@ -221,7 +221,7 @@ class App(QMainWindow):
             self.working_flag = True
             self.start_button.setText('Стоп')
             try:
-                if self.wb == None:
+                if self.wb is None:
                     self.log_message("Перед запуском убедитесь, что Excel создан")
                     self.working_flag = False
                     self.start_button.setText('Старт')

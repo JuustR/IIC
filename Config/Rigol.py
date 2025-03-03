@@ -48,6 +48,9 @@ class Rigol:
         self.rm = pyvisa.ResourceManager()
         self.Rigol = self.rm.open_resource(self.instr["Rigol"])
         self.keysight = self.rm.open_resource(self.instr["keysight"])
+        self.nplc_list = [0.001, 0.002, 0.006, 0.02, 0.06, 0.2, 1, 2, 10, 20, 100, 200]
+        self.range_dcv_list = [0.1, 1, 10, 100, 300]
+        self.range_fres_list = [100, 1000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000]
 
     def reset(self):
         """Сброс настроек прибора"""
@@ -58,6 +61,9 @@ class Rigol:
         """
         Настройка Rigol на переключение канала и Keysight на измерение постоянного напряжения
         """
+        # Проверка на правильность записи параметров
+        range = range if range in self.range_dcv_list else 0
+        nplc = nplc if nplc in self.nplc_list else 1
 
         self.keysight.write('CONF:VOLTage')
         self.keysight.write("VOLTage:DC:IMP:AUTO ON")  # High-Z
@@ -82,6 +88,9 @@ class Rigol:
         """
         Настройка Rigol на переключение канала и Keysight на измерение 4-проводного сопротивления
         """
+        # Проверка на правильность записи параметров
+        range = range if range in self.range_fres_list else 0
+        nplc = nplc if nplc in self.nplc_list else 1
 
         self.Rigol.write('INST:DMM OFF')
         if int(ch) > 9:
@@ -108,6 +117,10 @@ class Rigol:
         """
         Настройка Rigol на переключение канала и Keysight на измерение 2-проводного сопротивления
         """
+        # Проверка на правильность записи параметров
+        range = range if range in self.range_fres_list else 0
+        nplc = nplc if nplc in self.nplc_list else 1
+
         # ! НЕ РАБОТАЕТ
         nplc = int(nplc) if nplc.is_integer() else float(nplc)
         range = int(range) if range.is_integer() else float(range)

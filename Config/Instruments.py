@@ -166,7 +166,7 @@ class InstrumentConnection:
         # print(self.USB_resources)
         # print(self.rm.list_resources())
         n = 0
-        # self.instr_check()  # ожно закоментить
+        # self.instr_check()  # можно закоментить
         try:
             while n < len(self.USB_resources):
                 try:
