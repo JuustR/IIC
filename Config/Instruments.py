@@ -148,11 +148,10 @@ class InstrumentConnection:
                 self.log_message('Ошибка подключения Rigol!')
 
     def E36312A_connection(self):
-        # ! Нужен IP_BP или что-то такое
         try:
-            self.E36312A = self.rm.open_resource('TCPIP0::' + str(self.app_instance.IP_BP.text()) + '::inst0::INSTR')
+            self.E36312A = self.rm.open_resource('TCPIP0::169.254.4.15::inst0::INSTR')
             self.log_message('E36312A подключен успешно')
-            self.powersource_dict["E36312A"] = 'TCPIP0::169.254.50.9::inst0::INSTR'  # !
+            self.powersource_dict["E36312A"] = 'TCPIP0::169.254.4.15::inst0::INSTR'
         except Exception as e:
             if self.app_instance.show_errors_cb.isChecked():
                 self.log_message('Ошибка подключения E36312A!\n'
@@ -166,7 +165,7 @@ class InstrumentConnection:
         # print(self.USB_resources)
         # print(self.rm.list_resources())
         n = 0
-        # self.instr_check()  # ожно закоментить
+        # self.instr_check()  # можно закоментить
         try:
             while n < len(self.USB_resources):
                 try:

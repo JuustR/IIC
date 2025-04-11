@@ -1,7 +1,8 @@
 """
 Окно основного графического интерфейса и его настройки
 
-© 01.2025 Frolov Dmitriy. All Rights Reserved. Any copying or distribution without the consent of the author is prohibited.
+version 11.04.2025
+© 04.2025 Frolov Dmitriy. All Rights Reserved. Any copying or distribution without the consent of the author is prohibited.
 """
 
 import os
@@ -220,7 +221,7 @@ class App(QMainWindow):
             self.working_flag = True
             self.start_button.setText('Стоп')
             try:
-                if self.wb == None:
+                if self.wb is None:
                     self.log_message("Перед запуском убедитесь, что Excel создан")
                     self.working_flag = False
                     self.start_button.setText('Старт')

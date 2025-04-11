@@ -65,25 +65,30 @@ class Measurements(QObject):
         self.powersource_list = self.app_instance.powersource_list
         self.excel_cash = self.app_instance.excel_cash
 
-        # Инициализация ИП
-        if "AKIP" in self.powersource_list:
-            self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
-        else:
-            self.pause()
-
-        if self.app_instance.combobox_scan.currentText() == "keithley2010":
-            self.instrument = Keithley2010(self)
-        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
-            self.instrument = Rigol(self)
-        else:
-            return
-
+        self.rigol_flag = False
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
         self.cash_flag = False
 
         self.fres_value = None
         self.number = self.app_instance.start_line_le.text()
         self.meas_number = 1
+
+        # Инициализация ИП
+        if "AKIP" in self.powersource_list:
+            self.AKIP = self.rm.open_resource(self.powersource_list["AKIP"])
+        elif "E36312A" in self.powersource_list:
+            self.E36312A = self.rm.open_resource(self.powersource_list["E36312A"])
+        else:
+            self.pause()
+
+        if self.app_instance.combobox_scan.currentText() == "keithley2010":
+            self.instrument = Keithley2010(self)
+            self.rigol_flag = False
+        elif self.app_instance.combobox_scan.currentText() in ["Rigol", "keysight"]:
+            self.instrument = Rigol(self)
+            self.rigol_flag = True
+        else:
+            self.pause()
 
     def toggle_relay(self, relay_type, state):
         """
@@ -110,6 +115,13 @@ class Measurements(QObject):
                 self.AKIP.write(f'INSTrument:NSELect {channel}')
                 self.AKIP.write(f'APPL CH{channel},{voltage},1')
                 self.AKIP.write(f'CHANnel:OUTPut {1 if state == "on" else 0}')
+            elif self.app_instance.combobox_power.currentText() == "E36312A":
+                self.E36312A.write(f':APPLy %s,%G,%G' % (f'CH{channel}', float(voltage), 1.0))  # Устанавливаем канал 2 на 5В и 1А
+                if state == "on":
+                    self.E36312A.write(':OUTPut:STATe %d,(%s)' % (1, f'@{channel}'))  # Подключаем/отключаем канал @1 (1-On;0-Off)
+                else:
+                    self.E36312A.write(':OUTPut:STATe %d,(%s)' % (0, f'@{channel}'))  # Подключаем/отключаем канал @1 (1-On;0-Off)
+
         except Exception as e:
             # self.pause()  #! Можно раскоментить, наверное
             self.log_message(f"Ошибка управления нагревателем ({state})", e)
@@ -125,14 +137,16 @@ class Measurements(QObject):
         Функция паузы, останавливающая измерения и обнуляющая всё
         """
         self.app_instance.working_flag = False
-        if "AKIP" in self.powersource_list:
-            try:
-                self.control_heater(channel=1, voltage=0, state="off")
-                self.control_heater(channel=2, voltage=0, state="off")
-                self.control_heater(channel=3, voltage=0, state="off")
+
+        try:
+            self.control_heater(channel=1, voltage=0, state="off")
+            self.control_heater(channel=2, voltage=0, state="off")
+            self.control_heater(channel=3, voltage=0, state="off")
+            if "AKIP" in self.powersource_list:
                 self.AKIP.write("*rst")  # На всякий случай)
-            except Exception as e:
-                self.log_message("Ошибка отключения нагревателя", e)
+        except Exception as e:
+            self.log_message("Ошибка отключения нагревателя", e)
+
         if self.app_instance.rele_cb.isChecked():
             try:
                 self.toggle_relay("heater", "off")
@@ -278,6 +292,8 @@ class Measurements(QObject):
                 self.control_heater(channel=self.settings["ch_ip2"],
                                     voltage="0",
                                     state="on")
+
+            time.sleep(int(self.app_instance.pause_r.text()))
 
             # Условия остановки измерений
             if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:
@@ -473,6 +489,8 @@ class Measurements(QObject):
         except Exception as e:
             self.log_message("Ошибка измерения", e)
 
+        if self.rigol_flag:
+            self.instrument.trig_rigol()
         # self.instrument.reset()  # Сброс настроек перед напряжением
 
         return self.fres_value
@@ -497,16 +515,18 @@ class Measurements(QObject):
 
             # Измерения для больше чем одного read
             if int(self.settings["n_read_ch56"]) > 1:
-                self.instrument.set_dcv_parameters(float(nplc_line_edit),
-                                              int(ch_line_edit),
-                                              float(range_line_edit),
-                                              delay=0)  # Остальные измерения
+                # self.instrument.set_dcv_parameters(float(nplc_line_edit),
+                #                               int(ch_line_edit),
+                #                               float(range_line_edit),
+                #                               delay=0)  # Остальные измерения
                 res_results[f"ch{i}"].extend(
                     self.instrument.measure(
                         meas_count=(int(self.settings["n_read_ch56"]) - 1)))
             else:
                 continue
 
+            if self.rigol_flag:
+                self.instrument.trig_rigol()
         # self.instrument.reset()  # Сброс настроек перед сопротивлением
 
         return res_results
@@ -532,26 +552,29 @@ class Measurements(QObject):
             # Измерения для больше чем одного read
             if i < 3:
                 if int(self.settings["n_read_ch12"]) > 1:
-                    self.instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                  int(ch_line_edit),
-                                                  float(range_line_edit),
-                                                  delay=0)  # Остальные измерения
+                    # self.instrument.set_dcv_parameters(float(nplc_line_edit),
+                    #                               int(ch_line_edit),
+                    #                               float(range_line_edit),
+                    #                               delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
                         self.instrument.measure(
                             meas_count=(int(self.settings["n_read_ch12"]) - 1)))
                 else:
                     continue
+                # self.instrument.trig_rigol()
             else:
                 if int(self.settings["n_read_ch34"]) > 1:
-                    self.instrument.set_dcv_parameters(float(nplc_line_edit),
-                                                  int(ch_line_edit),
-                                                  float(range_line_edit),
-                                                  delay=0)  # Остальные измерения
+                    # self.instrument.set_dcv_parameters(float(nplc_line_edit),
+                    #                               int(ch_line_edit),
+                    #                               float(range_line_edit),
+                    #                               delay=0)  # Остальные измерения
                     termoemf_results[f"ch{i}"].extend(
                         self.instrument.measure(
                             meas_count=(int(self.settings["n_read_ch34"]) - 1)))
                 else:
                     continue
+            if self.rigol_flag:
+                self.instrument.trig_rigol()
 
         # self.instrument.reset()  # Сброс настроек перед сопротивлением
 
