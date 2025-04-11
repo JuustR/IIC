@@ -479,9 +479,9 @@ class Measurements(QObject):
         """
         try:
             self.instrument.set_fres_parameters(float(self.settings['nplc_term']),
-                                           int(self.settings['ch_term1']),
-                                           range=0,
-                                           delay=0)
+                                                int(self.settings['ch_term1']),
+                                                float(self.settings['range_term']),
+                                                float(self.settings['delay_term']))
         except Exception as e:
             self.log_message("Ошибка задания параметров", e)
         try:

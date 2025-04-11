@@ -11,13 +11,38 @@ import time
 import json
 
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QMainWindow, QLineEdit
-from PyQt6.QtCore import QSettings, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QMainWindow, QLineEdit, QComboBox
+from PyQt6.QtCore import QSettings, QTimer, pyqtSignal, QThread
 
 from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection, ConnectionThread
 from Config.Measurements import Measurements, MeasurementThread
 
+class Animations(QThread):
+    stop_signal = pyqtSignal()
+
+    def __init__(self, app_instance, parent=None):
+        super().__init__(parent)
+        self.app_instance = app_instance
+        self.running = True
+
+    def run(self):
+        while self.running:
+            self.start_animation()
+
+    def stop(self):
+        self.running = False
+        self.stop_signal.emit()
+
+    def start_animation(self):
+        self.app_instance.start_button.setText('Измеряется')
+        time.sleep(0.5)
+        self.app_instance.start_button.setText('Измеряется.')
+        time.sleep(0.5)
+        self.app_instance.start_button.setText('Измеряется..')
+        time.sleep(0.5)
+        self.app_instance.start_button.setText('Измеряется...')
+        time.sleep(0.5)
 
 class App(QMainWindow):
     """
@@ -37,7 +62,7 @@ class App(QMainWindow):
         # Путь к основной директории
         current_dir = os.path.dirname(os.path.abspath(__file__))
         # Загрузка ui, путем выхода в основную директорию
-        loadUi(os.path.join(current_dir, '..', 'assets', 'mainIIC2.ui'), self)
+        loadUi(os.path.join(current_dir, '..', 'assets', 'mainIIC3.ui'), self)
 
         self.setWindowTitle('IIC Measuring Program')
 
@@ -50,6 +75,7 @@ class App(QMainWindow):
         self.create_button.clicked.connect(self.on_create_clicked)
         self.start_line_button.clicked.connect(self.on_start_line_clicked)
         self.start_button.clicked.connect(self.on_start_clicked)
+        self.stop_button.clicked.connect(self.pause)
 
         # checkBox'ы
         self.rele_cb.stateChanged.connect(self.rele_cb_clicked)
@@ -100,6 +126,8 @@ class App(QMainWindow):
         self.settings_dict = {}
         self.start_time = time.time()
         self.excel_cash = []
+
+        self.animationthread = None
 
         self.log_signal.connect(self.log_message)
 
@@ -192,6 +220,13 @@ class App(QMainWindow):
         for _ in self.powersource_list:
             self.combobox_power.addItem(_)
 
+    def save_console_logs(self):
+        """
+        Сохраняет логи
+        :return:
+        """
+        self.log_message("В разработке")
+
     def on_create_clicked(self):
         """
         Создаёт шаблон эксперимента
@@ -204,49 +239,62 @@ class App(QMainWindow):
         Задаёт начало строки, по дефолту выставляет начало строки на 11 (реализовать по созданию Excel)
         """
         self.startline_changed_flag = True
+        self.log_message(f"Начальная строка: {self.start_line_le.text()}")
 
     def on_start_clicked(self):
         """
         Тут осуществляется запуск эксперимента
         """
-        if self.working_flag:
-            # Если поток активен, останавливаем его
-            self.measurement_thread.stop()
-            self.working_flag = False
-            self.start_disable_le()
-            self.start_button.setText('Старт')
-            self.log_message("Измерения остановлены.")
+        self.working_flag = True
+        if self.animationthread is None or not self.animationthread.isRunning():
+            self.animationthread = Animations(self)
+            self.animationthread.start()
         else:
-            # Инициализация и запуск потока
-            self.working_flag = True
-            self.start_button.setText('Стоп')
-            try:
-                if self.wb is None:
-                    self.log_message("Перед запуском убедитесь, что Excel создан")
-                    self.working_flag = False
-                    self.start_button.setText('Старт')
-                    return
-                else:
-                    self.ws = self.wb.Worksheets(1)
-                if not self.inst_list or not self.powersource_list:
-                    self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены")
-                    self.working_flag = False
-                    self.start_button.setText('Старт')
-                    return
-                self.measurement = Measurements(self)
-                self.measurement_thread = MeasurementThread(self.measurement)
-                self.measurement.update_excel_signal.connect(self.update_excel)
-                self.measurement.update_values_signal.connect(self.update_values)
-                self.measurement_thread.log_signal.connect(self.log_message)
-                self.measurement_thread.finished_signal.connect(self.measurement_finished)
-                self.measurement_thread.start()
-                self.start_disable_le()
-                self.log_message("Начало измерений")
-            except Exception as e:
-                self.log_message("Ошибка запуска измерений.", e)
-                self.working_flag = False
-                self.start_disable_le()
-                self.start_button.setText('Старт')
+            self.pause()
+        # self.start_animation()
+
+        # if self.working_flag:
+        #     # Если поток активен, останавливаем его
+        #     self.measurement_thread.stop()
+        #     self.working_flag = False
+        #     self.start_disable_le()
+        #     self.start_button.setText('Старт')
+        #     self.log_message("Измерения остановлены.")
+        # else:
+        #     # Инициализация и запуск потока
+        #     self.working_flag = True
+        #     self.start_button.setText('Измеряется...')
+        #     try:
+        #         if self.wb is None:
+        #             self.log_message("Перед запуском убедитесь, что Excel создан")
+        #             self.working_flag = False
+        #             self.start_button.setText('Старт')
+        #             return
+        #         else:
+        #             self.ws = self.wb.Worksheets(1)
+        #         if not self.inst_list or not self.powersource_list:
+        #             self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены")
+        #             self.working_flag = False
+        #             self.start_button.setText('Старт')
+        #             return
+        #         self.measurement = Measurements(self)
+        #         self.measurement_thread = MeasurementThread(self.measurement)
+        #         self.measurement.update_excel_signal.connect(self.update_excel)
+        #         self.measurement.update_values_signal.connect(self.update_values)
+        #         self.measurement_thread.log_signal.connect(self.log_message)
+        #         self.measurement_thread.finished_signal.connect(self.measurement_finished)
+        #         self.measurement_thread.start()
+        #         self.start_animation()
+        #         # self.start_disable_le()
+        #         self.log_message("Начало измерений")
+        #     except Exception as e:
+        #         self.log_message("Ошибка запуска измерений.", e)
+        #         self.working_flag = False
+        #         self.start_animation()
+        #         # self.start_disable_le()
+        #         self.start_button.setText('Старт')
+
+
 
     def update_values(self, dict):
         """
@@ -290,10 +338,14 @@ class App(QMainWindow):
         self.start_button.setText('Старт')
 
     def pause(self):
-        if self.measurement_thread and self.measurement_thread.isRunning():
-            self.measurement_thread.stop()
-            self.measurement_thread.wait()
-        self.measurement.pause()
+        if self.animationthread and self.animationthread.isRunning():
+            self.animationthread.stop()
+            self.animationthread.wait()
+            self.animationthread = None
+        # if self.measurement_thread and self.measurement_thread.isRunning():
+        #     self.measurement_thread.stop()
+        #     self.measurement_thread.wait()
+        # self.measurement.pause()
         self.working_flag = False
         self.start_button.setText('Старт')
 
@@ -317,8 +369,11 @@ class App(QMainWindow):
         for i in range(1, 7):  # Ch1 - Ch6
             self.settings.setValue(f"ch{i}", self.findChild(QLineEdit, f"ch{i}").text())
             self.settings.setValue(f"delay_ch{i}", self.findChild(QLineEdit, f"delay_ch{i}").text())
-            self.settings.setValue(f"range_ch{i}", self.findChild(QLineEdit, f"range_ch{i}").text())
-            self.settings.setValue(f"nplc_ch{i}", self.findChild(QLineEdit, f"nplc_ch{i}").text())
+            range_box = self.findChild(QComboBox, f"range_ch{i}")
+            self.settings.setValue(f"range_ch{i}", range_box.currentText())
+
+            nplc_box = self.findChild(QComboBox, f"nplc_ch{i}")
+            self.settings.setValue(f"nplc_ch{i}", nplc_box.currentText())
 
         self.settings.setValue("n_read_ch12", self.n_read_ch12.text())
         self.settings.setValue("n_read_ch34", self.n_read_ch34.text())
@@ -326,8 +381,8 @@ class App(QMainWindow):
         self.settings.setValue("ch_term1", self.ch_term1.text())
         # self.settings.setValue("ch_term2", self.ch_term2.text())
         self.settings.setValue("delay_term", self.delay_term.text())
-        self.settings.setValue("range_term", self.range_term.text())
-        self.settings.setValue("nplc_term", self.nplc_term.text())
+        self.settings.setValue("range_term", self.range_term.currentText())
+        self.settings.setValue("nplc_term", self.nplc_term.currentText())
         self.settings.setValue("ch_ip1", self.ch_ip1.text())
         self.settings.setValue("ch_ip2", self.ch_ip2.text())
         self.settings.setValue("u_ip1", self.u_ip1.text())
@@ -362,21 +417,39 @@ class App(QMainWindow):
         for i in range(1, 7):
             self.findChild(QLineEdit, f"ch{i}").setText(self.settings.value(f"ch{i}", ""))
             self.findChild(QLineEdit, f"delay_ch{i}").setText(self.settings.value(f"delay_ch{i}", ""))
-            self.findChild(QLineEdit, f"range_ch{i}").setText(self.settings.value(f"range_ch{i}", ""))
-            self.findChild(QLineEdit, f"nplc_ch{i}").setText(self.settings.value(f"nplc_ch{i}", ""))
+
+            range_value = self.settings.value(f"range_ch{i}", "")
+            range_box = self.findChild(QComboBox, f"range_ch{i}")
+            if range_value and range_box.findText(range_value) == -1:
+                range_box.addItem(range_value)
+            range_box.setCurrentText(range_value)
+
+            nplc_value = self.settings.value(f"nplc_ch{i}", "")
+            nplc_box = self.findChild(QComboBox, f"nplc_ch{i}")
+            if nplc_value and nplc_box.findText(nplc_value) == -1:
+                nplc_box.addItem(nplc_value)
+            nplc_box.setCurrentText(nplc_value)
 
         self.n_read_ch12.setText(self.settings.value("n_read_ch12", ""))
         self.n_read_ch34.setText(self.settings.value("n_read_ch34", ""))
         self.n_read_ch56.setText(self.settings.value("n_read_ch56", ""))
         self.ch_term1.setText(self.settings.value("ch_term1", ""))
-        # self.ch_term2.setText(self.settings.value("ch_term2", ""))
         self.ch_ip1.setText(self.settings.value("ch_ip1", ""))
         self.ch_ip2.setText(self.settings.value("ch_ip2", ""))
         self.u_ip1.setText(self.settings.value("u_ip1", ""))
         self.u_ip2.setText(self.settings.value("u_ip2", ""))
         self.delay_term.setText(self.settings.value("delay_term", ""))
-        self.range_term.setText(self.settings.value("range_term", ""))
-        self.nplc_term.setText(self.settings.value("nplc_term", ""))
+
+        range_term_value = self.settings.value("range_term", "")
+        if range_term_value and self.range_term.findText(range_term_value) == -1:
+            self.range_term.addItem(range_term_value)
+        self.range_term.setCurrentText(range_term_value)
+
+        nplc_term_value = self.settings.value("nplc_term", "")
+        if nplc_term_value and self.nplc_term.findText(nplc_term_value) == -1:
+            self.nplc_term.addItem(nplc_term_value)
+        self.nplc_term.setCurrentText(nplc_term_value)
+
         self.n_cycles.setText(self.settings.value("n_cycles", ""))
         self.n_heat.setText(self.settings.value("n_heat", ""))
         self.n_cool.setText(self.settings.value("n_cool", ""))

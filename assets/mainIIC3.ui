@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1333</width>
+    <width>1328</width>
     <height>600</height>
    </rect>
   </property>
@@ -556,7 +556,7 @@ QAbstractSpinBox {
       <x>399</x>
       <y>9</y>
       <width>271</width>
-      <height>231</height>
+      <height>271</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="MainVL">
@@ -640,6 +640,12 @@ QAbstractSpinBox {
       <layout class="QHBoxLayout" name="StartLineHL">
        <item>
         <widget class="QPushButton" name="start_line_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Задать начальную строчку в Excel</string>
          </property>
@@ -647,6 +653,18 @@ QAbstractSpinBox {
        </item>
        <item>
         <widget class="QLineEdit" name="start_line_le">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="text">
           <string>11</string>
          </property>
@@ -662,9 +680,16 @@ QAbstractSpinBox {
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="stop_button">
        <property name="text">
         <string>Стоп</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="Line" name="line_19">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -723,12 +748,12 @@ QAbstractSpinBox {
            <x>0</x>
            <y>0</y>
            <width>621</width>
-           <height>501</height>
+           <height>516</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <property name="sizeConstraint">
-           <enum>QLayout::SetDefaultConstraint</enum>
+           <enum>QLayout::SetNoConstraint</enum>
           </property>
           <item>
            <widget class="Line" name="line">
@@ -792,9 +817,15 @@ QAbstractSpinBox {
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
                   <item>
                    <widget class="QLabel" name="label_4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="maximumSize">
                      <size>
-                      <width>16777215</width>
+                      <width>200</width>
                       <height>46</height>
                      </size>
                     </property>
@@ -815,6 +846,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLabel" name="label_53">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>200</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>Кол-во read</string>
                     </property>
@@ -852,6 +895,12 @@ QAbstractSpinBox {
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
                   <item>
                    <widget class="QLabel" name="label_19">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="maximumSize">
                      <size>
                       <width>16777215</width>
@@ -875,6 +924,12 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLabel" name="label_54">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="text">
                      <string>Кол-во read</string>
                     </property>
@@ -912,6 +967,12 @@ QAbstractSpinBox {
                  <layout class="QHBoxLayout" name="horizontalLayout_6">
                   <item>
                    <widget class="QLabel" name="label_20">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="maximumSize">
                      <size>
                       <width>16777215</width>
@@ -935,6 +996,12 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLabel" name="label_55">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="text">
                      <string>Кол-во read</string>
                     </property>
@@ -983,6 +1050,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="ch1">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>25</width>
+                      <height>100</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>1</string>
                     </property>
@@ -997,6 +1076,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="delay_ch1">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>100</width>
+                      <height>100</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -1010,7 +1101,14 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="range_ch1"/>
+                   <widget class="QComboBox" name="range_ch1">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
                   </item>
                   <item>
                    <widget class="QLabel" name="label_9">
@@ -1020,9 +1118,12 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="nplc_ch1">
-                    <property name="text">
-                     <string>2</string>
+                   <widget class="QComboBox" name="nplc_ch1">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
                     </property>
                    </widget>
                   </item>
@@ -1039,6 +1140,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="ch2">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>25</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>2</string>
                     </property>
@@ -1053,6 +1166,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="delay_ch2">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>100</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -1066,7 +1191,14 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="range_ch2"/>
+                   <widget class="QComboBox" name="range_ch2">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
                   </item>
                   <item>
                    <widget class="QLabel" name="label_10">
@@ -1076,9 +1208,12 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="nplc_ch2">
-                    <property name="text">
-                     <string>2</string>
+                   <widget class="QComboBox" name="nplc_ch2">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
                     </property>
                    </widget>
                   </item>
@@ -1102,6 +1237,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="ch3">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>25</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>3</string>
                     </property>
@@ -1116,6 +1263,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="delay_ch3">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>100</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -1129,7 +1288,14 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="range_ch3"/>
+                   <widget class="QComboBox" name="range_ch3">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
                   </item>
                   <item>
                    <widget class="QLabel" name="label_30">
@@ -1139,9 +1305,12 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="nplc_ch3">
-                    <property name="text">
-                     <string>2</string>
+                   <widget class="QComboBox" name="nplc_ch3">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
                     </property>
                    </widget>
                   </item>
@@ -1158,6 +1327,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="ch4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>25</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>4</string>
                     </property>
@@ -1172,6 +1353,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="delay_ch4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>100</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -1185,7 +1378,14 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="range_ch4"/>
+                   <widget class="QComboBox" name="range_ch4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
                   </item>
                   <item>
                    <widget class="QLabel" name="label_31">
@@ -1195,9 +1395,12 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="nplc_ch4">
-                    <property name="text">
-                     <string>2</string>
+                   <widget class="QComboBox" name="nplc_ch4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
                     </property>
                    </widget>
                   </item>
@@ -1221,6 +1424,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="ch5">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>25</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>5</string>
                     </property>
@@ -1235,6 +1450,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="delay_ch5">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>100</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -1248,7 +1475,14 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="range_ch5"/>
+                   <widget class="QComboBox" name="range_ch5">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
                   </item>
                   <item>
                    <widget class="QLabel" name="label_32">
@@ -1258,11 +1492,7 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="nplc_ch5">
-                    <property name="text">
-                     <string>2</string>
-                    </property>
-                   </widget>
+                   <widget class="QComboBox" name="nplc_ch5"/>
                   </item>
                  </layout>
                 </item>
@@ -1277,6 +1507,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="ch6">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>25</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>6</string>
                     </property>
@@ -1291,6 +1533,18 @@ QAbstractSpinBox {
                   </item>
                   <item>
                    <widget class="QLineEdit" name="delay_ch6">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>100</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
                     <property name="text">
                      <string>0</string>
                     </property>
@@ -1304,7 +1558,14 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="range_ch6"/>
+                   <widget class="QComboBox" name="range_ch6">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
                   </item>
                   <item>
                    <widget class="QLabel" name="label_33">
@@ -1314,11 +1575,7 @@ QAbstractSpinBox {
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="nplc_ch6">
-                    <property name="text">
-                     <string>2</string>
-                    </property>
-                   </widget>
+                   <widget class="QComboBox" name="nplc_ch6"/>
                   </item>
                  </layout>
                 </item>
@@ -1358,6 +1615,12 @@ QAbstractSpinBox {
               </item>
               <item>
                <widget class="QLineEdit" name="ch_term1">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>7</string>
                 </property>
@@ -1372,6 +1635,12 @@ QAbstractSpinBox {
               </item>
               <item>
                <widget class="QLineEdit" name="delay_term">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -1385,7 +1654,7 @@ QAbstractSpinBox {
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="range_term"/>
+               <widget class="QComboBox" name="range_term"/>
               </item>
               <item>
                <widget class="QLabel" name="label_35">
@@ -1395,11 +1664,7 @@ QAbstractSpinBox {
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="nplc_term">
-                <property name="text">
-                 <string>10</string>
-                </property>
-               </widget>
+               <widget class="QComboBox" name="nplc_term"/>
               </item>
              </layout>
             </item>
@@ -1890,6 +2155,19 @@ QAbstractSpinBox {
      </item>
     </layout>
    </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>520</y>
+      <width>269</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Сохранить логи</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
@@ -1912,7 +2190,7 @@ QAbstractSpinBox {
    </hints>
   </connection>
   <connection>
-   <sender>pushButton</sender>
+   <sender>stop_button</sender>
    <signal>clicked(bool)</signal>
    <receiver>start_button</receiver>
    <slot>setDisabled(bool)</slot>
@@ -1924,6 +2202,102 @@ QAbstractSpinBox {
     <hint type="destinationlabel">
      <x>630</x>
      <y>202</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>start_button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>instruments_button</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>592</x>
+     <y>208</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>494</x>
+     <y>38</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>start_button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>choose_button</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>496</x>
+     <y>196</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>459</x>
+     <y>95</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>start_button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>create_button</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>508</x>
+     <y>195</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>566</x>
+     <y>94</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stop_button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>create_button</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>651</x>
+     <y>228</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>650</x>
+     <y>91</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stop_button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>choose_button</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>227</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>96</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stop_button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>instruments_button</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>431</x>
+     <y>226</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>430</x>
+     <y>32</y>
     </hint>
    </hints>
   </connection>
