@@ -1,8 +1,8 @@
 """
 Окно основного графического интерфейса и его настройки
 
-version 03.02.2025
-© 01.2025 Frolov Dmitriy. All Rights Reserved. Any copying or distribution without the consent of the author is prohibited.
+version 11.04.2025
+© 04.2025 Frolov Dmitriy. All Rights Reserved. Any copying or distribution without the consent of the author is prohibited.
 """
 
 import os
