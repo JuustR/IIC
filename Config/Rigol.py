@@ -38,6 +38,7 @@
 """
 
 import pyvisa
+from PyQt6.QtCore import QTimer
 import time
 
 
@@ -82,7 +83,8 @@ class Rigol:
         else:
             self.keysight.write(f"VOLTage:DC:RANGe {range}")
         self.keysight.write('SYST:LOC')
-        time.sleep(delay)
+        QTimer.singleShot(int(delay * 1000), lambda: None)
+        # time.sleep(delay)
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """
@@ -110,7 +112,8 @@ class Rigol:
         else:
             self.keysight.write(f"FRES:RANGe {range}")
         self.keysight.write('SYST:LOC')
-        time.sleep(delay)
+        QTimer.singleShot(int(delay * 1000), lambda: None)
+        # time.sleep(delay)
 
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
@@ -132,7 +135,8 @@ class Rigol:
             self.keysight.write(":SENS:RES:RANG:AUTO ON")
         else:
             self.keysight.write(f":SENS:RES:RANG {range}")
-        self.keysight.write(f":TRIG:DEL {delay}")
+        self.keysight.write('SYST:LOC')
+        QTimer.singleShot(int(delay * 1000), lambda: None)
 
     def measure(self, meas_count: int) -> list:
         """

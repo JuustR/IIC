@@ -59,17 +59,18 @@ class InstrumentConnection:
 
     def connect_all(self):
         """Функция для подключения всех выбранных приборов"""
-        # self.keithley2010_connection()
-        # self.keithley2000_connection()
-        # self.daq970A_connection()
+        self.keithley2010_connection()
+        self.keithley2000_connection()
+        self.daq970A_usb_connection()
+        self.daq970A_connection()
         self.keysight_connection()
         self.rigol_connection()
-        # self.E36312A_connection()  # Не работает, т.к. не задан IP
+        self.E36312A_connection()
         self.akip_connection()
 
         # Если нужно будет, чтобы ускорить подключение то можно закоментить
         # Все приборы: keithley2010, keithley2000, daq970A, keysight, rigol, E36312A, AKIP
-        self.log_message('Подключения к keithley2010, keithley2000, daq970A, E36312A закомменчены')
+        # self.log_message('Подключения к keithley2010, keithley2000, daq970A, E36312A закомменчены')
 
         # Должен возвращаться словарь подключенных приборов с их IP/GPIB
         return self.instr_list, self.powersource_dict
@@ -102,6 +103,22 @@ class InstrumentConnection:
                                  'GPIB на приборе должен быть 16\nОписание ошибки:', e)
             else:
                 self.log_message('Ошибка подключения Keithley2000')
+
+    def daq970A_usb_connection(self):
+        try:
+            # self.daq970A = self.rm.open_resource('TCPIP0::' + str(self.w_root.lineIP_1.text()) + '::inst0::INSTR')
+            self.usb_resources = [res for res in self.rm.list_resources() if res.startswith('USB')]
+            print(self.usb_resources)
+            self.daq970A = self.rm.open_resource(self.usb_resources[0])
+            self.daq970A.write("*RST")
+            self.log_message('DAQ подключен успешно')
+            self.instr_list["daq970A"] = self.usb_resources[0]
+        except Exception as e:
+            if self.app_instance.show_errors_cb.isChecked():
+                self.log_message('Ошибка подключения DAQ970A!\n'
+                                 'Проверьте USB в консоле и программе\nОписание ошибки:', e)
+            else:
+                self.log_message(f'Ошибка подключения DAQ970A!')
 
     def daq970A_connection(self):
         try:

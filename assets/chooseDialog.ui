@@ -1248,6 +1248,19 @@ QAbstractSpinBox {
     </item>
    </layout>
   </widget>
+  <widget class="QPushButton" name="open_ex_file">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>270</y>
+     <width>191</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Открыть существующий файл</string>
+   </property>
+  </widget>
  </widget>
  <tabstops>
   <tabstop>FileNameLE</tabstop>

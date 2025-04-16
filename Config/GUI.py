@@ -7,6 +7,7 @@ version 11.04.2025
 
 import os
 import win32com.client as win32
+import xlwings as xw
 import time
 import json
 
@@ -25,24 +26,36 @@ class Animations(QThread):
         super().__init__(parent)
         self.app_instance = app_instance
         self.running = True
+        self.timer = QTimer()
+        self.timer.setInterval(500)  # 500 mc
+        self.timer.timeout.connect(self.start_animation)
+        self.num = 1
 
     def run(self):
-        while self.running:
-            self.start_animation()
+        self.timer.start()
+        self.exec()
 
     def stop(self):
         self.running = False
+        self.timer.stop()
+        self.quit()
         self.stop_signal.emit()
 
     def start_animation(self):
-        self.app_instance.start_button.setText('Измеряется')
-        time.sleep(0.5)
-        self.app_instance.start_button.setText('Измеряется.')
-        time.sleep(0.5)
-        self.app_instance.start_button.setText('Измеряется..')
-        time.sleep(0.5)
-        self.app_instance.start_button.setText('Измеряется...')
-        time.sleep(0.5)
+        if not self.running:
+            return
+
+        if self.num == 1:
+            self.app_instance.start_button.setText('Измеряется')
+        elif self.num == 2:
+            self.app_instance.start_button.setText('Измеряется.')
+        elif self.num == 3:
+            self.app_instance.start_button.setText('Измеряется..')
+        else:
+            self.app_instance.start_button.setText('Измеряется...')
+            self.num = 0
+        self.num += 1
+
 
 class App(QMainWindow):
     """
@@ -53,11 +66,11 @@ class App(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        try:
-            self.excel = win32.Dispatch('Excel.Application')
-            self.excel.Visible = True  # Excel visible, тк invisible скрывает уже открытые файлы
-        except Exception as e:
-            print(f"Очистите gen_py\nМожно это сделать запустив программу gen_cache_clear.py\n{e}")
+        # try:
+        #     self.excel = win32.Dispatch('Excel.Application')
+        #     self.excel.Visible = True  # Excel visible, тк invisible скрывает уже открытые файлы
+        # except Exception as e:
+        #     print(f"Очистите gen_py\nМожно это сделать запустив программу gen_cache_clear.py\n{e}")
 
         # Путь к основной директории
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -77,10 +90,10 @@ class App(QMainWindow):
         self.start_button.clicked.connect(self.on_start_clicked)
         self.stop_button.clicked.connect(self.pause)
 
-        # checkBox'ы
-        self.rele_cb.stateChanged.connect(self.rele_cb_clicked)
-        self.instr1_cb.stateChanged.connect(self.instr1_cb_clicked)
-        self.instr2_cb.stateChanged.connect(self.instr2_cb_clicked)
+        # checkBox'ы (Настроил сигналами в QT Designer)
+        # self.rele_cb.stateChanged.connect(self.rele_cb_clicked)
+        # self.instr1_cb.stateChanged.connect(self.instr1_cb_clicked)
+        # self.instr2_cb.stateChanged.connect(self.instr2_cb_clicked)
 
         # ComboBox'ы
         # self.combobox_scan.currentTextChanged.connect(self.combobox_scan_changed)
@@ -127,7 +140,11 @@ class App(QMainWindow):
         self.start_time = time.time()
         self.excel_cash = []
 
-        self.animationthread = None
+        # Анимация
+        self.animation_timer = QTimer()
+        self.animation_timer.setInterval(500)
+        self.animation_timer.timeout.connect(self.animate_text)
+        self.num = 2
 
         self.log_signal.connect(self.log_message)
 
@@ -137,6 +154,18 @@ class App(QMainWindow):
         self.load_tab1_settings()
 
         self.show()
+
+    def animate_text(self):
+        if self.num == 1:
+            self.start_button.setText("Измеряется")
+        elif self.num == 2:
+            self.start_button.setText("Измеряется.")
+        elif self.num == 3:
+            self.start_button.setText("Измеряется..")
+        else:
+            self.start_button.setText("Измеряется...")
+            self.num = 0
+        self.num += 1
 
     def log_message(self, message, exception=None):
         """
@@ -246,11 +275,14 @@ class App(QMainWindow):
         Тут осуществляется запуск эксперимента
         """
         self.working_flag = True
-        if self.animationthread is None or not self.animationthread.isRunning():
-            self.animationthread = Animations(self)
-            self.animationthread.start()
-        else:
-            self.pause()
+        self.start_button.setText("Измеряется")
+        self.animation_timer.start()
+        # if self.animationthread is None or not self.animationthread.isRunning():
+        #     self.animationthread = Animations(self)
+        #     self.animationthread.start()
+        # else:
+        #     self.pause()
+
         # self.start_animation()
 
         # if self.working_flag:
@@ -271,7 +303,8 @@ class App(QMainWindow):
         #             self.start_button.setText('Старт')
         #             return
         #         else:
-        #             self.ws = self.wb.Worksheets(1)
+        #             self.ws = self.wb.sheets[0]
+        #             # self.ws = self.wb.Worksheets(1)  # pywin32
         #         if not self.inst_list or not self.powersource_list:
         #             self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены")
         #             self.working_flag = False
@@ -314,17 +347,27 @@ class App(QMainWindow):
         :param value: Значение, которое будет записано в ячейку (object)
         """
         try:
-            self.ws.Cells(row, col).Value = value
-            if self.excel_cash_flag:
-                while self.excel_cash:
-                    x = self.excel_cash[0]
-                    try:
-                        self.ws.Cells(x[0], x[1]).Value = x[2]
-                        self.excel_cash.pop(0)
-                    except Exception as e:
-                        self.excel_cash_flag = True
-                        print(e)
-                        break
+            # self.ws.Cells(row, col).Value = value
+            self.ws.cells(row, col).value = value  # xlwings
+
+            # Cash new
+            for _ in self.excel_cash:
+                # self.ws.Cells(_[0], _[1]).Value = _[2]
+                self.ws.cells(_[0], _[1]).value = _[2]  # xlwings
+            self.excel_cash.clear()
+
+            # Cash old
+            # if self.excel_cash_flag:
+            #     while self.excel_cash:
+            #         x = self.excel_cash[0]
+            #         try:
+            #             self.ws.Cells(x[0], x[1]).Value = x[2]
+            #             self.excel_cash.pop(0)
+            #         except Exception as e:
+            #             self.excel_cash_flag = True
+            #             print(e)
+            #             break
+            #    self.excel_cash_flag = False
         except Exception as e:
             self.excel_cash.append([row, col, value])
             self.excel_cash_flag = True
@@ -338,10 +381,11 @@ class App(QMainWindow):
         self.start_button.setText('Старт')
 
     def pause(self):
-        if self.animationthread and self.animationthread.isRunning():
-            self.animationthread.stop()
-            self.animationthread.wait()
-            self.animationthread = None
+        if self.animation_timer.isActive():
+            self.animation_timer.stop()
+            self.start_button.setText("Старт")
+            self.num = 2
+
         # if self.measurement_thread and self.measurement_thread.isRunning():
         #     self.measurement_thread.stop()
         #     self.measurement_thread.wait()
@@ -404,7 +448,8 @@ class App(QMainWindow):
 
         self.settings_changed_flag = True
         # ! Добавить сравнение изменений и вывод их в Excel, например
-        # !
+
+        self.copy_settings_to_dict()
 
     def load_tab1_settings(self):
         """
@@ -516,10 +561,12 @@ class App(QMainWindow):
         """
         try:
             if self.wb:
-                self.wb.SaveAs(self.wb_path, 52)
-                self.wb.Close(SaveChanges=1)
-            if self.excel:
-                self.excel.Quit()
+                # self.wb.SaveAs(self.wb_path, 52)
+                # self.wb.Close(SaveChanges=1)
+                self.wb.save(self.wb_path + ".xlsm")
+                self.wb.close()
+            # if self.excel:
+            #     self.excel.Quit()
             print("Excel успешно закрыт")
         except Exception as e:
             print(f"Ошибка при закрытии Excel: {e}")

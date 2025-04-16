@@ -556,7 +556,7 @@ QAbstractSpinBox {
       <x>399</x>
       <y>9</y>
       <width>271</width>
-      <height>271</height>
+      <height>301</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="MainVL">
@@ -635,6 +635,20 @@ QAbstractSpinBox {
         </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="programming_power_source">
+       <property name="text">
+        <string>Управляемый ИП</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="Line" name="line_20">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
      </item>
      <item>
       <layout class="QHBoxLayout" name="StartLineHL">
@@ -2055,42 +2069,6 @@ QAbstractSpinBox {
          </layout>
         </widget>
        </widget>
-       <widget class="QWidget" name="tab_2">
-        <attribute name="title">
-         <string>Seebeck</string>
-        </attribute>
-        <widget class="QLabel" name="label_50">
-         <property name="geometry">
-          <rect>
-           <x>160</x>
-           <y>120</y>
-           <width>221</width>
-           <height>111</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>В разработке</string>
-         </property>
-        </widget>
-       </widget>
-       <widget class="QWidget" name="tab_3">
-        <attribute name="title">
-         <string>R</string>
-        </attribute>
-        <widget class="QLabel" name="label_51">
-         <property name="geometry">
-          <rect>
-           <x>190</x>
-           <y>100</y>
-           <width>221</width>
-           <height>111</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>В разработке</string>
-         </property>
-        </widget>
-       </widget>
        <widget class="QWidget" name="tab_4">
         <attribute name="title">
          <string>Тензо</string>
@@ -2155,7 +2133,7 @@ QAbstractSpinBox {
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="save_logs_to_json">
     <property name="geometry">
      <rect>
       <x>60</x>
@@ -2180,12 +2158,12 @@ QAbstractSpinBox {
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>534</x>
-     <y>195</y>
+     <x>535</x>
+     <y>271</y>
     </hint>
     <hint type="destinationlabel">
-     <x>558</x>
-     <y>196</y>
+     <x>559</x>
+     <y>271</y>
     </hint>
    </hints>
   </connection>
@@ -2196,12 +2174,12 @@ QAbstractSpinBox {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>631</x>
-     <y>222</y>
+     <x>632</x>
+     <y>299</y>
     </hint>
     <hint type="destinationlabel">
-     <x>630</x>
-     <y>202</y>
+     <x>631</x>
+     <y>271</y>
     </hint>
    </hints>
   </connection>
@@ -2212,8 +2190,8 @@ QAbstractSpinBox {
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>592</x>
-     <y>208</y>
+     <x>593</x>
+     <y>271</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -2228,12 +2206,12 @@ QAbstractSpinBox {
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>496</x>
-     <y>196</y>
+     <x>497</x>
+     <y>271</y>
     </hint>
     <hint type="destinationlabel">
-     <x>459</x>
-     <y>95</y>
+     <x>461</x>
+     <y>118</y>
     </hint>
    </hints>
   </connection>
@@ -2244,12 +2222,12 @@ QAbstractSpinBox {
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>508</x>
-     <y>195</y>
+     <x>509</x>
+     <y>271</y>
     </hint>
     <hint type="destinationlabel">
-     <x>566</x>
-     <y>94</y>
+     <x>667</x>
+     <y>118</y>
     </hint>
    </hints>
   </connection>
@@ -2260,12 +2238,12 @@ QAbstractSpinBox {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>651</x>
-     <y>228</y>
+     <x>652</x>
+     <y>299</y>
     </hint>
     <hint type="destinationlabel">
-     <x>650</x>
-     <y>91</y>
+     <x>667</x>
+     <y>118</y>
     </hint>
    </hints>
   </connection>
@@ -2276,12 +2254,12 @@ QAbstractSpinBox {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>477</x>
-     <y>227</y>
+     <x>478</x>
+     <y>299</y>
     </hint>
     <hint type="destinationlabel">
-     <x>480</x>
-     <y>96</y>
+     <x>482</x>
+     <y>118</y>
     </hint>
    </hints>
   </connection>
@@ -2292,12 +2270,140 @@ QAbstractSpinBox {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>431</x>
-     <y>226</y>
+     <x>432</x>
+     <y>299</y>
     </hint>
     <hint type="destinationlabel">
      <x>430</x>
      <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>instr1_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>ip_instr1</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>756</x>
+     <y>509</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>829</x>
+     <y>507</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>instr1_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>excel_instr1</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>779</x>
+     <y>500</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1140</x>
+     <y>500</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>instr1_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>instr1_connect</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>710</x>
+     <y>501</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1300</x>
+     <y>505</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>instr2_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>ip_instr2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>757</x>
+     <y>537</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>828</x>
+     <y>542</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>instr2_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>excel_instr2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>753</x>
+     <y>538</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1129</x>
+     <y>538</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>instr2_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>instr2_connect</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>712</x>
+     <y>536</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1230</x>
+     <y>538</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rele_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>n_r_updown</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>758</x>
+     <y>361</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>866</x>
+     <y>362</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rele_cb</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>n_r_up</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>781</x>
+     <y>363</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1041</x>
+     <y>360</y>
     </hint>
    </hints>
   </connection>

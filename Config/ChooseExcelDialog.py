@@ -3,6 +3,7 @@
 """
 import os
 import time
+import xlwings as xw
 
 from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import (QDialog, QFileDialog)
@@ -30,6 +31,7 @@ class ChooseExcelDialog(QDialog):
         self.OpenTempBtn.clicked.connect(self.open_temp_btn)
         self.buttonBox.accepted.connect(self.onAccepted)
         self.buttonBox.rejected.connect(self.onRejected)
+        self.open_ex_file.clicked.connect(self.open_existing_file)
 
         if self.app_instance.data_reset_flag:
             self.data = self.app_instance.base_data
@@ -40,6 +42,22 @@ class ChooseExcelDialog(QDialog):
         self.FileNameLE.setText(self.data["FileName"])
         self.MacrosLabel.setText(self.data["MacrosName"])
         self.TempLabel.setText(self.data["TempName"])
+
+    def open_existing_file(self):
+        try:
+            self.data["FileName"] = self.FileNameLE.text()
+            # print("data: ", self.data["FileName"])
+            script_path = os.path.dirname(os.path.abspath(__file__))
+            # print("script_path: ", script_path)
+            file_path = os.path.join(script_path, '..', "Measurements", self.data["FileName"])  # without '.xlsm'
+            # print("file_path: ", file_path)
+            self.app_instance.wb = xw.Book(file_path + ".xlsm")
+            self.app_instance.wb_path = file_path
+            self.app_instance.ws = self.wb.sheets[0]
+
+        except Exception as e:
+            self.log_message("Не удалось открыть файл\n"
+                             "Возможно он находится в другой директории(должен быть в Measurements)\n", e)
 
     def log_message(self, message, exception=None):
         error_message = time.strftime("%H:%M:%S | ", time.localtime()) + f"{message}\n"
@@ -78,7 +96,8 @@ class ChooseExcelDialog(QDialog):
         file_path = os.path.join(script_path, '..', "Measurements", self.data["FileName"])  # without '.xlsm'
 
         # Проверка на наличие файлов с таким же именем
-        if os.path.exists("E:\IIC\Measurements\\" + self.data["FileName"] + ".xlsm"):
+        if os.path.exists(file_path + ".xlsm"):
+        # if os.path.exists("E:\IIC\Measurements\\" + self.data["FileName"] + ".xlsm"):  # Bilo tak
             self.log_message("Файл с таким именем уже существует, создайте другой")
             return
         else:
@@ -86,13 +105,13 @@ class ChooseExcelDialog(QDialog):
 
         if self.data["TempName"] == "Нет шаблона":
             temp_path = os.path.join(script_path, "..", "templates", "Base_temp.xltm")
-            # workbook = self.excel.Workbooks.Open(temp_path)
-            self.app_instance.wb = self.app_instance.excel.Workbooks.Open(temp_path)
+            # self.app_instance.wb = self.app_instance.excel.Workbooks.Open(temp_path)  # pywin32
+            self.app_instance.wb = self.app_instance.xw.Book(temp_path)  # xlwings
             self.app_instance.wb_path = file_path
         else:
             temp_path = os.path.join(script_path, "templates", self.data["TempName"])
-            # workbook = self.excel.Workbooks.Open(self.data["TempName"])
-            self.app_instance.wb = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
+            # self.app_instance.wb = self.app_instance.excel.Workbooks.Open(self.data["TempName"])  # pywin32
+            self.app_instance.wb = self.app_instance.xw.Book(temp_path)
             self.app_instance.wb_path = file_path
 
         # Формат .xlsm будет при 52, а .xlsx при 51
@@ -112,8 +131,9 @@ class ChooseExcelDialog(QDialog):
         else:
             self.macros_status = "без макроса"
 
-        self.app_instance.wb.SaveAs(file_path, 52)
-        self.app_instance.excel.Visible = True
+        self.app_instance.wb.save(file_path + '.xlsm')  # xlwings
+        # self.app_instance.wb.SaveAs(file_path, 52)  # pywin32
+        # self.app_instance.excel.Visible = True  # pywin32
         self.log_message(
             f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
 

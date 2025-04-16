@@ -1,5 +1,6 @@
 import pyvisa
 import time
+from PyQt6.QtCore import QTimer
 
 
 class DAQ970A:
@@ -38,7 +39,8 @@ class DAQ970A:
 
         self.keysight.write(f"VOLT:DC:NPLC {nplc}")
         # self.keysight.write('SYST:LOC')  # Хз нужно или нет(как будто нет)
-        time.sleep(delay)
+        QTimer.singleShot(int(delay * 1000), lambda: None)
+        # time.sleep(delay)
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """
@@ -61,7 +63,8 @@ class DAQ970A:
 
         self.keysight.write(f"FRES:NPLC {nplc}")
         # self.keysight.write('SYST:LOC')  # Хз нужно или нет(как будто нет)
-        time.sleep(delay)
+        QTimer.singleShot(int(delay * 1000), lambda: None)
+        # time.sleep(delay)
 
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
@@ -85,7 +88,8 @@ class DAQ970A:
 
         self.keysight.write(f"RES:NPLC {nplc}")
         # self.keysight.write('SYST:LOC')  # Хз нужно или нет(как будто нет)
-        time.sleep(delay)
+        # time.sleep(delay)
+        QTimer.singleShot(int(delay * 1000), lambda: None)
 
     def measure(self, meas_count: int) -> list:
         """

@@ -8,7 +8,7 @@ import requests
 import pyvisa
 from PyQt6.QtCore import QObject
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, QTimer
 
 from Config.Keithley2010 import Keithley2010
 from Config.Rigol import Rigol
@@ -63,7 +63,6 @@ class Measurements(QObject):
         self.settings = self.app_instance.settings_dict
         self.inst_list = self.app_instance.inst_list
         self.powersource_list = self.app_instance.powersource_list
-        self.excel_cash = self.app_instance.excel_cash
 
         self.rigol_flag = False
         self.change_volt_flag = False  # Флаг отвечающий за переключение направления тока
@@ -223,7 +222,8 @@ class Measurements(QObject):
                     # self.update_values_signal.emit({"start_line_le": str(self.number)})
                     self.app_instance.start_line_le.setText(str(self.number))
 
-                time.sleep(int(self.app_instance.pause_s.text()))
+                # time.sleep(int(self.app_instance.pause_s.text()))
+                QTimer.singleShot(int(int(self.app_instance.pause_s.text()) * 1000), lambda: None)
 
             # Измерения сопротивления
             # Условия остановки измерений
@@ -293,7 +293,8 @@ class Measurements(QObject):
                                     voltage="0",
                                     state="on")
 
-            time.sleep(int(self.app_instance.pause_r.text()))
+            # time.sleep(int(self.app_instance.pause_r.text()))
+            QTimer.singleShot(int(int(self.app_instance.pause_r.text()) * 1000), lambda: None)
 
             # Условия остановки измерений
             if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:

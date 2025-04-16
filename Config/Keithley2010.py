@@ -5,6 +5,7 @@
 """
 
 import pyvisa
+from PyQt6.QtCore import QTimer
 import time
 
 
@@ -43,8 +44,7 @@ class Keithley2010:
         else:
             self.instrument.write(f":ROUT:CLOS (@{ch})")
         self.instrument.write(":init:cont 1")
-        time.sleep(delay)
-        self.instrument.write(":init:cont 0")
+        QTimer.singleShot(int(delay * 1000), lambda: self.instrument.write(":init:cont 0"))
 
     def set_fres_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """
@@ -65,8 +65,7 @@ class Keithley2010:
         else:
             self.instrument.write(f":ROUT:CLOS (@{ch})")
         self.instrument.write(":init:cont 1")
-        time.sleep(delay)
-        self.instrument.write(":init:cont 0")
+        QTimer.singleShot(int(delay * 1000), lambda: self.instrument.write(":init:cont 0"))
 
     def set_res_parameters(self, nplc: float, ch: int, range: float, delay: float) -> None:
         """
@@ -87,8 +86,7 @@ class Keithley2010:
         else:
             self.instrument.write(f":ROUT:CLOS (@{ch})")
         self.instrument.write(":init:cont 1")
-        time.sleep(delay)
-        self.instrument.write(":init:cont 0")
+        QTimer.singleShot(int(delay * 1000), lambda: self.instrument.write(":init:cont 0"))
 
     def measure(self, meas_count: int) -> list:
         """
