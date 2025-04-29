@@ -1,6 +1,8 @@
 """
 Новое GUI, основанное на Freader
 
+Ver 0.01 from 29.04.2025
+
 Задачи:
 
 1)
@@ -16,27 +18,34 @@ from PyQt6.uic import loadUi
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QPushButton, QCheckBox, QLineEdit
 from PyQt6.QtCore import pyqtSignal, QThread, QSettings, QTimer
 
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill, Side, Border
-import os.path
+
 from Config.Freader.Meas_F import ExcelWriterThread
+from Config.Freader.Instruments_F import InstrumentConnection, ConnectionThread
+from Config.Freader.Create_Excel import Create_Open_Excel
 
 
 class App(QMainWindow):
+    """
+    Documentation
+    """
+    log_signal = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
 
-        # self.Excel = win32.Dispatch('Excel.Application')
-        # self.Excel.Visible = True  # Создаем COM объект
-
         self.rm = pyvisa.ResourceManager()
 
-        loadUi('daq_reader_by_df.ui', self)  # Загружаем UI напрямую в self
-        self.setWindowTitle("Excel Writer")
+        # Путь к основной директории
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Загрузка ui, путем выхода в основную директорию
+        loadUi(os.path.join(current_dir, '..', '..', 'assets', 'mainIIC3.ui'), self)
 
-        self.settings = QSettings("lab425", "Reader")
+        # loadUi('daq_reader_by_df.ui', self)  # Загружаем UI напрямую в self
+        self.setWindowTitle("Seebeck + R Measurement Programm by DIF")
 
-        self.excel_name.setText(time.strftime("%d%m%Y ", time.localtime()) + "_Example")
+        self.settings = QSettings("lab425", "SRMP_by_DIF")
+
+        # self.excel_name.setText(time.strftime("%d%m%Y ", time.localtime()) + "_Example")
 
         # Анимация
         self.animation_timer = QTimer()
@@ -44,39 +53,178 @@ class App(QMainWindow):
         self.animation_timer.timeout.connect(self.animate_text)
         self.animation_num = 2
 
+        self.wb_path = None
         self.wb = None
         self.ws = None
-        self.daq = None
-        self.time_open = None
+        self.inst_list = None
+        self.powersource_list = None
+        self.measurement = None
+        self.settings_dict = {}
         self.start_time = time.time()
-        self.usb_resources = None
-        self.cache_values = []
+        self.cache_values = []  # self.excel_cash
 
-        self.start_time_flag = False
-        self.ip_daq_flag = True
-        self.read_one_flag = False
-        self.rts_flag = False  # Ready to Start
-        self.start_flag = False
+        self.log_signal.connect(self.log_message)
 
-        self.create_excel.clicked.connect(self.create_excel_func)
-        self.open_excel.clicked.connect(self.open_excel_func)
-        self.start_button.clicked.connect(self.start)
-        self.pause_button.clicked.connect(self.pause)
-        self.connect_button.clicked.connect(self.connect)
-        self.read_one.clicked.connect(self.read_one_func)
-        self.save_button.clicked.connect(self.save_settings)
+        self.working_flag = False
+        self.data_reset_flag = False
+        self.settings_changed_flag = True
+        self.startline_changed_flag = False
+        self.excel_cash_flag = False
+
+        # !Было
+        # self.wb = None
+        # self.ws = None
+        # self.daq = None
+        # self.time_open = None  # Время создание файла
+        # self.start_time = time.time()
+        # self.usb_resources = None
+        # self.cache_values = []
+
+        # self.start_time_flag = False
+        # self.ip_daq_flag = True
+        # self.read_one_flag = False
+        # self.rts_flag = False  # Ready to Start
+        # self.start_flag = False
+
+        # Подключаем основные кнопки к соответсвующим функциям
+        self.choose_button.clicked.connect(self.on_choose_excel_clicked)
+        self.instruments_button.clicked.connect(self.on_instruments_clicked)
+        # self.create_button.clicked.connect(self.on_create_clicked)
+        # self.start_line_button.clicked.connect(self.on_start_line_clicked)
+        # self.start_button.clicked.connect(self.on_start_clicked)
+        # checkBox'ы
+        self.rele_cb.stateChanged.connect(self.rele_cb_clicked)
+        self.instr1_cb.stateChanged.connect(self.instr1_cb_clicked)
+        self.instr2_cb.stateChanged.connect(self.instr2_cb_clicked)
+
+        # Подключаем кнопки меню настроек
+        # self.save_settings_pb.clicked.connect(self.save_settings)
+
+        # Начальные настройки консоли
+        self.ConsolePTE.setPlainText(time.strftime("%d-%m-%Y %H:%M:%S", time.localtime()) + "\n" +
+                                     """
+Здравствуйте! Для начала работы:
+1. Выберите/создайте шаблон Excel
+2. Настройте приборы и Excel
+  2.1. Выберите каналы
+  2.2. Настройте параметры
+  2.3. Подключитель к приборам
+3.(необ.) Задайте начальную строчку Excel
+4. Запускайте измерения
+        """)
+
+        # !Переписать
+        # data - changeable, base_data - unchangeable REMEMBER IT!!!
+        self.data = {"TempName": "Нет шаблона",
+                     "MacrosName": "Нет макроса",
+                     "FileName": time.strftime("%d-%m-%Y_Example", time.localtime())}
+        self.base_data = {"TempName": "Нет шаблона",
+                          "MacrosName": "Нет макроса",
+                          "FileName": time.strftime("%d-%m-%Y_Example", time.localtime())}
+
+        # !Было
+        # self.create_excel.clicked.connect(self.create_excel_func)
+        # self.open_excel.clicked.connect(self.open_excel_func)
+        # self.start_button.clicked.connect(self.start)
+        # self.pause_button.clicked.connect(self.pause)
+        # self.connect_button.clicked.connect(self.connect)
+        # self.read_one.clicked.connect(self.read_one_func)
+        # self.save_button.clicked.connect(self.save_settings)
 
         self.mainthread = None
 
-        # Переписать, а то бред какой-то тут
-        # self.settings.setValue("first_run", 1)
-        if self.settings.value("first_run") == 1:
-            self.settings.clear()
-            self.settings.sync()
-            self.save_settings()
-            self.settings.setValue("first_run", 2)
+        # self.load_tab1_settings()
 
-        self.load_settings()
+    def log_message(self, message, exception=None):
+        """
+        Выводит в консоль pyqt логи
+
+        :param message: Сообщение, которое будет выведено (str)
+        :param exception: Вывод исключения/ошибки (exception)
+        """
+        error_message = time.strftime("%H:%M:%S | ", time.localtime()) + f"{message}\n"
+        if exception:
+            error_message += f"{exception}\n"
+        self.ConsolePTE.appendPlainText(error_message)
+
+    def instr1_cb_clicked(self):
+        """
+        Добавление ещё одного прибора
+        """
+        if self.instr1_cb.isChecked():
+            self.ip_instr1.setEnabled(True)
+            self.excel_instr1.setEnabled(True)
+            self.instr1_connect.setEnabled(True)
+        else:
+            self.ip_instr1.setEnabled(False)
+            self.excel_instr1.setEnabled(False)
+            self.instr1_connect.setEnabled(False)
+
+    def instr2_cb_clicked(self):
+        """
+        Добавление ещё одного прибора
+        """
+        if self.instr2_cb.isChecked():
+            self.ip_instr2.setEnabled(True)
+            self.excel_instr2.setEnabled(True)
+            self.instr2_connect.setEnabled(True)
+        else:
+            self.ip_instr2.setEnabled(False)
+            self.excel_instr2.setEnabled(False)
+            self.instr2_connect.setEnabled(False)
+
+    def rele_cb_clicked(self):
+        """
+        Подключение к релюшкам
+        """
+        # !Добавить проверку в измерения, чтоб отключать взаимодействие с релюшками
+        if self.rele_cb.isChecked():
+            self.n_r_up.setEnabled(False)
+            self.n_r_updown.setEnabled(True)
+        else:
+            self.n_r_updown.setEnabled(False)
+            self.n_r_up.setEnabled(True)
+
+    def on_instruments_clicked(self):
+        """
+        Подключается ко всем доступным приборам, которые обнаружит
+        """
+        self.combobox_scan.clear()
+        self.combobox_power.clear()
+        ic = InstrumentConnection(self)
+
+        self.connection_thread = ConnectionThread(ic)
+        self.connection_thread.log_signal.connect(self.log_message)
+        self.connection_thread.result_signal.connect(self.connection_finished)
+
+        self.connection_thread.start()
+
+    def connection_finished(self, inst_list, powersource_list):
+        """
+        Добавляет в соответствующие комбобоксы имена подключенных приборов
+
+        :param inst_list: Список сканеров/мультиметров (list/dict)
+        :param powersource_list: Список источников питания (list/dict)
+        """
+        self.inst_list = inst_list
+        self.powersource_list = powersource_list
+
+        connected_instruments = (', '.join(str(i) for i in self.inst_list) + ", " +
+                                 ', '.join(str(i) for i in self.powersource_list))
+        self.log_message('Подключенные приборы: ' + connected_instruments)
+
+        for _ in self.inst_list:
+            self.combobox_scan.addItem(_)
+        for _ in self.powersource_list:
+            self.combobox_power.addItem(_)
+
+    def on_choose_excel_clicked(self):
+        """
+        Вызов диалога с созданием нового Excel
+        """
+        self.log_message('Вызвали создание нового Excel')
+        dlg = Create_Open_Excel(self)
+        dlg.exec()
 
     def start(self):
         if self.rts_flag:
@@ -166,103 +314,6 @@ class App(QMainWindow):
             self.start_button.setText("Измеряется...")
             self.animation_num = 0
         self.animation_num += 1
-
-    def connect(self):
-        try:
-            if self.ip_daq_flag and self.lan.isChecked():
-                self.daq = self.rm.open_resource('TCPIP0::' + str(self.ip_daq.text()) + '::inst0::INSTR')
-            elif self.ip_daq_flag and self.usb.isChecked():
-                self.usb_resources = [res for res in self.rm.list_resources() if res.startswith('USB')]
-                print(self.usb_resources)
-                # self.daq = self.rm.open_resource(self.usb_resources[0])
-                # Вставить USB ниже и раскомментить, а выше закоментить если не подключается
-                # self.daq = self.rm.open_resource('USB0::0x2A8D::0x5101::MY58003604::0::INSTR')  # 120
-                self.daq = self.rm.open_resource('USB0::0x2A8D::0x5101::MY58038716::0::INSTR')  # 107
-
-            self.statusbar.showMessage('Подключение успешно')
-            self.rts_flag = True
-            # print('Подключение успешно')
-        except Exception as e:
-            error = QMessageBox()
-            error.setWindowTitle('Ошибка')
-            error.setText(
-                f'Подключение не удалось. Если подключались по usb, то проверте ip в команднике и программе(строка - 192): {e}')
-            error.exec()
-
-    def create_excel_func(self):
-        try:
-
-            file_name = str(self.excel_name.text()) + '.xlsx'
-
-            book = Workbook()
-            sheet = book.active
-
-            thin_border = Border(left=Side(style='thin'),
-                                 right=Side(style='thin'),
-                                 top=Side(style='thin'),
-                                 bottom=Side(style='thin'))
-
-            font = Font(b=True, size=12, color="000000")
-            fill = PatternFill("solid", fgColor="FFFF00")
-
-            sheet['A1'] = 'Время'
-            sheet['B1'] = 'V1'
-            sheet['C1'] = 'V2'
-            sheet['D1'] = 'V3'
-            sheet['E1'] = 'V4'
-            sheet['F1'] = 'Системное время'
-            sheet['G1'] = 'Комментарии Python'
-            sheet['H1'] = 'Для комментариев'
-
-            # sheet.column_dimensions['D'].width = 20
-            sheet.column_dimensions['H'].width = 25
-            sheet.column_dimensions['F'].width = 25
-            sheet.column_dimensions['L'].width = 20
-            sheet.column_dimensions['M'].width = 25
-            sheet.column_dimensions['N'].width = 25
-
-            for i in range(1, 25):
-                sheet.cell(row=1, column=i).font = font
-                sheet.cell(row=1, column=i).fill = fill
-                sheet.cell(row=1, column=i).alignment = Alignment(horizontal='center')
-                sheet.cell(row=1, column=i).border = thin_border
-
-            if os.path.isfile("C:\\Python\\" + file_name):
-                error = QMessageBox()
-                error.setWindowTitle('Ошибка')
-                error.setText('Такой файл уже существует, выберите другое имя')
-                # error.setIcon(QMessageBox.Warning)
-                # error.setStandardButtons(QMessageBox.Ok)
-                error.exec()
-            else:
-                book.save("C:\\Python\\" + file_name)
-                # os.startfile("C:\\Python\\" + file_name)
-                book.close()
-                self.time_open = time.time()
-                while time.time() - self.time_open < 2:
-                    pass
-                self.wb = xw.Book(f"C:\\Python\\{file_name}")
-                self.ws = self.wb.sheets[0]
-
-        except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', f'Не удалось создать файл: {e}')
-
-    def open_excel_func(self):
-        try:
-            file_name = str(self.excel_name.text()) + '.xlsx'
-            self.wb = xw.Book(f"C:\\Python\\{file_name}")
-            self.ws = self.wb.sheets[0]
-            # xw.App(visible=True)
-        except Exception as e:
-            self.statusbar.showMessage(f'Ошибка.\nНе удалось открыть Excel: {e}')
-
-    # def closeEvent(self, event):
-    #     try:
-    #         self.wb.close()
-    #         print("Excel закрыт")
-    #     except Exception as e:
-    #         print(f"Ошибка при закрытии Excel: {e}")
-    #     event.accept()
 
     def save_settings(self):
         for i in range(1, 21):
