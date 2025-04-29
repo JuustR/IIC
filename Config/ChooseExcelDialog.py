@@ -53,7 +53,8 @@ class ChooseExcelDialog(QDialog):
             # print("file_path: ", file_path)
             self.app_instance.wb = xw.Book(file_path + ".xlsm")
             self.app_instance.wb_path = file_path
-            self.app_instance.ws = self.wb.sheets[0]
+            self.app_instance.ws = self.app_instance.wb.sheets[0]
+            self.app_instance.wb.save(file_path + '.xlsm')
 
         except Exception as e:
             self.log_message("Не удалось открыть файл\n"
@@ -106,12 +107,12 @@ class ChooseExcelDialog(QDialog):
         if self.data["TempName"] == "Нет шаблона":
             temp_path = os.path.join(script_path, "..", "templates", "Base_temp.xltm")
             # self.app_instance.wb = self.app_instance.excel.Workbooks.Open(temp_path)  # pywin32
-            self.app_instance.wb = self.app_instance.xw.Book(temp_path)  # xlwings
+            self.app_instance.wb = xw.Book(temp_path)  # xlwings
             self.app_instance.wb_path = file_path
         else:
             temp_path = os.path.join(script_path, "templates", self.data["TempName"])
             # self.app_instance.wb = self.app_instance.excel.Workbooks.Open(self.data["TempName"])  # pywin32
-            self.app_instance.wb = self.app_instance.xw.Book(temp_path)
+            self.app_instance.wb = xw.Book(temp_path)
             self.app_instance.wb_path = file_path
 
         # Формат .xlsm будет при 52, а .xlsx при 51

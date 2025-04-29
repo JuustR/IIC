@@ -102,7 +102,7 @@ class InstrumentConnection:
                 self.log_message('Ошибка подключения Keithley2000!\n'
                                  'GPIB на приборе должен быть 16\nОписание ошибки:', e)
             else:
-                self.log_message('Ошибка подключения Keithley2000')
+                self.log_message('Ошибка подключения Keithley2000!')
 
     def daq970A_usb_connection(self):
         try:
@@ -118,7 +118,7 @@ class InstrumentConnection:
                 self.log_message('Ошибка подключения DAQ970A!\n'
                                  'Проверьте USB в консоле и программе\nОписание ошибки:', e)
             else:
-                self.log_message(f'Ошибка подключения DAQ970A!')
+                self.log_message(f'Ошибка подключения DAQ970A по usb!')
 
     def daq970A_connection(self):
         try:
@@ -132,7 +132,7 @@ class InstrumentConnection:
                 self.log_message('Ошибка подключения DAQ970A!\n'
                                  'IP прибора должен быть 169.254.50.10\nОписание ошибки:', e)
             else:
-                self.log_message(f'Ошибка подключения DAQ970A!')
+                self.log_message(f'Ошибка подключения DAQ970A по лану!')
 
     def keysight_connection(self):
         try:

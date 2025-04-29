@@ -19,43 +19,6 @@ from Config.ChooseExcelDialog import ChooseExcelDialog
 from Config.Instruments import InstrumentConnection, ConnectionThread
 from Config.Measurements import Measurements, MeasurementThread
 
-class Animations(QThread):
-    stop_signal = pyqtSignal()
-
-    def __init__(self, app_instance, parent=None):
-        super().__init__(parent)
-        self.app_instance = app_instance
-        self.running = True
-        self.timer = QTimer()
-        self.timer.setInterval(500)  # 500 mc
-        self.timer.timeout.connect(self.start_animation)
-        self.num = 1
-
-    def run(self):
-        self.timer.start()
-        self.exec()
-
-    def stop(self):
-        self.running = False
-        self.timer.stop()
-        self.quit()
-        self.stop_signal.emit()
-
-    def start_animation(self):
-        if not self.running:
-            return
-
-        if self.num == 1:
-            self.app_instance.start_button.setText('Измеряется')
-        elif self.num == 2:
-            self.app_instance.start_button.setText('Измеряется.')
-        elif self.num == 3:
-            self.app_instance.start_button.setText('Измеряется..')
-        else:
-            self.app_instance.start_button.setText('Измеряется...')
-            self.num = 0
-        self.num += 1
-
 
 class App(QMainWindow):
     """
@@ -274,60 +237,49 @@ class App(QMainWindow):
         """
         Тут осуществляется запуск эксперимента
         """
-        self.working_flag = True
+        # self.working_flag = True
         self.start_button.setText("Измеряется")
         self.animation_timer.start()
-        # if self.animationthread is None or not self.animationthread.isRunning():
-        #     self.animationthread = Animations(self)
-        #     self.animationthread.start()
-        # else:
-        #     self.pause()
 
-        # self.start_animation()
+        if self.working_flag:
+            # Если поток активен, останавливаем его
+            self.measurement_thread.stop()
+            self.working_flag = False
+            self.start_disable_le()
+            self.start_button.setText('Старт')
+            self.log_message("Измерения остановлены.")
+        else:
+            # Инициализация и запуск потока
+            self.working_flag = True
+            try:
+                if self.wb is None:
+                    self.log_message("Перед запуском убедитесь, что Excel создан")
+                    self.pause()
+                    return
+                else:
+                    self.ws = self.wb.sheets[0]
+                    # self.ws = self.wb.Worksheets(1)  # pywin32
 
-        # if self.working_flag:
-        #     # Если поток активен, останавливаем его
-        #     self.measurement_thread.stop()
-        #     self.working_flag = False
-        #     self.start_disable_le()
-        #     self.start_button.setText('Старт')
-        #     self.log_message("Измерения остановлены.")
-        # else:
-        #     # Инициализация и запуск потока
-        #     self.working_flag = True
-        #     self.start_button.setText('Измеряется...')
-        #     try:
-        #         if self.wb is None:
-        #             self.log_message("Перед запуском убедитесь, что Excel создан")
-        #             self.working_flag = False
-        #             self.start_button.setText('Старт')
-        #             return
-        #         else:
-        #             self.ws = self.wb.sheets[0]
-        #             # self.ws = self.wb.Worksheets(1)  # pywin32
-        #         if not self.inst_list or not self.powersource_list:
-        #             self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены")
-        #             self.working_flag = False
-        #             self.start_button.setText('Старт')
-        #             return
-        #         self.measurement = Measurements(self)
-        #         self.measurement_thread = MeasurementThread(self.measurement)
-        #         self.measurement.update_excel_signal.connect(self.update_excel)
-        #         self.measurement.update_values_signal.connect(self.update_values)
-        #         self.measurement_thread.log_signal.connect(self.log_message)
-        #         self.measurement_thread.finished_signal.connect(self.measurement_finished)
-        #         self.measurement_thread.start()
-        #         self.start_animation()
-        #         # self.start_disable_le()
-        #         self.log_message("Начало измерений")
-        #     except Exception as e:
-        #         self.log_message("Ошибка запуска измерений.", e)
-        #         self.working_flag = False
-        #         self.start_animation()
-        #         # self.start_disable_le()
-        #         self.start_button.setText('Старт')
-
-
+                # if not self.inst_list or not self.powersource_list:  # Было так
+                if not self.inst_list:
+                    self.log_message("Перед запуском убедитесь, что сканер подключен")
+                    # self.log_message("Перед запуском убедитесь, что приборы и источники питания подключены")
+                    self.pause()
+                    return
+                self.measurement = Measurements(self)
+                self.measurement_thread = MeasurementThread(self.measurement)
+                self.measurement.update_excel_signal.connect(self.update_excel)
+                self.measurement.update_values_signal.connect(self.update_values)
+                self.measurement_thread.log_signal.connect(self.log_message)
+                self.measurement_thread.finished_signal.connect(self.measurement_finished)
+                self.measurement_thread.start()
+                # self.start_disable_le()
+                self.log_message("Начало измерений")
+            except Exception as e:
+                self.log_message("Ошибка запуска измерений.", e)
+                self.working_flag = False
+                self.pause()
+                # self.start_disable_le()
 
     def update_values(self, dict):
         """
@@ -386,12 +338,18 @@ class App(QMainWindow):
             self.start_button.setText("Старт")
             self.num = 2
 
-        # if self.measurement_thread and self.measurement_thread.isRunning():
-        #     self.measurement_thread.stop()
-        #     self.measurement_thread.wait()
-        # self.measurement.pause()
+        if self.measurement_thread and self.measurement_thread.isRunning():
+            self.measurement_thread.stop()
+            self.measurement_thread.wait()
+
         self.working_flag = False
         self.start_button.setText('Старт')
+
+        try:
+            self.measurement.pause()
+        except:
+            pass
+
 
     def on_choose_excel_clicked(self):
         """
