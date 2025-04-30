@@ -7,7 +7,8 @@ class DAQ970A:
         self.app_instance = app_instance
         self.instr = self.app_instance.inst_list
         self.rm = pyvisa.ResourceManager()
-        self.keysight = self.rm.open_resource(self.instr["DAQ970A"])
+        self.keysight = self.rm.open_resource(self.instr["daq970A"])
+        self.keysight.timeout = 5000
         self.nplc_list = [0.001, 0.002, 0.006, 0.02, 0.06, 0.2, 1, 2, 10, 20, 100, 200]
         self.range_dcv_list = [0.1, 1, 10, 100, 300]
         self.range_fres_list = [100, 1000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000]

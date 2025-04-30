@@ -662,7 +662,7 @@ QAbstractSpinBox {
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="pause_button">
        <property name="text">
         <string>Стоп</string>
        </property>
@@ -1912,7 +1912,7 @@ QAbstractSpinBox {
    </hints>
   </connection>
   <connection>
-   <sender>pushButton</sender>
+   <sender>pause_button</sender>
    <signal>clicked(bool)</signal>
    <receiver>start_button</receiver>
    <slot>setDisabled(bool)</slot>

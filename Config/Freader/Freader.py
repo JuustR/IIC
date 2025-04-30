@@ -84,17 +84,18 @@ class ExcelWriterThread(QThread):
                 time_sleep = int(self.app_instance.time_oprosa.text())
                 while time_sleep > 0:
                     # print(time_sleep)
-                    if time_sleep > 10:
-                        self.statusbar.showMessage(f"Измерения продолжатся через {time_sleep} секунд")
+                    self.statusbar.showMessage(f"Измерения продолжатся через {time_sleep} секунд")
                     if self.running:
                         if (time_sleep - 1) > 0:
                             time.sleep(1)  # Пауза между записями
                             time_sleep -= 1
                         else:
                             time.sleep(time_sleep)
+                            self.statusbar.showMessage("")
                             time_sleep -= 1
                             break
                     else:
+                        self.statusbar.showMessage("")
                         self.stop()
                         break
 

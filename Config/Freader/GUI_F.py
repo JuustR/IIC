@@ -91,14 +91,15 @@ class App(QMainWindow):
         self.instruments_button.clicked.connect(self.on_instruments_clicked)
         # self.create_button.clicked.connect(self.on_create_clicked)
         # self.start_line_button.clicked.connect(self.on_start_line_clicked)
-        # self.start_button.clicked.connect(self.on_start_clicked)
+        self.start_button.clicked.connect(self.start)
+        self.pause_button.clicked.connect(self.pause)
         # checkBox'ы
         self.rele_cb.stateChanged.connect(self.rele_cb_clicked)
         self.instr1_cb.stateChanged.connect(self.instr1_cb_clicked)
         self.instr2_cb.stateChanged.connect(self.instr2_cb_clicked)
 
         # Подключаем кнопки меню настроек
-        # self.save_settings_pb.clicked.connect(self.save_settings)
+        self.save_settings_pb.clicked.connect(self.save_settings)
 
         # Начальные настройки консоли
         self.ConsolePTE.setPlainText(time.strftime("%d-%m-%Y %H:%M:%S", time.localtime()) + "\n" +
@@ -126,14 +127,14 @@ class App(QMainWindow):
         # self.create_excel.clicked.connect(self.create_excel_func)
         # self.open_excel.clicked.connect(self.open_excel_func)
         # self.start_button.clicked.connect(self.start)
-        # self.pause_button.clicked.connect(self.pause)
+
         # self.connect_button.clicked.connect(self.connect)
         # self.read_one.clicked.connect(self.read_one_func)
         # self.save_button.clicked.connect(self.save_settings)
 
         self.mainthread = None
 
-        # self.load_tab1_settings()
+        self.load_tab1_settings()
 
     def log_message(self, message, exception=None):
         """
@@ -227,31 +228,32 @@ class App(QMainWindow):
         dlg.exec()
 
     def start(self):
-        if self.rts_flag:
-            self.start_button.setText("Измеряется")
-            self.start_flag = True
-            self.disable_enable_ch()
-            self.animation_timer.start()
-            try:
-                if self.wb is None:
-                    print("Перед запуском убедитесь, что Excel создан")
-                    self.statusbar.showMessage("Перед запуском убедитесь, что Excel создан")
-                    self.pause()
-                    return
-                if self.ip_daq_flag:
-                    if self.mainthread is None or not self.mainthread.isRunning():
-                        self.mainthread = ExcelWriterThread(self)
-
-                        self.mainthread.update_values_signal.connect(self.update_values)
-                        self.mainthread.update_excel_signal.connect(self.update_excel)
-                        self.mainthread.start()
-                    else:
-                        self.pause()
-                else:
-                    print("Poka net")
-            except Exception as e:
-                print(e)
+        self.start_button.setText("Измеряется")
+        self.start_flag = True
+        # self.disable_enable_ch()
+        self.start_disable_le()
+        self.animation_timer.start()
+        try:
+            if self.wb is None:
+                self.log_message("Перед запуском убедитесь, что Excel создан")
+                self.statusbar.showMessage("Перед запуском убедитесь, что Excel создан")
                 self.pause()
+                return
+            if self.inst_list:
+                if self.mainthread is None or not self.mainthread.isRunning():
+                    self.mainthread = ExcelWriterThread(self)
+
+                    # self.mainthread.update_values_signal.connect(self.update_values)
+                    self.mainthread.update_excel_signal.connect(self.update_excel)
+                    self.mainthread.stop_signal.connect(self.pause)
+                    self.mainthread.start()
+                else:
+                    self.pause()
+            else:
+                print("Poka net")
+        except Exception as e:
+            print(e)
+            self.pause()
 
     def update_excel(self, row, col, value):
         try:
@@ -267,11 +269,12 @@ class App(QMainWindow):
             print(f"Cache: {self.cache_values}")
 
     def update_values(self, num):
-        self.excel_row.setText(f'{num}')
+        self.start_line_le.setText(f'{num}')
 
     def pause(self):
         self.start_flag = False
-        self.disable_enable_ch()
+        # self.disable_enable_ch()
+        self.start_button.setEnabled(True)
 
         if self.animation_timer.isActive():
             self.animation_timer.stop()
@@ -315,53 +318,6 @@ class App(QMainWindow):
             self.animation_num = 0
         self.animation_num += 1
 
-    def save_settings(self):
-        for i in range(1, 21):
-            checkbox = self.findChild(QCheckBox, f"ch{i}")
-            if checkbox:
-                self.settings.setValue(f"ch{i}", checkbox.isChecked())
-
-            dcv_radio = self.findChild(QRadioButton, f"dcv{i}")
-            if dcv_radio:
-                self.settings.setValue(f"dcv{i}", dcv_radio.isChecked())
-
-            fres_radio = self.findChild(QRadioButton, f"fres{i}")
-            if fres_radio:
-                self.settings.setValue(f"fres{i}", fres_radio.isChecked())
-
-        self.settings.setValue("ip_daq", self.ip_daq.text())
-        self.settings.setValue("time_oprosa", self.time_oprosa.text())
-        self.settings.setValue("nplc_dcv", self.nplc_dcv.text())
-        self.settings.setValue("nplc_fres", self.nplc_fres.text())
-
-        self.statusbar.showMessage('Настройки сохранены')
-
-    def load_settings(self):
-        for i in range(1, 21):
-            checkbox = self.findChild(QCheckBox, f"ch{i}")
-            if checkbox:
-                checkbox.setChecked(self.settings.value(f"ch{i}", False, type=bool))
-
-            dcv_radio = self.findChild(QRadioButton, f"dcv{i}")
-            fres_radio = self.findChild(QRadioButton, f"fres{i}")
-
-            if dcv_radio:
-                dcv_checked = self.settings.value(f"dcv{i}", False, type=bool)
-                dcv_radio.blockSignals(True)
-                dcv_radio.setChecked(dcv_checked)
-                dcv_radio.blockSignals(False)
-
-            if fres_radio:
-                fres_checked = self.settings.value(f"fres{i}", False, type=bool)
-                fres_radio.blockSignals(True)
-                fres_radio.setChecked(fres_checked)
-                fres_radio.blockSignals(False)
-
-        self.ip_daq.setText(self.settings.value("ip_daq", ""))
-        self.time_oprosa.setText(self.settings.value("time_oprosa", ""))
-        self.nplc_dcv.setText(self.settings.value("nplc_dcv", ""))
-        self.nplc_fres.setText(self.settings.value("nplc_fres", ""))
-
     def read_one_func(self):
         # print([child.objectName() for child in self.findChildren(QRadioButton)])
         self.read_one_flag = True
@@ -369,6 +325,135 @@ class App(QMainWindow):
         self.read_one_flag = False
         self.pause()
 
+    def start_disable_le(self):
+        """
+        Отключение фрагментов интерфейса при старте измерений
+        """
+        widgets_to_disable = [self.combobox_scan, self.combobox_power, self.ip_rigol, self.n_read_ch12, self.n_read_ch34,
+                              self.n_read_ch56, self.n_cycles, self.n_heat, self.n_cool, self.ch1, self.ch2, self.ch3,
+                              self.ch4, self.ch5, self.ch6, self.ch_term1, self.instruments_button, self.choose_button,
+                              self.create_button]
+        if self.working_flag:
+            for widget in widgets_to_disable:
+                widget.setEnabled(False)
+            if self.rele_cb.isChecked():
+                self.n_r_updown.setEnabled(False)
+            else:
+                self.n_r_up.setEnabled(False)
+        else:
+            for widget in widgets_to_disable:
+                widget.setEnabled(True)
+            if self.rele_cb.isChecked():
+                self.n_r_updown.setEnabled(True)
+            else:
+                self.n_r_up.setEnabled(True)
+
+    def save_settings(self):
+        """
+        По кнопке сохраняет настройки программы для Seebeck+R
+        """
+        self.settings.setValue("combobox_scan", self.combobox_scan.currentText())
+        self.settings.setValue("combobox_power", self.combobox_power.currentText())
+        self.settings.setValue("rele_cb", self.rele_cb.isChecked())
+
+        for i in range(1, 7):  # Ch1 - Ch6
+            self.settings.setValue(f"ch{i}", self.findChild(QLineEdit, f"ch{i}").text())
+            self.settings.setValue(f"delay_ch{i}", self.findChild(QLineEdit, f"delay_ch{i}").text())
+            self.settings.setValue(f"range_ch{i}", self.findChild(QLineEdit, f"range_ch{i}").text())
+            self.settings.setValue(f"nplc_ch{i}", self.findChild(QLineEdit, f"nplc_ch{i}").text())
+
+        self.settings.setValue("n_read_ch12", self.n_read_ch12.text())
+        self.settings.setValue("n_read_ch34", self.n_read_ch34.text())
+        self.settings.setValue("n_read_ch56", self.n_read_ch56.text())
+        self.settings.setValue("ch_term1", self.ch_term1.text())
+        # self.settings.setValue("ch_term2", self.ch_term2.text())
+        self.settings.setValue("delay_term", self.delay_term.text())
+        self.settings.setValue("range_term", self.range_term.text())
+        self.settings.setValue("nplc_term", self.nplc_term.text())
+        self.settings.setValue("ch_ip1", self.ch_ip1.text())
+        self.settings.setValue("ch_ip2", self.ch_ip2.text())
+        self.settings.setValue("u_ip1", self.u_ip1.text())
+        self.settings.setValue("u_ip2", self.u_ip2.text())
+        self.settings.setValue("n_cycles", self.n_cycles.text())
+        self.settings.setValue("n_heat", self.n_heat.text())
+        self.settings.setValue("n_cool", self.n_cool.text())
+        self.settings.setValue("pause_s", self.pause_s.text())
+        self.settings.setValue("pause_r", self.pause_r.text())
+        self.settings.setValue("n_r_up", self.n_r_up.text())
+        self.settings.setValue("n_r_updown", self.n_r_updown.text())
+        self.settings.setValue("ip_rigol", self.ip_rigol.text())
+        self.settings.setValue("r_cell", self.r_cell.text())
+
+        # Добавление текста в консоль
+        self.log_message('Сохранили настройки программы')
+        if self.working_flag:
+            self.log_message('Настройки будут применены в следующем цикле')
+
+        self.settings_changed_flag = True
+        # ! Добавить сравнение изменений и вывод их в Excel, например
+        # !
+
+    def load_tab1_settings(self):
+        """
+        Загружает сохранённые значения виджетов пока только для Seebeck+R
+        """
+        self.combobox_scan.setCurrentText(self.settings.value("combobox_scan", ""))
+        self.combobox_power.setCurrentText(self.settings.value("combobox_power", ""))
+        self.rele_cb.setChecked(self.settings.value("rele_cb", "false") == "true")
+
+        for i in range(1, 7):
+            self.findChild(QLineEdit, f"ch{i}").setText(self.settings.value(f"ch{i}", ""))
+            self.findChild(QLineEdit, f"delay_ch{i}").setText(self.settings.value(f"delay_ch{i}", ""))
+            self.findChild(QLineEdit, f"range_ch{i}").setText(self.settings.value(f"range_ch{i}", ""))
+            self.findChild(QLineEdit, f"nplc_ch{i}").setText(self.settings.value(f"nplc_ch{i}", ""))
+
+        self.n_read_ch12.setText(self.settings.value("n_read_ch12", ""))
+        self.n_read_ch34.setText(self.settings.value("n_read_ch34", ""))
+        self.n_read_ch56.setText(self.settings.value("n_read_ch56", ""))
+        self.ch_term1.setText(self.settings.value("ch_term1", ""))
+        # self.ch_term2.setText(self.settings.value("ch_term2", ""))
+        self.ch_ip1.setText(self.settings.value("ch_ip1", ""))
+        self.ch_ip2.setText(self.settings.value("ch_ip2", ""))
+        self.u_ip1.setText(self.settings.value("u_ip1", ""))
+        self.u_ip2.setText(self.settings.value("u_ip2", ""))
+        self.delay_term.setText(self.settings.value("delay_term", ""))
+        self.range_term.setText(self.settings.value("range_term", ""))
+        self.nplc_term.setText(self.settings.value("nplc_term", ""))
+        self.n_cycles.setText(self.settings.value("n_cycles", ""))
+        self.n_heat.setText(self.settings.value("n_heat", ""))
+        self.n_cool.setText(self.settings.value("n_cool", ""))
+        self.pause_s.setText(self.settings.value("pause_s", ""))
+        self.pause_r.setText(self.settings.value("pause_r", ""))
+        self.n_r_up.setText(self.settings.value("n_r_up", ""))
+        self.n_r_up.setText(self.settings.value("n_r_up", ""))
+        self.ip_rigol.setText(self.settings.value("ip_rigol", ""))
+        self.r_cell.setText(self.settings.value("r_cell", ""))
+
+        # (мб необ) Копирование настроек в словарь
+        self.copy_settings_to_dict()
+
+    def copy_settings_to_dict(self):
+        """
+        Копирует настройки из self.settings в словарь settings_dict
+        """
+
+        def copy_to_dict(element):
+            self.settings_dict[element] = self.settings.value(element)
+
+        keys = [
+            "combobox_scan", "combobox_power", "rele_cb",
+            "n_read_ch12", "n_read_ch34", "n_read_ch56",
+            "ch_term1", "ch_term2", "delay_term", "range_term", "nplc_term",
+            "ch_ip1", "ch_ip2", "u_ip1", "u_ip2", "n_cycles",
+            "n_heat", "n_cool", "pause_s", "pause_r",
+            "n_r_up", "n_r_updown", "ip_rigol"
+        ]
+
+        for i in range(1, 7):
+            keys.extend([f"ch{i}", f"delay_ch{i}", f"range_ch{i}", f"nplc_ch{i}"])
+
+        for key in keys:
+            copy_to_dict(key)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
