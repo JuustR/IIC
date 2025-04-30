@@ -604,7 +604,7 @@ QAbstractSpinBox {
          </size>
         </property>
         <property name="text">
-         <string> Добавить макрос:</string>
+         <string> Добавить макрос: </string>
         </property>
        </widget>
       </item>
@@ -705,7 +705,7 @@ QAbstractSpinBox {
       <item>
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>    </string>
+         <string/>
         </property>
        </widget>
       </item>

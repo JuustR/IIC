@@ -34,6 +34,10 @@ class Create_Open_Excel(QDialog):
         self.statusbar = QStatusBar()
         self.MainVL.addWidget(self.statusbar)
 
+        script_path = os.path.dirname(os.path.abspath(__file__))
+        measurements_path = os.path.abspath(os.path.join(script_path, '..', "..", "Measurements"))
+        self.label.setText(f"Файл: {measurements_path}\\")
+
         self.OpenMacrosBtn.clicked.connect(self.open_macros_btn)
         self.OpenTempBtn.clicked.connect(self.open_temp_btn)
         self.create_excel.clicked.connect(self.create_excel_func)
@@ -77,130 +81,74 @@ class Create_Open_Excel(QDialog):
             self.data["TempName"] = file_dir[0][0]
             self.TempLabel.setText(file_dir[0][0])
 
-    def onAccepted(self):
-        """
-        Метод создающий новый Excel на основе заданных ранее параметров
-        """
-        self.data["FileName"] = self.FileNameLE.text()
-        script_path = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(script_path, '..', "..", "Measurements", self.data["FileName"])  # without '.xlsm'
-
-        # Проверка на наличие файлов с таким же именем
-        if os.path.exists(file_path + ".xlsm"):
-            self.log_message("Файл с таким именем уже существует, создайте другой")
-            return
-        else:
-            self.app_instance.wb = None
-
-        if self.data["TempName"] == "Нет шаблона":
-            temp_path = os.path.join(script_path, "..", "..", "templates", "Base_temp.xltm")
-            # workbook = self.excel.Workbooks.Open(temp_path)
-            self.app_instance.wb = self.app_instance.excel.Workbooks.Open(temp_path)
-            self.app_instance.wb_path = file_path
-        else:
-            temp_path = os.path.join(script_path, "templates", self.data["TempName"])
-            # workbook = self.excel.Workbooks.Open(self.data["TempName"])
-            self.app_instance.wb = self.app_instance.excel.Workbooks.Open(self.data["TempName"])
-            self.app_instance.wb_path = file_path
-
-        # Формат .xlsm будет при 52, а .xlsx при 51
-        if self.data["MacrosName"] != "Нет макроса":
-            try:
-                vbacomponent = self.wb.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
-                vbacomponent.CodeModule.AddFromFile(self.data["MacrosName"])
-                self.macros_status = f"с макросом \"{os.path.basename(self.data['MacrosName'])}\""
-
-            except Exception as e:
-                self.log_message('Макросы не добавлены, т.к.\n' +
-                                 "в Центре управления безопасностью \n"
-                                 "(Параметры макросов) необходимо поставить галочку на "
-                                 "'Доверять доступ к объектной модели проектов VBA'", e)
-                self.data["MacrosName"] = "Нет макроса"
-                self.macros_status = "без макроса"
-        else:
-            self.macros_status = "без макроса"
-
-        self.app_instance.wb.SaveAs(file_path, 52)
-        self.app_instance.excel.Visible = True
-        self.log_message(
-            f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
-
-        # ! Добавить, если такой-то шаблон, то установки будут такие-то
-
-
-    def onRejected(self):
-        """
-        Отмена создания Excel со сбросом заданных условий
-        """
-        self.app_instance.data_reset_flag = not self.app_instance.data_reset_flag
-        self.log_message('Отмена создания файла')
-
     def getExcelSettings(self):
         return self.excel_settings
 
     def create_excel_func(self):
+
         try:
+            self.data["FileName"] = self.FileNameLE.text()
+            script_path = os.path.dirname(os.path.abspath(__file__))
+            file_path = os.path.join(script_path, '..', "..", "Measurements", self.data["FileName"])  # without '.xlsm'
 
-            file_name = str(self.FileNameLE.text()) + '.xlsm'
-
-            book = Workbook()
-            sheet = book.active
-
-            thin_border = Border(left=Side(style='thin'),
-                                 right=Side(style='thin'),
-                                 top=Side(style='thin'),
-                                 bottom=Side(style='thin'))
-
-            font = Font(b=True, size=12, color="000000")
-            fill = PatternFill("solid", fgColor="FFFF00")
-
-            sheet['A1'] = 'Время'
-            sheet['B1'] = 'V1'
-            sheet['C1'] = 'V2'
-            sheet['D1'] = 'V3'
-            sheet['E1'] = 'V4'
-            sheet['F1'] = 'Системное время'
-            sheet['G1'] = 'Комментарии Python'
-            sheet['H1'] = 'Для комментариев'
-
-            # sheet.column_dimensions['D'].width = 20
-            sheet.column_dimensions['H'].width = 25
-            sheet.column_dimensions['F'].width = 25
-            sheet.column_dimensions['L'].width = 20
-            sheet.column_dimensions['M'].width = 25
-            sheet.column_dimensions['N'].width = 25
-
-            for i in range(1, 25):
-                sheet.cell(row=1, column=i).font = font
-                sheet.cell(row=1, column=i).fill = fill
-                sheet.cell(row=1, column=i).alignment = Alignment(horizontal='center')
-                sheet.cell(row=1, column=i).border = thin_border
-
-            if os.path.isfile("C:\\Python\\" + file_name):
-                error = QMessageBox()
-                error.setWindowTitle('Ошибка')
-                error.setText('Такой файл уже существует, выберите другое имя')
-                # error.setIcon(QMessageBox.Warning)
-                # error.setStandardButtons(QMessageBox.Ok)
-                error.exec()
+            # Проверка на наличие файлов с таким же именем
+            if os.path.exists(file_path + ".xlsm"):
+                self.log_message("Файл с таким именем уже существует, создайте другой")
+                self.statusbar.showMessage("Файл с таким именем уже существует, создайте другой")
+                return
             else:
-                book.save("C:\\Python\\" + file_name)
-                # os.startfile("C:\\Python\\" + file_name)
-                book.close()
-                self.time_open = time.time()
-                while time.time() - self.time_open < 2:
-                    pass
-                self.wb = xw.Book(f"C:\\Python\\{file_name}")
-                self.ws = self.wb.sheets[0]
+                self.app_instance.wb = None
 
+            if self.data["TempName"] == "Нет шаблона":
+                temp_path = os.path.join(script_path, "..", "..", "templates", "Base_temp.xltm")
+                with xw.App(visible=False) as app:
+                    self.app_instance.wb = app.books.open(temp_path)
+                    self.app_instance.wb.save(file_path + ".xlsm")
+                    self.app_instance.wb.close()
+                self.app_instance.wb = xw.Book(file_path + ".xlsm")
+                self.app_instance.wb_path = file_path
+            else:
+                temp_path = os.path.join(script_path, "..", "..", "templates", self.data["TempName"])
+                with xw.App(visible=False) as app:
+                    self.app_instance.wb = app.books.open(temp_path)
+                    self.app_instance.wb.save(file_path + ".xlsm")
+                    self.app_instance.wb.close()
+                self.app_instance.wb = xw.Book(file_path + ".xlsm")
+                self.app_instance.wb_path = file_path
+
+            if self.data["MacrosName"] != "Нет макроса":
+                try:
+                    vbacomponent = self.app_instance.wb.api.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
+                    vbacomponent.CodeModule.AddFromFile(self.data["MacrosName"])
+                    self.macros_status = f"с макросом \"{os.path.basename(self.data['MacrosName'])}\""
+
+                except Exception as e:
+                    self.log_message('Макросы не добавлены, т.к.\n' +
+                                     "в Центре управления безопасностью \n"
+                                     "(Параметры макросов) необходимо поставить галочку на "
+                                     "'Доверять доступ к объектной модели проектов VBA'", e)
+                    self.data["MacrosName"] = "Нет макроса"
+                    self.macros_status = "без макроса"
+            else:
+                self.macros_status = "без макроса"
+
+            self.app_instance.wb.save()
+            self.log_message(
+                f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
+
+            self.accept()
         except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', f'Не удалось создать файл: {e}')
+            self.log_message(f'Неудалось создать эксель')
+
 
     def open_excel_func(self):
         try:
             file_name = str(self.FileNameLE.text()) + '.xlsm'
-            self.wb = xw.Book(f"C:\\IIC\\Measurements\\{file_name}")
-            self.ws = self.wb.sheets[0]
-            # xw.App(visible=True)
+            script_path = os.path.dirname(os.path.abspath(__file__))
+            file_path = os.path.abspath(os.path.join(script_path, '..', "..", "Measurements", file_name))
+            self.app_instance.wb = xw.Book(file_path)
+            self.app_instance.ws = self.app_instance.wb.sheets[0]
+
+            self.accept()
         except Exception as e:
             self.statusbar.showMessage(f'Ошибка.\nНе удалось открыть Excel: {e}')
