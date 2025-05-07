@@ -49,7 +49,7 @@ class ExcelWriterThread(QThread):
             self.E36312A = self.rm.open_resource(self.powersource_list["E36312A"])
         else:
             self.log_message("Должен быть подключен ИП")  # ! Не обязательно сделать
-            self.stop()
+            # self.stop()
 
         if self.app_instance.combobox_scan.currentText() == "keithley2010":
             self.instrument = Keithley2010(self)
@@ -69,37 +69,47 @@ class ExcelWriterThread(QThread):
     def run(self):
         try:
             while self.running:
-                self.cycle_S_R()
+                try:
+                    self.cycle_S_R()
+                except Exception as e:
+                    self.log_signal.emit(f"Ошибка в cycle_S_R: {str(e)}")
+                    time.sleep(1)  # Задержка перед повторным запуском
         except Exception as e:
-            self.log_signal.emit(f"Ошибка: {e}")
+            self.log_signal.emit(f"Критическая ошибка потока: {str(e)}")
         finally:
             self.running = False
-            self.finished_signal.emit()
 
     def stop(self):
+        if not self.running:
+            return
+
         self.running = False
+
+        try:
+            if hasattr(self, 'AKIP') and self.AKIP:
+                self.AKIP.write("*rst")
+        except Exception as e:
+            self.log_message("Ошибка сброса ИП", e)
 
         try:
             self.control_heater(channel=1, voltage=0, state="off")
             self.control_heater(channel=2, voltage=0, state="off")
             self.control_heater(channel=3, voltage=0, state="off")
-            if "AKIP" in self.powersource_list:
-                self.AKIP.write("*rst")  # На всякий случай)
         except Exception as e:
             self.log_message("Ошибка отключения нагревателя", e)
 
-        if self.app_instance.rele_cb.isChecked():
-            try:
+        try:
+            if self.app_instance.rele_cb.isChecked():
                 self.toggle_relay("heater", "off")
                 self.toggle_relay("sample", "off")
                 self.toggle_relay("current", "off")
-            except Exception as e:
-                self.log_message("Ошибка отключения релюшек\nВыключите их вручную для корректной работы", e)
+        except Exception as e:
+            self.log_message("Ошибка отключения реле", e)
 
-
-        self.log_message("Цикл измерений остановлен ")
-        # self.app_instance.pause()
-        self.stop_signal.emit()
+        try:
+            self.stop_signal.emit()
+        except RuntimeError:
+            pass  # Игнорируем, если сигнал уже неактивен
 
     def log_message(self, message, exception=None):
         error_message = f"{message}"
@@ -173,7 +183,7 @@ class ExcelWriterThread(QThread):
         """
         Основной цикл измерений термоЭДС и сопротивления
         """
-        while self.running:
+        while self.app_instance.start_flag and self.app_instance.mainthread.running:
             # Проверка обновления настроек
             try:
                 if self.app_instance.settings_changed_flag:
@@ -191,7 +201,7 @@ class ExcelWriterThread(QThread):
             for i in range(int(self.settings["n_cycles"])):  # Количество полных циклов термо эдс
 
                 # ! Нужно ли? Будет ли сейчас программа прерываться?
-                if not self.app_instance.mainthread.running or not self.running:
+                if not self.app_instance.mainthread.running or not self.app_instance.start_flag:
                     # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                     break
 
@@ -207,7 +217,7 @@ class ExcelWriterThread(QThread):
                 # Основные измерения нагрева для термоЭДС
                 for _ in range(int(self.settings["n_heat"])):
                     # Условия остановки измерений
-                    if not self.app_instance.mainthread.running or not self.running:
+                    if not self.app_instance.mainthread.running or not self.app_instance.start_flag:
                         # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                         break
 
@@ -228,7 +238,7 @@ class ExcelWriterThread(QThread):
                 # Основные измерения охлаждения для термоЭДС
                 for _ in range(int(self.settings["n_cool"])):
                     # Условия остановки измерений
-                    if not self.app_instance.mainthread.running or not self.running:
+                    if not self.app_instance.mainthread.running or not self.app_instance.start_flag:
                         # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                         break
 
@@ -239,25 +249,17 @@ class ExcelWriterThread(QThread):
                     self.app_instance.start_line_le.setText(str(self.number))
 
                 time_sleep = int(self.app_instance.pause_s.text())
-                while time_sleep > 0:  # ! Потестить
+                while time_sleep > 0 and self.running:
                     if time_sleep > 5:
                         self.app_instance.statusbar.showMessage(f"Измерения продолжатся через {time_sleep} секунд")
-                    if self.running:
-                        if (time_sleep - 1) > 0:
-                            time.sleep(1)  # Пауза между записями
-                            time_sleep -= 1
-                        else:
-                            time.sleep(time_sleep)
-                            time_sleep -= 1
-                            self.app_instance.statusbar.showMessage("")
-                            break
-                    else:
-                        # self.stop()
-                        break
+                    time.sleep(1)
+                    time_sleep -= 1
+                    if time_sleep <= 0:
+                        self.app_instance.statusbar.showMessage("")
 
             # Измерения сопротивления
             # Условия остановки измерений
-            if not self.app_instance.mainthread.running or not self.running:
+            if not self.app_instance.mainthread.running or not self.app_instance.start_flag:
                 # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                 break
 
@@ -273,7 +275,7 @@ class ExcelWriterThread(QThread):
                 # Основные измерения сопротивления
                 for _ in range(int(self.settings["n_r_updown"]) * 2):
                     # Условия остановки измерений
-                    if not self.app_instance.mainthread.running or not self.running:
+                    if not self.app_instance.mainthread.running or not self.app_instance.start_flag:
                         # self.log_message("Цикл измерений прерван на измерении термоЭДС")
                         break
 
@@ -307,7 +309,7 @@ class ExcelWriterThread(QThread):
 
                 for _ in range(int(self.settings["n_r_up"])):
                     # Условия остановки измерений
-                    if not self.app_instance.mainthread.running or not self.running:
+                    if not self.app_instance.mainthread.running or not self.app_instance.start_flag:
                         # self.log_message("Цикл измерений прерван на сопротивлении")
                         break
 
@@ -324,21 +326,13 @@ class ExcelWriterThread(QThread):
                                     state="on")
 
             time_sleep = int(self.app_instance.pause_r.text())
-            while time_sleep > 0:  # ! Потестить
-                if time_sleep > 10:
+            while time_sleep > 0 and self.running:
+                if time_sleep > 5:
                     self.app_instance.statusbar.showMessage(f"Измерения продолжатся через {time_sleep} секунд")
-                if self.running:
-                    if (time_sleep - 1) > 0:
-                        time.sleep(1)  # Пауза между записями
-                        time_sleep -= 1
-                    else:
-                        time.sleep(time_sleep)
-                        time_sleep -= 1
-                        self.app_instance.statusbar.showMessage("")
-                        break
-                else:
-                    # self.stop()
-                    break
+                time.sleep(1)
+                time_sleep -= 1
+                if time_sleep <= 0:
+                    self.app_instance.statusbar.showMessage("")
 
             # # Условия остановки измерений
             # if not self.app_instance.measurement_thread.running or not self.app_instance.working_flag:

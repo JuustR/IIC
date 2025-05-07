@@ -132,7 +132,8 @@ class Create_Open_Excel(QDialog):
             else:
                 self.macros_status = "без макроса"
 
-            self.app_instance.wb.save()
+            # self.app_instance.wb.save()
+            self.app_instance.ws = self.app_instance.wb.sheets[0]
             self.log_message(
                 f"Создали файл \"{self.data['FileName']}\" по шаблону \"{os.path.basename(temp_path)}\" {self.macros_status}")
 
@@ -148,7 +149,7 @@ class Create_Open_Excel(QDialog):
             file_path = os.path.abspath(os.path.join(script_path, '..', "..", "Measurements", file_name))
             self.app_instance.wb = xw.Book(file_path)
             self.app_instance.ws = self.app_instance.wb.sheets[0]
-
+            self.log_message(f"Подключились к файлу: {file_name}")
             self.accept()
         except Exception as e:
             self.statusbar.showMessage(f'Ошибка.\nНе удалось открыть Excel: {e}')

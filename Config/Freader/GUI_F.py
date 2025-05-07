@@ -252,6 +252,7 @@ class App(QMainWindow):
             else:
                 print("Poka net")
         except Exception as e:
+            self.start_flag = False
             print(e)
             self.pause()
 
@@ -272,20 +273,28 @@ class App(QMainWindow):
         self.start_line_le.setText(f'{num}')
 
     def pause(self):
-        self.start_flag = False
-        # self.disable_enable_ch()
-        self.start_button.setEnabled(True)
-
         if self.animation_timer.isActive():
             self.animation_timer.stop()
             self.start_button.setText("Старт")
             self.animation_num = 2
 
-        if self.mainthread and self.mainthread.isRunning():
-            self.mainthread.stop()
-            self.mainthread.wait()
-            self.mainthread = None
+        if not self.start_flag:
+            return
 
+        self.start_flag = False
+        self.start_button.setEnabled(True)
+
+        if self.mainthread:
+            try:
+                self.mainthread.stop()  # Безопасный stop()
+                if not self.mainthread.wait(2000):  # Ждём 2 секунды
+                    self.mainthread.terminate()  # Принудительно, если завис
+            except Exception as e:
+                self.log_message(f"Ошибка остановки потока: {e}")
+            finally:
+                self.mainthread = None
+
+        self.log_message("Измерение остановлено")
         self.statusbar.showMessage("Измерение остановлено")
 
     def disable_enable_ch(self):
