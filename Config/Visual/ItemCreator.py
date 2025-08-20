@@ -4,6 +4,7 @@ from PyQt6.QtGui import QBrush, QColor, QFont
 
 
 class StageItem(QGraphicsRectItem):
+    """Класс для создания стадий"""
     def __init__(self, x, y, width, height, stage_type, number, params=None):
         super().__init__(x, y, width, height)
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, True)

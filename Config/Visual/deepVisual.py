@@ -36,7 +36,7 @@ class StagesEditor(QMainWindow):
         self.setGeometry(100, 100, 1200, 300)
 
         # Флаги и состояние файла
-        self.is_saved = True  # Флаг сохраненности
+        self.is_saved_flag = True  # Флаг сохраненности
         self.current_file_path = None  # Текущий открытый файл
 
         self.scene = CustomGraphicsScene(self)
@@ -57,10 +57,150 @@ class StagesEditor(QMainWindow):
         # Автозагрузка последнего файла при старте
         self.auto_load_last_file()
 
-
-
         # Подключаем отслеживание изменений
         self.setup_change_tracking()
+
+    # new_file | save_stages_in_file | load_stages_from_file | update_recent_files_menu |
+    def init_menu(self):
+        """Инициализация меню файлов"""
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu("Файл")
+
+        new_action = file_menu.addAction("Новый файл")
+        new_action.triggered.connect(self.new_file)
+
+        file_menu.addSeparator()
+
+        save_action = file_menu.addAction("Сохранить")
+        save_action.triggered.connect(self.save_stages_in_file)
+
+        load_action = file_menu.addAction("Загрузить")
+        load_action.triggered.connect(self.load_stages_from_file)
+
+        # Меню последних файлов
+        self.recent_menu = file_menu.addMenu("Последние файлы")
+        self.update_recent_files_menu()
+
+        file_menu.addSeparator()
+
+        exit_action = file_menu.addAction("Выход")
+        exit_action.triggered.connect(self.close)
+
+    def new_file(self):
+        """Создает новый файл"""
+        if not self.is_saved_flag:
+            reply = QMessageBox.question(
+                self, "Несохраненные изменения",
+                "Есть несохраненные изменения. Сохранить перед созданием нового файла?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.save_stages()
+            elif reply == QMessageBox.StandardButton.Cancel:
+                return
+
+        self.clear_scene()
+        self.current_file_path = None
+        self.mark_as_saved()  # Новый файл считается "сохраненным" (пустым)
+
+    def save_stages_in_file(self):
+        """Сохраняет стадии в JSON файл"""
+        try:
+            # Получаем путь для сохранения
+            current_dir = os.getcwd()
+            parent_dir = os.path.dirname(current_dir)
+            base_dir = os.path.join(parent_dir, "Stages")
+            file_path, _ = QFileDialog.getSaveFileName(
+                self, "Сохранить этап", base_dir, "JSON Files (*.json)"
+            )
+
+            if not file_path:
+                return
+
+            # Подготавливаем данные для сохранения
+            stages_data = []
+            sorted_items = sorted(self.stage_items, key=lambda x: x.x())
+
+            for item in sorted_items:
+                stage_data = {
+                    'type': item.stage_type,
+                    'number': item.number,
+                    'x_position': item.x(),
+                    'params': item.params
+                }
+                stages_data.append(stage_data)
+
+            # Сохраняем в файл
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(stages_data, f, indent=4, ensure_ascii=False)
+
+            QMessageBox.information(self, "Успех", "Этап успешно сохранен!")
+
+            # Добавляем в последние файлы
+            self.add_to_recent_files(file_path)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении: {str(e)}")
+
+    def load_stages_from_file(self):
+        """Загружает стадии из JSON файла"""
+        try:
+            # Получаем путь для загрузки
+            current_dir = os.getcwd()
+            parent_dir = os.path.dirname(current_dir)
+            base_dir = os.path.join(parent_dir, "Stages")
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, "Загрузить этап", base_dir, "JSON Files (*.json)"
+            )
+
+            if not file_path:
+                return
+
+            # Загружаем данные из файла
+            with open(file_path, 'r', encoding='utf-8') as f:
+                stages_data = json.load(f)
+
+            # Очищаем текущую сцену
+            self.clear_scene()
+
+            # Восстанавливаем этапы
+            for stage_data in stages_data:
+                self.load_stage(stage_data)
+
+            # Обновляем нумерацию и layout
+            self.renumber_stages()
+            self.auto_arrange()
+
+            QMessageBox.information(self, "Успех", "Этап успешно загружен!")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка при загрузке: {str(e)}")
+
+    def load_stage(self, stage_data):
+        """Загружает одну стадию из данных"""
+        try:
+            # Определяем высоту в зависимости от наличия параметров
+            height = 80 if stage_data.get('params') else 50
+
+            stage = StageItem(
+                0, 50, 150, height,
+                stage_data['type'],
+                stage_data['number'],
+                stage_data.get('params', {})
+            )
+
+            # Устанавливаем позицию
+            stage.setPos(stage_data['x_position'], 50)
+
+            self.scene.addItem(stage)
+            self.stage_items.append(stage)
+
+            # Обновляем счетчик номеров
+            self.current_number = max(self.current_number, stage_data['number'] + 1)
+
+        except Exception as e:
+            print(f"Ошибка при загрузке этапа: {str(e)}")
 
     def setup_change_tracking(self):
         """Настройка отслеживания изменений"""
@@ -90,7 +230,7 @@ class StagesEditor(QMainWindow):
 
     def check_for_changes(self):
         """Проверяет, были ли изменения с последнего сохранения"""
-        if not self.is_saved:
+        if not self.is_saved_flag:
             return  # Уже помечено как несохраненное
 
         current_state = self.get_current_state_hash()
@@ -99,13 +239,13 @@ class StagesEditor(QMainWindow):
 
     def mark_as_unsaved(self):
         """Помечает файл как несохраненный"""
-        if self.is_saved:
-            self.is_saved = False
+        if self.is_saved_flag:
+            self.is_saved_flag = False
             self.update_window_title()
 
     def mark_as_saved(self, file_path=None):
         """Помечает файл как сохраненный"""
-        self.is_saved = True
+        self.is_saved_flag = True
         if file_path:
             self.current_file_path = file_path
         self.last_saved_state = self.get_current_state_hash()
@@ -121,7 +261,7 @@ class StagesEditor(QMainWindow):
         else:
             title = base_title
 
-        if not self.is_saved:
+        if not self.is_saved_flag:
             title = "* " + title  # Добавляем звездочку для несохраненных файлов
 
         self.setWindowTitle(title)
@@ -142,14 +282,14 @@ class StagesEditor(QMainWindow):
             self.load_from_file(last_file)
 
     def save_stages(self):
-        """Сохраняет этапы в JSON файл"""
+        """Сохраняет стадии в JSON файл"""
         try:
             # Если файл уже был сохранен, используем тот же путь
-            if self.current_file_path and self.is_saved:
+            if self.current_file_path and self.is_saved_flag:
                 file_path = self.current_file_path
             else:
                 file_path, _ = QFileDialog.getSaveFileName(
-                    self, "Сохранить этапы", self.current_file_path or "", "JSON Files (*.json)"
+                    self, "Сохранить этап", self.current_file_path or "", "JSON Files (*.json)"
                 )
 
             if not file_path:
@@ -176,16 +316,16 @@ class StagesEditor(QMainWindow):
             self.add_to_recent_files(file_path)
             self.settings.setValue(SETTINGS_LAST_FILE, file_path)
 
-            QMessageBox.information(self, "Успех", "Этапы успешно сохранены!")
+            QMessageBox.information(self, "Успех", "Этап успешно сохранены!")
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении: {str(e)}")
 
     def load_stages(self):
-        """Загружает этапы из JSON файла через диалог"""
+        """Загружает стадии из JSON файла через диалог"""
         try:
             file_path, _ = QFileDialog.getOpenFileName(
-                self, "Загрузить этапы", "", "JSON Files (*.json)"
+                self, "Загрузить этап", "", "JSON Files (*.json)"
             )
 
             if file_path:
@@ -195,10 +335,10 @@ class StagesEditor(QMainWindow):
             QMessageBox.critical(self, "Ошибка", f"Ошибка при загрузке: {str(e)}")
 
     def load_from_file(self, file_path):
-        """Загружает этапы из указанного файла"""
+        """Загружает стадии из указанного файла"""
         try:
             # Проверяем, нужно ли сохранить текущие изменения
-            if not self.is_saved:
+            if not self.is_saved_flag:
                 reply = QMessageBox.question(
                     self, "Несохраненные изменения",
                     "Есть несохраненные изменения. Сохранить перед загрузкой?",
@@ -247,31 +387,6 @@ class StagesEditor(QMainWindow):
         # self.setWindowTitle("Редактор последовательности этапов")
         self.mark_as_unsaved()
 
-    def init_menu(self):
-        """Инициализация меню файлов с историей"""
-        menubar = self.menuBar()
-        file_menu = menubar.addMenu("Файл")
-
-        new_action = file_menu.addAction("Новый файл")
-        new_action.triggered.connect(self.new_file)
-
-        file_menu.addSeparator()
-
-        save_action = file_menu.addAction("Сохранить")
-        save_action.triggered.connect(self.save_stages_in_file)
-
-        load_action = file_menu.addAction("Загрузить")
-        load_action.triggered.connect(self.load_stages_from_file)
-
-        # Меню последних файлов
-        self.recent_menu = file_menu.addMenu("Последние файлы")
-        self.update_recent_files_menu()
-
-        file_menu.addSeparator()
-
-        exit_action = file_menu.addAction("Выход")
-        exit_action.triggered.connect(self.close)
-
     def update_recent_files_menu(self):
         """Обновляет меню последних файлов"""
         self.recent_menu.clear()
@@ -306,136 +421,6 @@ class StagesEditor(QMainWindow):
         self.settings.setValue("recent_files", recent_files)
         self.update_recent_files_menu()
 
-    def new_file(self):
-        """Создает новый файл"""
-        if not self.is_saved:
-            reply = QMessageBox.question(
-                self, "Несохраненные изменения",
-                "Есть несохраненные изменения. Сохранить перед созданием нового файла?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel
-            )
-
-            if reply == QMessageBox.StandardButton.Yes:
-                self.save_stages()
-            elif reply == QMessageBox.StandardButton.Cancel:
-                return
-
-        self.clear_scene()
-        self.current_file_path = None
-        self.mark_as_saved()  # Новый файл считается "сохраненным" (пустым)
-
-    def save_stages_in_file(self):
-        """Сохраняет этапы в JSON файл"""
-        try:
-            # Получаем путь для сохранения
-            file_path, _ = QFileDialog.getSaveFileName(
-                self, "Сохранить этапы", "", "JSON Files (*.json)"
-            )
-
-            if not file_path:
-                return
-
-            # Подготавливаем данные для сохранения
-            stages_data = []
-            sorted_items = sorted(self.stage_items, key=lambda x: x.x())
-
-            for item in sorted_items:
-                stage_data = {
-                    'type': item.stage_type,
-                    'number': item.number,
-                    'x_position': item.x(),
-                    'params': item.params
-                }
-                stages_data.append(stage_data)
-
-            # Сохраняем в файл
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(stages_data, f, indent=4, ensure_ascii=False)
-
-            QMessageBox.information(self, "Успех", "Этапы успешно сохранены!")
-
-            # Добавляем в последние файлы
-            self.add_to_recent_files(file_path)
-
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении: {str(e)}")
-
-    def load_stages_from_file(self):
-        """Загружает этапы из JSON файла"""
-        try:
-            # Получаем путь для загрузки
-            file_path, _ = QFileDialog.getOpenFileName(
-                self, "Загрузить этапы", "", "JSON Files (*.json)"
-            )
-
-            if not file_path:
-                return
-
-            # Загружаем данные из файла
-            with open(file_path, 'r', encoding='utf-8') as f:
-                stages_data = json.load(f)
-
-            # Очищаем текущую сцену
-            self.clear_scene()
-
-            # Восстанавливаем этапы
-            for stage_data in stages_data:
-                self.load_stage(stage_data)
-
-            # Обновляем нумерацию и layout
-            self.renumber_stages()
-            self.auto_arrange()
-
-            QMessageBox.information(self, "Успех", "Этапы успешно загружены!")
-
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Ошибка при загрузке: {str(e)}")
-
-    def load_stage(self, stage_data):
-        """Загружает один этап из данных"""
-        try:
-            # Определяем высоту в зависимости от наличия параметров
-            height = 80 if stage_data.get('params') else 50
-
-            stage = StageItem(
-                0, 50, 150, height,
-                stage_data['type'],
-                stage_data['number'],
-                stage_data.get('params', {})
-            )
-
-            # Устанавливаем позицию
-            stage.setPos(stage_data['x_position'], 50)
-
-            self.scene.addItem(stage)
-            self.stage_items.append(stage)
-
-            # Обновляем счетчик номеров
-            self.current_number = max(self.current_number, stage_data['number'] + 1)
-
-        except Exception as e:
-            print(f"Ошибка при загрузке этапа: {str(e)}")
-
-    # Добавляем в closeEvent сохранение при выходе (опционально)
-    def closeEvent(self, event):
-        """При закрытии программы проверяем сохраненность"""
-        if not self.is_saved:
-            reply = QMessageBox.question(
-                self, "Несохраненные изменения",
-                "Есть несохраненные изменения. Сохранить перед выходом?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel
-            )
-
-            if reply == QMessageBox.StandardButton.Yes:
-                self.save_stages()
-                event.accept()
-            elif reply == QMessageBox.StandardButton.No:
-                event.accept()
-            else:
-                event.ignore()
-        else:
-            event.accept()
-
     def safe_auto_arrange(self):
         """Защищённый вызов авто-выравнивания"""
         try:
@@ -444,7 +429,9 @@ class StagesEditor(QMainWindow):
         except Exception as e:
             print(f"Ошибка выравнивания: {str(e)}")
 
+    # init_ui
     def init_ui(self):
+        """Основное рабочее окно"""
         central_widget = QWidget()
         layout = QVBoxLayout()
 
@@ -456,13 +443,13 @@ class StagesEditor(QMainWindow):
         control_panel.setObjectName("controlPanel")
         control_layout = QHBoxLayout()
 
-        self.add_button = QPushButton("Добавить этап")
+        self.add_button = QPushButton("Добавить стадию")
         self.add_button.setObjectName("addButton")
 
-        self.remove_button = QPushButton("Удалить выбранный")
+        self.remove_button = QPushButton("Удалить выбранную")
         self.remove_button.setObjectName("removeButton")
 
-        self.edit_button = QPushButton("Редактировать выбранный")
+        self.edit_button = QPushButton("Редактировать выбранную")
         self.edit_button.setObjectName("editButton")
 
         self.auto_arrange_button = QPushButton("Авто-расположение")
@@ -475,7 +462,7 @@ class StagesEditor(QMainWindow):
         control_panel.setLayout(control_layout)
 
         # Информационная метка
-        self.info_label = QLabel("Перетаскивайте этапы для изменения порядка")
+        self.info_label = QLabel("Перетаскивайте стадии для изменения порядка")
         self.info_label.setObjectName("infoLabel")
 
         # Настройка скроллбаров
@@ -497,6 +484,7 @@ class StagesEditor(QMainWindow):
         self.auto_arrange_button.clicked.connect(self.auto_arrange)
 
     def add_stage(self):
+        """Добавляет стадию на основе StageConfigDialog"""
         dialog = StageConfigDialog(self)
 
         if dialog.exec() == QInputDialog.DialogCode.Accepted:
@@ -552,6 +540,7 @@ class StagesEditor(QMainWindow):
             print(f"Ошибка при удалении: {str(e)}")
 
     def edit_selected(self):
+        """Редактирование выбранных стадий"""
         selected_items = self.scene.selectedItems()
         if not selected_items:
             return
@@ -595,7 +584,7 @@ class StagesEditor(QMainWindow):
             self.mark_as_unsaved()
 
     def auto_arrange(self):
-        """Безопасное автоматическое выравнивание этапов"""
+        """Автоматическое выравнивание стадий"""
         try:
             if not hasattr(self, 'stage_items') or not self.stage_items:
                 return
@@ -642,7 +631,7 @@ class StagesEditor(QMainWindow):
             print(f"Ошибка в auto_arrange: {str(e)}")
 
     def renumber_stages(self):
-        """Безопасная перенумерация этапов"""
+        """Перенумерация этапов"""
         try:
             valid_items = [item for item in self.stage_items
                            if isinstance(item, StageItem) and item.scene() is not None]
@@ -656,6 +645,24 @@ class StagesEditor(QMainWindow):
         except:
             pass
 
+    def closeEvent(self, event):
+        """Ивент при закрытии программы, который проверяет сохраненность файлов"""
+        if not self.is_saved_flag:
+            reply = QMessageBox.question(
+                self, "Несохраненные изменения",
+                "Есть несохраненные изменения. Сохранить перед выходом?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.save_stages()
+                event.accept()
+            elif reply == QMessageBox.StandardButton.No:
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            event.accept()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

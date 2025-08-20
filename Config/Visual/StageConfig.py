@@ -3,9 +3,10 @@ from PyQt6.QtWidgets import (QVBoxLayout, QWidget, QLabel, QComboBox, QCheckBox,
 
 
 class StageConfigDialog(QDialog):
+    """Класс для работы со стадиями"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Настройка этапа")
+        self.setWindowTitle("Настройка стадии")
 
         # Основные элементы
         self.type_combo = QComboBox()
@@ -47,7 +48,7 @@ class StageConfigDialog(QDialog):
 
         # Основной layout
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Тип этапа:"))
+        layout.addWidget(QLabel("Тип стадии:"))
         layout.addWidget(self.type_combo)
         layout.addWidget(self.stacked_config)
         layout.addWidget(self.button_box)
