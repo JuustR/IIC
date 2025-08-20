@@ -1,0 +1,96 @@
+[
+    {
+        "type": "Relay",
+        "number": 1,
+        "x_position": 50.0,
+        "params": {
+            "relay_type": "Heater",
+            "relay_state": true
+        }
+    },
+    {
+        "type": "Heater",
+        "number": 2,
+        "x_position": 230.0,
+        "params": {}
+    },
+    {
+        "type": "SeebeckUp",
+        "number": 3,
+        "x_position": 410.0,
+        "params": {}
+    },
+    {
+        "type": "Relay",
+        "number": 4,
+        "x_position": 590.0,
+        "params": {
+            "relay_type": "Heater",
+            "relay_state": false
+        }
+    },
+    {
+        "type": "Heater",
+        "number": 5,
+        "x_position": 770.0,
+        "params": {}
+    },
+    {
+        "type": "SeebeckDown",
+        "number": 6,
+        "x_position": 950.0,
+        "params": {}
+    },
+    {
+        "type": "Relay",
+        "number": 7,
+        "x_position": 1130.0,
+        "params": {
+            "relay_type": "Sample",
+            "relay_state": true
+        }
+    },
+    {
+        "type": "Resistance",
+        "number": 8,
+        "x_position": 1310.0,
+        "params": {
+            "resistance_value": "10k"
+        }
+    },
+    {
+        "type": "Relay",
+        "number": 9,
+        "x_position": 1490.0,
+        "params": {
+            "relay_type": "Current",
+            "relay_state": true
+        }
+    },
+    {
+        "type": "Resistance",
+        "number": 10,
+        "x_position": 1670.0,
+        "params": {
+            "resistance_value": "10k"
+        }
+    },
+    {
+        "type": "Relay",
+        "number": 11,
+        "x_position": 1850.0,
+        "params": {
+            "relay_type": "Current",
+            "relay_state": false
+        }
+    },
+    {
+        "type": "Relay",
+        "number": 12,
+        "x_position": 2030.0,
+        "params": {
+            "relay_type": "Sample",
+            "relay_state": false
+        }
+    }
+]

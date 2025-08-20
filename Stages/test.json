@@ -1,0 +1,34 @@
+[
+    {
+        "type": "Relay",
+        "number": 1,
+        "x_position": 50.0,
+        "params": {
+            "relay_type": "Heater",
+            "relay_state": false
+        }
+    },
+    {
+        "type": "SeebeckUp",
+        "number": 2,
+        "x_position": 230.0,
+        "params": {}
+    },
+    {
+        "type": "Relay",
+        "number": 3,
+        "x_position": 410.0,
+        "params": {
+            "relay_type": "Current",
+            "relay_state": true
+        }
+    },
+    {
+        "type": "Resistance",
+        "number": 4,
+        "x_position": 590.0,
+        "params": {
+            "resistance_value": "10k"
+        }
+    }
+]
